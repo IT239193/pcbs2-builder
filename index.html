@@ -1296,17 +1296,17 @@
 
         // List of expected files in the datas/ folder
         // Mapping simple ID to likely filename
-        const targets = [
-            { id: 'cpu', file: 'CPU.txt', label: 'CPU' },
-            { id: 'gpu', file: 'GPU.txt', label: 'GPU' },
-            { id: 'gpu', file: 'Water Cooled GPU.txt', label: 'WC GPU' },
-            { id: 'ram', file: 'RAM.txt', label: 'RAM' },
-            { id: 'mobo', file: 'Motherboard.txt', label: 'Motherboard' },
-            { id: 'cases', file: 'Cases.txt', label: 'Cases' },
-            { id: 'cooler', file: 'Coolers.txt', label: 'Cooler' },
-            { id: 'psu', file: 'PSU.txt', label: 'PSU' },
-            { id: 'fan', file: 'Case Fans.txt', label: 'Fans' }
-        ];
+const targets = [
+    { id: 'cpu', db: 'cpu', file: 'CPU.txt', label: 'CPU' },
+    { id: 'gpu', db: 'gpu', file: 'GPU.txt', label: 'GPU' },
+    { id: 'wc_gpu', db: 'gpu', file: 'Water Cooled GPU.txt', label: 'WC GPU' }, // Unique ID, shared DB
+    { id: 'ram', db: 'ram', file: 'RAM.txt', label: 'RAM' },
+    { id: 'mobo', db: 'mobo', file: 'Motherboard.txt', label: 'Motherboard' },
+    { id: 'cases', db: 'cases', file: 'Cases.txt', label: 'Cases' },
+    { id: 'cooler', db: 'cooler', file: 'Coolers.txt', label: 'Cooler' },
+    { id: 'psu', db: 'psu', file: 'PSU.txt', label: 'PSU' },
+    { id: 'fan', db: 'fan', file: 'Case Fans.txt', label: 'Fans' }
+];
 
         // Create initial UI elements for status
         const statusEls = {};
@@ -1318,28 +1318,29 @@
             statusEls[t.id] = el;
         });
 
-        for (const t of targets) {
-            try {
-                const response = await fetch(`datas/${t.file}`);
-                if (!response.ok) throw new Error(`Status ${response.status}`);
-                const text = await response.text();
-                
-                // Parse it
-                parseHTML(t.file, text);
+for (const t of targets) {
+    try {
+        const response = await fetch(`datas/${t.file}`);
+        if (!response.ok) throw new Error(`Status ${response.status}`);
+        const text = await response.text();
+        
+        parseHTML(t.file, text);
 
-                // Update UI Success
-                const count = DB[t.id].size;
-                statusEls[t.id].className = 'file-tag loaded';
-                statusEls[t.id].innerHTML = `${t.label} ✓ (${count})`;
+        // FIX: Use the specific DB key if provided, otherwise fallback to ID
+        const dbKey = t.db || t.id; 
+        const count = DB[dbKey].size;
 
-            } catch (err) {
-                console.warn(`Could not load ${t.file}:`, err);
-                // Update UI Error
-                statusEls[t.id].className = 'file-tag error';
-                statusEls[t.id].innerHTML = `${t.label} ❌ (Missing)`;
-            }
-        }
+        // Update the correct UI element using the unique ID
+        statusEls[t.id].className = 'file-tag loaded';
+        statusEls[t.id].innerHTML = `${t.label} ✓ (${count})`;
+
+    } catch (err) {
+        console.warn(`Could not load ${t.file}:`, err);
+        statusEls[t.id].className = 'file-tag error';
+        statusEls[t.id].innerHTML = `${t.label} ❌ (Missing)`;
     }
+}
+        }
 
     // ==================== FILE PARSING ====================
     function parseHTML(fname, html) {
