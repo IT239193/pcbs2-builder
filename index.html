@@ -1286,6 +1286,11 @@
     // Trigger on load
     window.addEventListener('DOMContentLoaded', initAutoFetcher);
 
+        // ==================== AUTO-FETCHER LOGIC (GÜNCELLENMİŞ) ====================
+    
+    // Trigger on load
+    window.addEventListener('DOMContentLoaded', initAutoFetcher);
+
     async function initAutoFetcher() {
         // Reset state
         Object.keys(DB).forEach(k => DB[k].clear());
@@ -1295,16 +1300,18 @@
         statusContainer.innerHTML = ''; // Clear previous status
 
         // List of expected files in the datas/ folder
-        // Mapping simple ID to likely filename
+        // CHANGE: Added 'db' property to map multiple files to the same database
         const targets = [
-            { id: 'cpu', file: 'CPU.txt', label: 'CPU' },
-            { id: 'gpu', file: 'GPU.txt', label: 'GPU' },
-            { id: 'ram', file: 'RAM.txt', label: 'RAM' },
-            { id: 'mobo', file: 'Motherboard.txt', label: 'Motherboard' },
-            { id: 'cases', file: 'Cases.txt', label: 'Cases' },
-            { id: 'cooler', file: 'Coolers.txt', label: 'Cooler' },
-            { id: 'psu', file: 'PSU.txt', label: 'PSU' },
-            { id: 'fan', file: 'Case Fans.txt', label: 'Fans' }
+            { id: 'cpu',       file: 'CPU.txt',              label: 'CPU',         db: 'cpu' },
+            { id: 'gpu',       file: 'GPU.txt',              label: 'GPU',         db: 'gpu' },
+            // YENİ EKLENEN SATIR: ID farklı ('water_gpu') ama veritabanı aynı ('gpu')
+            { id: 'water_gpu', file: 'Water Cooled GPU.txt', label: 'Water GPU',   db: 'gpu' },
+            { id: 'ram',       file: 'RAM.txt',              label: 'RAM',         db: 'ram' },
+            { id: 'mobo',      file: 'Motherboard.txt',      label: 'Motherboard', db: 'mobo' },
+            { id: 'cases',     file: 'Cases.txt',            label: 'Cases',       db: 'cases' },
+            { id: 'cooler',    file: 'Coolers.txt',          label: 'Cooler',      db: 'cooler' },
+            { id: 'psu',       file: 'PSU.txt',              label: 'PSU',         db: 'psu' },
+            { id: 'fan',       file: 'Case Fans.txt',        label: 'Fans',        db: 'fan' }
         ];
 
         // Create initial UI elements for status
@@ -1327,7 +1334,11 @@
                 parseHTML(t.file, text);
 
                 // Update UI Success
-                const count = DB[t.id].size;
+                // CHANGE: Use t.db property if available, otherwise fallback to t.id
+                // This ensures we count the correct DB size even if the ID is different
+                const dbKey = t.db || t.id;
+                const count = DB[dbKey].size;
+                
                 statusEls[t.id].className = 'file-tag loaded';
                 statusEls[t.id].innerHTML = `${t.label} ✓ (${count})`;
 
@@ -1339,6 +1350,7 @@
             }
         }
     }
+
 
     // ==================== FILE PARSING ====================
     function parseHTML(fname, html) {
