@@ -1368,18 +1368,18 @@ function parseHTML(fname, html, statusId, statusEl) {
     console.warn(`❌ Unknown type for ${fname}`);
     if (statusEl) {
       statusEl.className = 'file-tag loaded';
-      statusEl.innerHTML = `${fname} (No data)`;
+      statusEl.innerHTML = `${fname} (No data) ✅`;
     }
     Loaded[type] = true;
     return;
   }
   
   if (rows.length < 2) {
-    console.log(`⚠️ No table in ${fname}, marking loaded`);
+    console.log(`⚠️ No table in ${fname}`);
     Loaded[type] = true;
     if (statusEl) {
       statusEl.className = 'file-tag loaded';
-      statusEl.innerHTML = `${fname.split('.')[0]} (0)`;
+      statusEl.innerHTML = `${fname.split('.')[0]} (0) ✅`;
     }
     return;
   }
@@ -1410,7 +1410,7 @@ function parseHTML(fname, html, statusId, statusEl) {
       continue;
     }
     
-    // ✅ DÜZELTME: const → let base
+    // 🔥 TÜM TÜRLER İÇİN let base = {} ✅
     let base = { 
       name: baseName, 
       price, 
@@ -1418,6 +1418,7 @@ function parseHTML(fname, html, statusId, statusEl) {
       mfgr: get(cells, 'Manufacturer') 
     };
     
+    // 🔥 TÜM Object.assign(base, ...) KULLAN! ✅
     if (type === 'cpu') {
       Object.assign(base, {
         scoreTS: parseInt(get(cells, 'Basic CPU Score TS') || 0),
@@ -1509,165 +1510,11 @@ function parseHTML(fname, html, statusId, statusEl) {
   
   if (statusEl) {
     statusEl.className = 'file-tag loaded';
-    statusEl.innerHTML = `${fname.split('.')[0]} (${DB[type].size})`;
+    statusEl.innerHTML = `${fname.split('.')[0]} (${DB[type].size}) ✅`;
   }
 }
 
-
-
-
-
-    // ==================== FILE PARSING ====================
-    function parseHTML(fname, html) {
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(html, 'text/html');
-  const rows = Array.from(doc.querySelectorAll('tr'));
-  
-  if (rows.length < 2) {
-    console.log(`No table data in ${fname}`);
-    // Type belirle ve loaded set et
-    let type;
-    const n = fname.toLowerCase();
-    if (n.includes('cpu.txt')) type = 'cpu';
-    else if (n.includes('gpu')) type = 'gpu';
-    else if (n.includes('ram')) type = 'ram';
-    else if (n.includes('motherboard')) type = 'mobo';
-    else if (n.includes('cases')) type = 'cases';
-    else if (n.includes('cooler')) type = 'cooler';
-    else if (n.includes('psu') || n.includes('power supplies')) type = 'psu';
-    else if (n.includes('case fans') || n.includes('fans')) type = 'fan';
     
-    if (type) Loaded[type] = true;
-    return;
-  }
-  
-  const headers = Array.from(rows[0].querySelectorAll('td')).map(td => 
-    td.getAttribute('div') || td.textContent.trim()
-  );
-  
-  const idx = {};
-  headers.forEach((h, i) => idx[h] = i);
-  
-  const get = (cells, key) => {
-    const i = idx[key];
-    return i !== undefined ? cells[i]?.textContent.trim() : '';
-  };
-  
-  let type;
-  const n = fname.toLowerCase();
-  if (n.includes('cpu.txt')) type = 'cpu';
-  else if (n.includes('gpu')) type = 'gpu';
-  else if (n.includes('ram')) type = 'ram';
-  else if (n.includes('motherboard')) type = 'mobo';
-  else if (n.includes('cases')) type = 'cases';
-  else if (n.includes('cooler')) type = 'cooler';
-  else if (n.includes('psu') || n.includes('power supplies')) type = 'psu';
-  else if (n.includes('case fans') || n.includes('fans')) type = 'fan';
-  
-  if (!type) return;
-  
-  let newEntries = 0;
-  let hasValidData = false;
-  
-  for (let i = 1; i < rows.length; i++) {
-    const cells = rows[i].querySelectorAll('td');
-    if (!cells.length) continue;
-    
-    const price = parseFloat(get(cells, 'Price'));
-    if (isNaN(price)) price = 0;
-    if (price === 0) continue;
-    
-    hasValidData = true;
-    
-    const baseName = get(cells, 'Part Name');
-    
-    if (DB[type].has(baseName)) {
-      console.log(`Duplicate skipped: ${baseName} from ${fname}`);
-      continue;
-    }
-    
-    const base = {
-      name: baseName,
-      price: price,
-      level: parseInt(get(cells, 'Level') || 0),
-      mfgr: get(cells, 'Manufacturer')
-    };
-    
-    if (type === 'cpu') {
-      base.scoreTS = parseInt(get(cells, 'Basic CPU Score TS') || 0);
-      base.scoreTSX = parseInt(get(cells, 'Basic CPU Score TSX') || 0);
-      if (!base.scoreTS) base.scoreTS = base.scoreTSX;
-      base.socket = get(cells, 'CPU Socket');
-      base.series = get(cells, 'CPU Series');
-      base.watts = parseInt(get(cells, 'Wattage') || 0);
-      base.multTS = parseFloat(get(cells, 'Mem Clock Multiplier TS') || 0);
-      base.multTSX = parseFloat(get(cells, 'Mem Clock Multiplier TSX') || 0);
-      base.defaultMem = parseInt(get(cells, 'Default Memory Speed') || 2133);
-      base.memTypes = get(cells, 'Supported Memory Types');
-      base.cores = get(cells, 'Cores');
-      base.maxFreq = get(cells, 'Frequency');
-      base.baseFreq = get(cells, 'Base Frequency');
-      base.voltage = get(cells, 'Voltage');
-      base.maxVoltage = get(cells, 'Max Voltage');
-      base.canOC = get(cells, 'Can Overclock');
-      base.ocScore = get(cells, 'Overclock Basic CPU Score');
-      base.canDelid = get(cells, 'Can Delid');
-    } else if (type === 'gpu') {
-      base.score = parseInt(get(cells, 'Single GPU Graphics Score') || 0);
-      base.score2 = parseInt(get(cells, 'Double GPU Graphics Score') || 0);
-      base.score3 = parseInt(get(cells, 'Triple GPU Graphics Score') || 0);
-      base.score4 = parseInt(get(cells, 'Quad GPU Graphics Score') || 0);
-      base.watts = parseInt(get(cells, 'Wattage') || 0);
-      base.vram = parseInt(get(cells, 'VRAM GB') || 0);
-      base.length = parseInt(get(cells, 'Length') || 0);
-      base.multi = get(cells, 'Double GPU supported') === 'Yes';
-      base.isWater = n.includes('water');
-      base.baseCore = get(cells, 'Base Core Clock Freq');
-      base.baseMem = get(cells, 'Base Mem Clock Freq');
-      base.maxCore = get(cells, 'GPU max clock');
-      base.maxMem = get(cells, 'GPU max mem clock');
-      base.chipset = get(cells, 'Chipset');
-    } else if (type === 'ram') {
-      base.freq = parseInt(get(cells, 'Frequency') || 0);
-      base.type = get(cells, 'Ram Type');
-      base.size = parseInt(get(cells, 'Size each GB') || 0);
-      base.totalSize = parseInt(get(cells, 'Total Size GB') || 0);
-      base.voltage = get(cells, 'Voltage');
-      base.maxVoltage = get(cells, 'Max Voltage');
-      base.maxSpeed = parseInt(get(cells, 'Max Speed') || 0);
-    } else if (type === 'mobo') {
-      base.socket = get(cells, 'CPU Socket');
-      base.ramType = get(cells, 'Ram Type');
-      base.size = get(cells, 'Motherboard Size');
-    } else if (type === 'cases') {
-      base.size = get(cells, 'Case Size');
-      base.moboSizes = get(cells, 'Motherboard Size');
-      base.maxGpuLen = parseInt(get(cells, 'Max GPU length') || 0);
-      base.maxCpuHeight = parseInt(get(cells, 'Max CPU Fan Height') || 0);
-      base.maxPsuLen = parseInt(get(cells, 'Max PSU length') || 0);
-      base.radSizes = get(cells, 'Max Radiator Sizes');
-    } else if (type === 'cooler') {
-      base.type = get(cells, 'Type');
-      base.height = parseInt(get(cells, 'Height') || 0);
-      base.size = parseInt(get(cells, 'Size') || 0);
-      base.sockets = get(cells, 'CPU Socket List');
-      base.flow = parseFloat(get(cells, 'Air Flow') || 0);
-    } else if (type === 'psu') {
-      base.watts = parseInt(get(cells, 'Wattage') || 0);
-      base.length = parseInt(get(cells, 'Length') || 0);
-    } else if (type === 'fan') {
-      base.size = parseInt(get(cells, 'Size') || 0);
-      base.flow = parseFloat(get(cells, 'Air Flow') || 0);
-    }
-    
-    DB[type].set(base.name, base);
-    newEntries++;
-  }
-  
-  Loaded[type] = true;
-  console.log(`${fname}: ${newEntries} entries loaded, type: ${type}`);
-}
-
 
 
 function updateStatus() {
