@@ -1999,15 +1999,20 @@
             const cpuClass = getBrandClass(b.cpu);
             const buildIdx = start + i;
 
-            const gpuCountStr = b.gpuCnt > 1 ? `${b.gpuCnt}x ` : '';
+           const gpuCountStr = b.gpuCnt > 1 ? `${b.gpuCnt}x ` : '';
             const gpuEmoji = b.gpu.isWater ? '💧' : '💨';
+
+            // Calculate the specific score used for this count
+            const usedGpuScore = b.gpuCnt === 1 ? b.gpu.score :
+                                 b.gpuCnt === 2 ? b.gpu.score2 :
+                                 b.gpuCnt === 3 ? b.gpu.score3 : b.gpu.score4;
             
             const gpuSpecs = `
-                ${b.gpu.vram}GB | ${b.gpu.length}mm | ${b.gpu.watts * b.gpuCnt}W | ${gpuEmoji} | 
+                Score: ${formatNumber(usedGpuScore)} | ${b.gpu.vram}GB | ${b.gpu.length}mm | ${b.gpu.watts * b.gpuCnt}W | ${gpuEmoji} | 
                 Base Core/Max Core: ${b.gpu.baseCore || '?'}/${b.gpu.maxCore || '?'} MHz | 
                 Base Mem/Max Mem: ${b.gpu.baseMem || '?'}/${b.gpu.maxMem || '?'} MHz
             `;
-
+            
             const cpuBaseScore = currentMode === 'TS' ? b.cpu.scoreTS : b.cpu.scoreTSX;
             const ocText = b.cpu.canOC === 'Yes' ? `OC: ${b.cpu.ocScore}` : 'Locked';
             
