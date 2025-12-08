@@ -116,9 +116,12 @@
         }
 
         /* Perf Warning */
+        /* Perf Tip (Updated to Green) */
         #perfWarning {
-            background: rgba(231, 76, 60, 0.15);
-            border: 1px solid var(--error);
+            /* Changed to very light green background */
+            background: rgba(46, 204, 113, 0.15); 
+            /* Changed border to Success Green */
+            border: 1px solid var(--success);
             color: var(--text-main);
             padding: 10px 15px;
             margin: 15px auto 0 auto;
@@ -132,7 +135,12 @@
             position: relative;
         }
         #perfWarning.hidden { display: none !important; }
-        #perfWarning span { font-weight: bold; color: var(--error); }
+        
+        #perfWarning span { 
+            font-weight: bold; 
+            /* Changed text color to Success Green */
+            color: var(--success); 
+        }
         .close-warning {
             position: absolute;
             right: 10px;
@@ -981,10 +989,10 @@
         <h1>PCBS2 Ultimate Builder</h1>
         <div class="header-subtitle">contact me on discord for bug reports @timmy2131_</div>
         
-        <!-- Warning Message Moved Here -->
+<!-- Performance Tip Moved Here -->
         <div id="perfWarning" class="hidden">
-            <span>⚠ PERFORMANCE WARNING:</span> 
-            If you don't specify preferred RAM brand, size, frequency, or other component filters, the generated results pool will be massive, causing slow performance and potential browser freezing. Please refine your selection.
+            <span>💡 PRO TIP:</span> 
+            If you don't specify preferred RAM brand, size, frequency, or other component filters, the generated results pool will be massive, and that can slow the scans.
             <div class="close-warning" onclick="dismissWarning()">&times;</div>
         </div>
     </header>
