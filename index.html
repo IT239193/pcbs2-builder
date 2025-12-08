@@ -101,17 +101,6 @@
             gap: 10px;
         }
 
-        .btn-reload {
-            background: #2c3e50;
-            color: white;
-            border: 1px solid #555;
-            padding: 5px 15px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .btn-reload:hover { background: var(--accent); border-color: var(--accent); }
-
         .file-status-container {
             display: flex;
             flex-wrap: wrap;
@@ -330,8 +319,8 @@
         }
         .filter-btn:hover { color: #fff; }
 
-        .btn-clear { border-color: var(--brand-clear); color: var(--error); }
-        .btn-clear:hover { background: var(--brand-clear); color: white; }
+        .btn-clear { border-color: var(--brand-generic); color: var(--error); }
+        .btn-clear:hover { background: var(--brand-generic); color: white; }
 
         .btn-amd { border-color: var(--brand-amd); color: var(--brand-amd); }
         .btn-amd:hover { background: var(--brand-amd); color: white; }
@@ -920,12 +909,11 @@
     </header>
 
     <!-- REPLACED DROP ZONE WITH AUTO-FETCH STATUS BAR -->
-        <div class="status-bar-container">
+    <div class="status-bar-container">
         <div class="status-header">
             <div class="status-title">
                 <span>📁 Data Source: "datas/" folder</span>
             </div>
-            <!-- Reload button removed from here -->
         </div>
         <div class="file-status-container" id="fileStatus">
             <div style="color:#777; font-style:italic;">Initializing data fetch...</div>
@@ -934,7 +922,6 @@
             Note: Ensure you are running this file via a local server (e.g., Live Server) to allow file fetching.
         </div>
     </div>
-
 
     <div class="controls-wrapper" id="controls">
         <div class="section-header">1. Benchmarking & Goals</div>
@@ -954,7 +941,7 @@
             </div>
             <div class="input-group">
                 <label>GPU Count</label>
-                <select id="gpuCount">
+                <select id="gpuCount" onchange="refreshDropdowns()">
                     <option value="1">Single GPU</option>
                     <option value="2">Dual GPU (SLI/CF)</option>
                     <option value="3">Triple GPU</option>
@@ -1287,26 +1274,17 @@
     // Trigger on load
     window.addEventListener('DOMContentLoaded', initAutoFetcher);
 
-        // ==================== AUTO-FETCHER LOGIC (GÜNCELLENMİŞ) ====================
-    
-    // Trigger on load
-    // ==================== AUTO-FETCHER LOGIC (DÜZELTİLMİŞ) ====================
-    
-    // Trigger on load
-    window.addEventListener('DOMContentLoaded', initAutoFetcher);
-
     async function initAutoFetcher() {
-        // Reset state
         Object.keys(DB).forEach(k => DB[k].clear());
         Object.keys(Loaded).forEach(k => Loaded[k] = false);
 
         const statusContainer = document.getElementById('fileStatus');
-        statusContainer.innerHTML = ''; // Clear previous status
+        statusContainer.innerHTML = ''; 
 
         const targets = [
             { id: 'cpu',       file: 'CPU.txt',              label: 'CPU' },
             { id: 'gpu',       file: 'GPU.txt',              label: 'GPU' },
-            { id: 'water_gpu', file: 'Water Cooled GPU.txt', label: 'Water GPU' }, // Özel etiket
+            { id: 'water_gpu', file: 'Water Cooled GPU.txt', label: 'Water GPU' },
             { id: 'ram',       file: 'RAM.txt',              label: 'RAM' },
             { id: 'mobo',      file: 'Motherboard.txt',      label: 'Motherboard' },
             { id: 'cases',     file: 'Cases.txt',            label: 'Cases' },
@@ -1315,7 +1293,6 @@
             { id: 'fan',       file: 'Case Fans.txt',        label: 'Fans' }
         ];
 
-        // Create initial UI elements for status
         const statusEls = {};
         targets.forEach(t => {
             const el = document.createElement('div');
@@ -1331,13 +1308,9 @@
                 if (!response.ok) throw new Error(`Status ${response.status}`);
                 const text = await response.text();
                 
-                // Parse and Capture Count
-                // DEĞİŞİKLİK: Doğrudan parseHTML'den dönen sayıyı alıyoruz
                 const addedCount = parseHTML(t.file, text);
 
-                // Update UI Success
                 statusEls[t.id].className = 'file-tag loaded';
-                // DEĞİŞİKLİK: DB.size yerine addedCount kullanıyoruz
                 statusEls[t.id].innerHTML = `${t.label} ✓ (${addedCount})`;
 
             } catch (err) {
@@ -1348,16 +1321,12 @@
         }
     }
 
-
-    
-
     // ==================== FILE PARSING ====================
-        // ==================== FILE PARSING ====================
     function parseHTML(fname, html) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
         const rows = Array.from(doc.querySelectorAll('tr'));
-        if (rows.length < 2) return 0; // Değişiklik: return 0
+        if (rows.length < 2) return 0;
 
         const headers = Array.from(rows[0].querySelectorAll('td')).map(td => td.getAttribute('div') || td.textContent.trim());
         const idx = {};
@@ -1377,9 +1346,9 @@
         else if (n.includes('psu') || n.includes('power supplies')) type = 'psu';
         else if (n.includes('case fans') || n.includes('fans')) type = 'fan';
 
-        if (!type) return 0; // Değişiklik: return 0
+        if (!type) return 0;
 
-        let addedCount = 0; // Değişiklik: Sayaç başlat
+        let addedCount = 0; 
 
         for (let i = 1; i < rows.length; i++) {
             const cells = rows[i].querySelectorAll('td');
@@ -1423,7 +1392,8 @@
                 base.vram = parseInt(get(cells, 'VRAM (GB)')) || 0;
                 base.length = parseInt(get(cells, 'Length')) || 0;
                 base.multi = get(cells, 'Double GPU supported') === 'Yes';
-                base.isWater = n.includes('water'); // Water Cooled kontrolü
+                base.sliType = get(cells, 'Double GPU SLI') === 'Yes' ? 'SLI' : 'Crossfire';
+                base.isWater = n.includes('water');
                 
                 base.baseCore = get(cells, 'Base Core Clock Freq');
                 base.baseMem = get(cells, 'Base Mem Clock Freq');
@@ -1443,6 +1413,9 @@
                 base.socket = get(cells, 'CPU Socket');
                 base.ramType = get(cells, 'Ram Type');
                 base.size = get(cells, 'Motherboard Size');
+                base.pciSlots = parseInt(get(cells, 'PCI Slots')) || 0;
+                base.supportSLI = get(cells, 'Support SLI') === 'Yes';
+                base.supportCF = get(cells, 'Support Crossfire') === 'Yes';
             } else if (type === 'cases') {
                 base.size = get(cells, 'Case Size');
                 base.moboSizes = get(cells, 'Motherboard Size');
@@ -1450,6 +1423,7 @@
                 base.maxCpuHeight = parseInt(get(cells, 'Max CPU Fan Height')) || 0;
                 base.maxPsuLen = parseInt(get(cells, 'Max PSU length')) || 0;
                 base.radSizes = get(cells, 'Max Radiator Sizes') || "";
+                base.gpuSlots = parseInt(get(cells, 'GPU Slots')) || 0;
             } else if (type === 'cooler') {
                 base.type = get(cells, 'Type');
                 base.height = parseInt(get(cells, 'Height')) || 0;
@@ -1465,15 +1439,13 @@
             }
 
             DB[type].set(base.name, base);
-            addedCount++; // Değişiklik: Sayacı artır
+            addedCount++; 
         }
 
         Loaded[type] = true;
         updateStatus();
-        
-        return addedCount; // Değişiklik: Sayıyı döndür
+        return addedCount; 
     }
-
 
     function updateStatus() {
         if (Loaded.cpu && Loaded.gpu && Loaded.mobo && Loaded.ram && Loaded.cases) {
@@ -1482,18 +1454,62 @@
         }
     }
 
+    function getGPUSlotWidth(name, length) {
+        const n = name.toLowerCase();
+        const len = length || 0;
+
+        // Explicit Size 3 Rules
+        if (n.includes('rx vega 56')) return 3;
+        if (n.includes('radeon vii')) return 3;
+        if (n.includes('rx 470') || n.includes('rx 560') || n.includes('rx 570') || n.includes('rx 580') || n.includes('rx 590')) return 3;
+        if (n.includes('msi gtx 970 gaming 4g')) return 3;
+        if (n.includes('msi gtx 980 ti gaming 6g golden edition')) return 3;
+        if (n.includes('rx 5500')) return 3;
+        if (n.includes('rtx 2060') && len < 271) return 3;
+        if (n.includes('gtx 1080 ti') && len < 290) return 3;
+
+        // Explicit Size 4 Rules
+        if (n.includes('gtx 970')) return 4; // Any other 970
+
+        // Explicit Size 2 Rules
+        if (n.includes('rx 6800 xt')) return 2;
+        if (n.includes('gtx 1080 ti')) return 2; // len >= 290
+        if (n.includes('gtx 1070 ti')) return 2;
+        if (n.includes('rx 5700')) return 2;
+        if (n.includes('rtx 2060')) return 2; // len >= 271
+        if (n.includes('rtx 2070')) return 2;
+        if (n.includes('rtx 3060') || n.includes('rtx 3080') || n.includes('rtx 3090')) return 2;
+
+        return 2; // Default
+    }
+
     // ==================== REAL-TIME LEVEL FILTERING ====================
     function refreshDropdowns() {
         if (!Loaded.cpu) return;
 
         const currentLvl = parseInt(document.getElementById('level').value) || 30;
+        const gpuCnt = parseInt(document.getElementById('gpuCount').value);
 
-        // Filter Databases by Level
+        // Filter Logic for Multi-GPU Requirements
+        let moboFilterMinPCI = 0;
+        let caseFilterMinGPU = 0;
+
+        if (gpuCnt > 1) {
+            moboFilterMinPCI = 5;
+            caseFilterMinGPU = 3;
+        }
+
         const cpus = Array.from(DB.cpu.values()).filter(c => c.level <= currentLvl);
         const gpus = Array.from(DB.gpu.values()).filter(g => g.level <= currentLvl);
         const rams = Array.from(DB.ram.values()).filter(r => r.level <= currentLvl);
-        const mobos = Array.from(DB.mobo.values()).filter(m => m.level <= currentLvl);
-        const cases = Array.from(DB.cases.values()).filter(c => c.level <= currentLvl);
+        
+        const mobos = Array.from(DB.mobo.values()).filter(m => 
+            m.level <= currentLvl && m.pciSlots >= moboFilterMinPCI
+        );
+        
+        const cases = Array.from(DB.cases.values()).filter(c => 
+            c.level <= currentLvl && c.gpuSlots >= caseFilterMinGPU
+        );
 
         // Populate Dropdowns with Filtered Data
         populateMultiSelect('socket', [...new Set(cpus.map(c => c.socket).filter(s => s))].sort(), 'socketListContainer');
@@ -1505,13 +1521,8 @@
         populateMultiSelect('caseNames', cases.map(c => c.name).sort(), 'caseListContainer');
         populateMultiSelect('ramNames', rams.map(r => r.name).sort(), 'ramListContainer');
 
-        // Dynamic Stick Count Logic: 
-        // If ALL available motherboards are Mini-ITX (2 slots), disable/hide 4 sticks.
-        // Otherwise allow 4 sticks.
         const stickSelect = document.getElementById('ramSticks');
         const fourStickOption = stickSelect.querySelector('option[value="4"]');
-        
-        // Assumption: Mini-ITX has 2 slots, others have 4.
         const canSupport4Sticks = mobos.some(m => m.size !== 'Mini-ITX');
         
         if (canSupport4Sticks) {
@@ -1524,7 +1535,7 @@
         }
     }
 
-    // ==================== MULTI-SELECT FUNCTIONS (SHIFT/CTRL SUPPORT) ====================
+    // ==================== MULTI-SELECT FUNCTIONS ====================
     window.addEventListener('click', function(e) {
         if (!e.target.matches('.multi-select-display') && !e.target.closest('.multi-dropdown')) {
             document.querySelectorAll('.multi-dropdown').forEach(d => d.classList.remove('show'));
@@ -1546,7 +1557,7 @@
         options.forEach((opt, index) => {
             const div = document.createElement('div');
             div.className = 'multi-option';
-            if (selectedOptions[category].has(opt)) div.classList.add('selected'); // Preserve selection state visually
+            if (selectedOptions[category].has(opt)) div.classList.add('selected');
             div.dataset.value = opt;
             div.dataset.index = index; 
             
@@ -1555,10 +1566,14 @@
             if (category === 'ramNames') {
                 const r = DB.ram.get(opt);
                 if (r) {
-                    label = `<span style="font-size:0.9em">
-                        ${r.name} | ${r.totalSize}GB | Size Each: ${r.size} | ${r.type} | ${r.freq} MHz | ${r.voltage}v | ${r.maxVoltage}v | Max Speed: ${r.maxSpeed}
-                    </span>`;
+                    label = `<span style="font-size:0.9em">${r.name} | ${r.totalSize}GB | ${r.type} | ${r.freq} MHz</span>`;
                 }
+            } else if (category === 'moboNames') {
+                const m = DB.mobo.get(opt);
+                if (m) label = `<span style="font-size:0.9em">${m.name} | PCI Slots: ${m.pciSlots}</span>`;
+            } else if (category === 'caseNames') {
+                const c = DB.cases.get(opt);
+                if (c) label = `<span style="font-size:0.9em">${c.name} | GPU Slots: ${c.gpuSlots}</span>`;
             } else {
                 if (category === 'vram') label += ' GB';
                 if (category === 'length') label += ' mm';
@@ -1830,16 +1845,25 @@
                             m.level <= lvl &&
                             m.socket === cpu.socket &&
                             m.ramType === type &&
+                            (gpuCnt > 1 ? m.pciSlots >= 5 : true) &&
                             (selectedOptions.moboNames.size === 0 || selectedOptions.moboNames.has(m.name))
                         );
                         if (!found) continue; 
                         mobo = found; 
                         
-                        // Enforce stick count limitation by mobo size if relevant
                         if (sticks === 4 && mobo.size === 'Mini-ITX') continue;
                     }
 
                     for (const gpu of validGpu) {
+                        // Multi GPU Check
+                        if (gpuCnt > 1) {
+                            // Mobo Support Check
+                            if (mobo) {
+                                if (gpu.sliType === 'SLI' && !mobo.supportSLI) continue;
+                                if (gpu.sliType === 'Crossfire' && !mobo.supportCF) continue;
+                            }
+                        }
+
                         let gpuScore = gpuCnt === 1 ? gpu.score :
                                       gpuCnt === 2 ? gpu.score2 :
                                       gpuCnt === 3 ? gpu.score3 : gpu.score4;
@@ -1847,11 +1871,19 @@
 
                         let bCase = null;
                         if (useCase) {
+                            const gpuSlotWidth = getGPUSlotWidth(gpu.name, gpu.length);
+                            
                             const found = allCases.find(c => {
                                 if (c.level > lvl) return false;
                                 if (c.maxGpuLen < gpu.length) return false;
                                 if (mobo && !c.moboSizes.includes(mobo.size)) return false;
                                 if (selectedOptions.caseNames.size > 0 && !selectedOptions.caseNames.has(c.name)) return false;
+                                
+                                // Specific Multi-GPU filter from constraints
+                                if (gpuCnt > 1) {
+                                    if (c.gpuSlots < 3) return false;
+                                }
+
                                 return true;
                             });
                             if (!found) continue;
@@ -2001,7 +2033,7 @@
                         <span class="part-price">${formatCurrency(b.mobo.price)}</span>
                     </div>
                     <div class="part-name">${b.mobo.name}</div>
-                    <div class="part-specs">${b.mobo.socket} | ${b.mobo.ramType} | ${b.mobo.size} Form Factor</div>
+                    <div class="part-specs">${b.mobo.socket} | ${b.mobo.ramType} | ${b.mobo.size} Form Factor | PCI Slots: ${b.mobo.pciSlots}</div>
                 </div>`;
             }
             if (b.psu) {
@@ -2019,7 +2051,7 @@
             let interactiveHTML = '';
             if (b.case) {
                 interactiveHTML += renderInteractive('Case', b.case, buildIdx, 'cases',
-                    `Max GPU: ${b.case.maxGpuLen}mm | CPU H: ${b.case.maxCpuHeight}mm | Size: ${b.case.size}`
+                    `Max GPU: ${b.case.maxGpuLen}mm | CPU H: ${b.case.maxCpuHeight}mm | Size: ${b.case.size} | GPU Slots: ${b.case.gpuSlots}`
                 );
             }
             if (b.cooler) {
@@ -2196,7 +2228,7 @@
             const diffClass = diff > 0 ? 'val-neg' : (diff < 0 ? 'val-pos' : '');
 
             let details = '';
-            if (type === 'cases') details = `Max GPU: ${p.maxGpuLen}mm | CPU H: ${p.maxCpuHeight}mm | Size: ${p.size}`;
+            if (type === 'cases') details = `Max GPU: ${p.maxGpuLen}mm | CPU H: ${p.maxCpuHeight}mm | Size: ${p.size} | GPU Slots: ${p.gpuSlots}`;
             if (type === 'cooler') details = `${p.type} | ${p.type.includes('Air') ? `Height: ${p.height}mm` : `Size: ${p.size}mm`} | Flow: ${p.flow}`;
             if (type === 'fan') details = `Size: ${p.size}mm | Flow: ${p.flow} CFM`;
 
@@ -2247,6 +2279,10 @@
             if (build.cooler && build.cooler.type.includes('Air') &&
                 part.maxCpuHeight < build.cooler.height) return false;
             if (build.psu && part.maxPsuLen > 0 && build.psu.length > part.maxPsuLen) return false;
+            
+            // Check Multi GPU Slot Fit (Strict from Prompt)
+            if (build.gpuCnt > 1 && part.gpuSlots < 3) return false;
+
             return true;
         }
 
