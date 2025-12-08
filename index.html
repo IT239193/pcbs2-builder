@@ -1281,10 +1281,69 @@
         if(Loaded.cpu && Loaded.gpu) generateBuilds();
     }
 
+
+async function initAutoFetcher() {
+  Object.keys(DB).forEach(k => DB[k].clear());
+  Object.keys(Loaded).forEach(k => Loaded[k] = false);
+  
+  const statusContainer = document.getElementById('fileStatus');
+  statusContainer.innerHTML = '<div style="color:#777; font-style:italic;">Initializing data fetch...</div>';
+  
+  const targets = [
+    {id: 'cpu', db: 'cpu', file: 'CPU.txt', label: 'CPU'},
+    {id: 'gpu', db: 'gpu', file: 'GPU.txt', label: 'GPU'}, 
+    {id: 'wcgpu', db: 'gpu', file: 'Water Cooled GPU.txt', label: 'WC GPU'},
+    {id: 'ram', db: 'ram', file: 'RAM.txt', label: 'RAM'},
+    {id: 'mobo', db: 'mobo', file: 'Motherboard.txt', label: 'Motherboard'},
+    {id: 'cases', db: 'cases', file: 'Cases.txt', label: 'Cases'},
+    {id: 'cooler', db: 'cooler', file: 'Coolers.txt', label: 'Cooler'},
+    {id: 'psu', db: 'psu', file: 'PSU.txt', label: 'PSU'},
+    {id: 'fan', db: 'fan', file: 'Case Fans.txt', label: 'Fans'}
+  ];
+  
+  const statusEls = {};
+  targets.forEach(t => {
+    const el = document.createElement('div');
+    el.className = 'file-tag loading';
+    el.innerHTML = `${t.label}...`;
+    statusContainer.appendChild(el);
+    statusEls[t.id] = el;
+  });
+  
+  for (const t of targets) {
+    try {
+      console.log(`Loading ${t.file}...`);
+      const response = await fetch(`datas/${t.file}`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      
+      const text = await response.text();
+      parseHTML(t.file, text, t.id, statusEls[t.id]);
+      
+      const dbKey = t.db || t.id;
+      const count = DB[dbKey]?.size || 0;
+      statusEls[t.id].className = 'file-tag loaded';
+      statusEls[t.id].innerHTML = `${t.label} (${count})`;
+      
+    } catch (err) {
+      console.error(`❌ ${t.file}:`, err);
+      statusEls[t.id].className = 'file-tag error';
+      statusEls[t.id].innerHTML = `${t.label} Missing`;
+    }
+  }
+  
+  console.log('✅ LOAD COMPLETE:', Loaded);
+  console.log('GPU TOTAL:', DB.gpu?.size || 0);
+  updateStatus();
+}
+
+
+
+
+
     // ==================== AUTO-FETCHER LOGIC ====================
     
     // Trigger on load
-    window.addEventListener('DOMContentLoaded', initAutoFetcher);
+    window.addEventListener('DOMContentLoaded', () => initAutoFetcher());
 
 function parseHTML(fname, html, statusId, statusEl) {
   console.log(`Parsing ${fname}...`);
