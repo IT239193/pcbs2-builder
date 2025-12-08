@@ -1289,17 +1289,18 @@ async function initAutoFetcher() {
   const statusContainer = document.getElementById('fileStatus');
   statusContainer.innerHTML = '<div style="color:#777; font-style:italic;">Initializing data fetch...</div>';
   
-  const targets = [
-    {id: 'cpu', db: 'cpu', file: 'CPU.txt', label: 'CPU'},
-    {id: 'gpu', db: 'gpu', file: 'GPU.txt', label: 'GPU'}, 
-    {id: 'wcgpu', db: 'gpu', file: 'Water Cooled GPU.txt', label: 'WC GPU'},
-    {id: 'ram', db: 'ram', file: 'RAM.txt', label: 'RAM'},
-    {id: 'mobo', db: 'mobo', file: 'Motherboard.txt', label: 'Motherboard'},
-    {id: 'cases', db: 'cases', file: 'Cases.txt', label: 'Cases'},
-    {id: 'cooler', db: 'cooler', file: 'Coolers.txt', label: 'Cooler'},
-    {id: 'psu', db: 'psu', file: 'PSU.txt', label: 'PSU'},
-    {id: 'fan', db: 'fan', file: 'Case Fans.txt', label: 'Fans'}
-  ];
+const targets = [
+  {id: 'cpu', db: 'cpu', file: 'CPU.txt', label: 'CPU'},
+  {id: 'gpu', db: 'gpu', file: 'GPU.txt', label: 'GPU'}, 
+  // {id: 'wcgpu', db: 'gpu', file: 'Water Cooled GPU.txt', label: 'WC GPU'},  // ← KALDIRILDI!
+  {id: 'ram', db: 'ram', file: 'RAM.txt', label: 'RAM'},
+  {id: 'mobo', db: 'mobo', file: 'Motherboard.txt', label: 'Motherboard'},
+  {id: 'cases', db: 'cases', file: 'Cases.txt', label: 'Cases'},
+  {id: 'cooler', db: 'cooler', file: 'Coolers.txt', label: 'Cooler'},
+  {id: 'psu', db: 'psu', file: 'PSU.txt', label: 'PSU'},
+  {id: 'fan', db: 'fan', file: 'Case Fans.txt', label: 'Fans'}
+];
+
   
   const statusEls = {};
   targets.forEach(t => {
