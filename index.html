@@ -1289,6 +1289,9 @@
         // ==================== AUTO-FETCHER LOGIC (GÜNCELLENMİŞ) ====================
     
     // Trigger on load
+    // ==================== AUTO-FETCHER LOGIC (DÜZELTİLMİŞ) ====================
+    
+    // Trigger on load
     window.addEventListener('DOMContentLoaded', initAutoFetcher);
 
     async function initAutoFetcher() {
@@ -1299,19 +1302,16 @@
         const statusContainer = document.getElementById('fileStatus');
         statusContainer.innerHTML = ''; // Clear previous status
 
-        // List of expected files in the datas/ folder
-        // CHANGE: Added 'db' property to map multiple files to the same database
         const targets = [
-            { id: 'cpu',       file: 'CPU.txt',              label: 'CPU',         db: 'cpu' },
-            { id: 'gpu',       file: 'GPU.txt',              label: 'GPU',         db: 'gpu' },
-            // YENİ EKLENEN SATIR: ID farklı ('water_gpu') ama veritabanı aynı ('gpu')
-            { id: 'water_gpu', file: 'Water Cooled GPU.txt', label: 'Water GPU',   db: 'gpu' },
-            { id: 'ram',       file: 'RAM.txt',              label: 'RAM',         db: 'ram' },
-            { id: 'mobo',      file: 'Motherboard.txt',      label: 'Motherboard', db: 'mobo' },
-            { id: 'cases',     file: 'Cases.txt',            label: 'Cases',       db: 'cases' },
-            { id: 'cooler',    file: 'Coolers.txt',          label: 'Cooler',      db: 'cooler' },
-            { id: 'psu',       file: 'PSU.txt',              label: 'PSU',         db: 'psu' },
-            { id: 'fan',       file: 'Case Fans.txt',        label: 'Fans',        db: 'fan' }
+            { id: 'cpu',       file: 'CPU.txt',              label: 'CPU' },
+            { id: 'gpu',       file: 'GPU.txt',              label: 'GPU' },
+            { id: 'water_gpu', file: 'Water Cooled GPU.txt', label: 'Water GPU' }, // Özel etiket
+            { id: 'ram',       file: 'RAM.txt',              label: 'RAM' },
+            { id: 'mobo',      file: 'Motherboard.txt',      label: 'Motherboard' },
+            { id: 'cases',     file: 'Cases.txt',            label: 'Cases' },
+            { id: 'cooler',    file: 'Coolers.txt',          label: 'Cooler' },
+            { id: 'psu',       file: 'PSU.txt',              label: 'PSU' },
+            { id: 'fan',       file: 'Case Fans.txt',        label: 'Fans' }
         ];
 
         // Create initial UI elements for status
@@ -1330,21 +1330,17 @@
                 if (!response.ok) throw new Error(`Status ${response.status}`);
                 const text = await response.text();
                 
-                // Parse it
-                parseHTML(t.file, text);
+                // Parse and Capture Count
+                // DEĞİŞİKLİK: Doğrudan parseHTML'den dönen sayıyı alıyoruz
+                const addedCount = parseHTML(t.file, text);
 
                 // Update UI Success
-                // CHANGE: Use t.db property if available, otherwise fallback to t.id
-                // This ensures we count the correct DB size even if the ID is different
-                const dbKey = t.db || t.id;
-                const count = DB[dbKey].size;
-                
                 statusEls[t.id].className = 'file-tag loaded';
-                statusEls[t.id].innerHTML = `${t.label} ✓ (${count})`;
+                // DEĞİŞİKLİK: DB.size yerine addedCount kullanıyoruz
+                statusEls[t.id].innerHTML = `${t.label} ✓ (${addedCount})`;
 
             } catch (err) {
                 console.warn(`Could not load ${t.file}:`, err);
-                // Update UI Error
                 statusEls[t.id].className = 'file-tag error';
                 statusEls[t.id].innerHTML = `${t.label} ❌ (Missing)`;
             }
@@ -1352,12 +1348,15 @@
     }
 
 
+    
+
     // ==================== FILE PARSING ====================
+        // ==================== FILE PARSING ====================
     function parseHTML(fname, html) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
         const rows = Array.from(doc.querySelectorAll('tr'));
-        if (rows.length < 2) return;
+        if (rows.length < 2) return 0; // Değişiklik: return 0
 
         const headers = Array.from(rows[0].querySelectorAll('td')).map(td => td.getAttribute('div') || td.textContent.trim());
         const idx = {};
@@ -1377,7 +1376,9 @@
         else if (n.includes('psu') || n.includes('power supplies')) type = 'psu';
         else if (n.includes('case fans') || n.includes('fans')) type = 'fan';
 
-        if (!type) return; 
+        if (!type) return 0; // Değişiklik: return 0
+
+        let addedCount = 0; // Değişiklik: Sayaç başlat
 
         for (let i = 1; i < rows.length; i++) {
             const cells = rows[i].querySelectorAll('td');
@@ -1421,7 +1422,7 @@
                 base.vram = parseInt(get(cells, 'VRAM (GB)')) || 0;
                 base.length = parseInt(get(cells, 'Length')) || 0;
                 base.multi = get(cells, 'Double GPU supported') === 'Yes';
-                base.isWater = n.includes('water');
+                base.isWater = n.includes('water'); // Water Cooled kontrolü
                 
                 base.baseCore = get(cells, 'Base Core Clock Freq');
                 base.baseMem = get(cells, 'Base Mem Clock Freq');
@@ -1463,11 +1464,15 @@
             }
 
             DB[type].set(base.name, base);
+            addedCount++; // Değişiklik: Sayacı artır
         }
 
         Loaded[type] = true;
         updateStatus();
+        
+        return addedCount; // Değişiklik: Sayıyı döndür
     }
+
 
     function updateStatus() {
         if (Loaded.cpu && Loaded.gpu && Loaded.mobo && Loaded.ram && Loaded.cases) {
