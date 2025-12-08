@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PCBS2 Ultimate Pro Builder - Auto Fetch</title>
+    <title>PCBS2 Ultimate Pro Builder - Strict Multi-GPU</title>
     <style>
         :root {
             --bg-dark: #0f0f1e;
             --bg-panel: #1a1a2e;
             --accent: #3498db;
             --accent-hover: #2980b9;
-            --highlight: #e67e22; /* Light Orange */
+            --highlight: #e67e22; 
             --text-main: #ecf0f1;
             --text-muted: #95a5a6;
             --border: rgba(52, 152, 219, 0.3);
@@ -1270,8 +1270,6 @@
     }
 
     // ==================== AUTO-FETCHER LOGIC ====================
-    
-    // Trigger on load
     window.addEventListener('DOMContentLoaded', initAutoFetcher);
 
     async function initAutoFetcher() {
@@ -1454,11 +1452,17 @@
         }
     }
 
-    function getGPUSlotWidth(name, length) {
+    // Determines Maximum Supported GPU Count based on specific Whitelist
+    function getMultiGPUCap(name, length) {
         const n = name.toLowerCase();
         const len = length || 0;
 
-        // Explicit Size 3 Rules
+        // Quad Support (4)
+        if (n.includes('r9 280')) return 4;
+        if (n.includes('r9 290')) return 4;
+        if (n.includes('gtx 970') && !n.includes('msi gtx 970 gaming 4g')) return 4;
+
+        // Triple Support (3)
         if (n.includes('rx vega 56')) return 3;
         if (n.includes('radeon vii')) return 3;
         if (n.includes('rx 470') || n.includes('rx 560') || n.includes('rx 570') || n.includes('rx 580') || n.includes('rx 590')) return 3;
@@ -1468,10 +1472,7 @@
         if (n.includes('rtx 2060') && len < 271) return 3;
         if (n.includes('gtx 1080 ti') && len < 290) return 3;
 
-        // Explicit Size 4 Rules
-        if (n.includes('gtx 970')) return 4; // Any other 970
-
-        // Explicit Size 2 Rules
+        // Double Support (2)
         if (n.includes('rx 6800 xt')) return 2;
         if (n.includes('gtx 1080 ti')) return 2; // len >= 290
         if (n.includes('gtx 1070 ti')) return 2;
@@ -1480,7 +1481,8 @@
         if (n.includes('rtx 2070')) return 2;
         if (n.includes('rtx 3060') || n.includes('rtx 3080') || n.includes('rtx 3090')) return 2;
 
-        return 2; // Default
+        // Default: Single GPU Only (1)
+        return 1;
     }
 
     // ==================== REAL-TIME LEVEL FILTERING ====================
@@ -1778,6 +1780,13 @@
             if (selectedOptions.vram.size > 0 && !selectedOptions.vram.has(g.vram)) return false;
             if (selectedOptions.length.size > 0 && !selectedOptions.length.has(g.length)) return false;
             if (selectedOptions.gpuNames.size > 0 && !selectedOptions.gpuNames.has(g.name)) return false;
+
+            // Strict Multi-GPU Whitelist Logic
+            if (gpuCnt > 1) {
+                const maxCap = getMultiGPUCap(g.name, g.length);
+                if (maxCap < gpuCnt) return false;
+            }
+
             return true;
         });
 
@@ -1855,9 +1864,8 @@
                     }
 
                     for (const gpu of validGpu) {
-                        // Multi GPU Check
+                        // Multi GPU Compatibility Checks
                         if (gpuCnt > 1) {
-                            // Mobo Support Check
                             if (mobo) {
                                 if (gpu.sliType === 'SLI' && !mobo.supportSLI) continue;
                                 if (gpu.sliType === 'Crossfire' && !mobo.supportCF) continue;
@@ -1871,15 +1879,13 @@
 
                         let bCase = null;
                         if (useCase) {
-                            const gpuSlotWidth = getGPUSlotWidth(gpu.name, gpu.length);
-                            
                             const found = allCases.find(c => {
                                 if (c.level > lvl) return false;
                                 if (c.maxGpuLen < gpu.length) return false;
                                 if (mobo && !c.moboSizes.includes(mobo.size)) return false;
                                 if (selectedOptions.caseNames.size > 0 && !selectedOptions.caseNames.has(c.name)) return false;
                                 
-                                // Specific Multi-GPU filter from constraints
+                                // Specific Multi-GPU filter
                                 if (gpuCnt > 1) {
                                     if (c.gpuSlots < 3) return false;
                                 }
@@ -2280,7 +2286,7 @@
                 part.maxCpuHeight < build.cooler.height) return false;
             if (build.psu && part.maxPsuLen > 0 && build.psu.length > part.maxPsuLen) return false;
             
-            // Check Multi GPU Slot Fit (Strict from Prompt)
+            // Check Multi GPU Slot Fit
             if (build.gpuCnt > 1 && part.gpuSlots < 3) return false;
 
             return true;
