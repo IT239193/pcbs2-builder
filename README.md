@@ -18,3 +18,6 @@ Everything runs with plain HTML, CSS, and JavaScript.
 No backend. No database servers. No dependencies.  
 
 The part data comes from simple JSON files that you can edit yourself. If you want to tweak values, add new parts, or change categories, go ahead — nothing’s hidden or locked behind scripts..
+
+
+https://it239193.github.io/pcbs2-builder/
