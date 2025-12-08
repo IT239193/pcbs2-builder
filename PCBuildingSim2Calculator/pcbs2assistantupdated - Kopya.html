@@ -1,0 +1,2230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PCBS2 Ultimate Pro Builder - Auto Fetch</title>
+    <style>
+        :root {
+            --bg-dark: #0f0f1e;
+            --bg-panel: #1a1a2e;
+            --accent: #3498db;
+            --accent-hover: #2980b9;
+            --highlight: #e67e22; /* Light Orange */
+            --text-main: #ecf0f1;
+            --text-muted: #95a5a6;
+            --border: rgba(52, 152, 219, 0.3);
+
+            --price-red: #ff4757;
+            --watt-lime: #d4e157;
+            --score-blue: #00d2ff;
+            --success: #2ecc71;
+            --error: #e74c3c;
+
+            /* Brand Colors */
+            --brand-amd: #d35400;
+            --brand-intel: #00d2ff;
+            --brand-intel-gpu: #0047AB;
+            --brand-nvidia: #76b900;
+            --brand-ram: #e0b0ff;
+            --brand-aux: #e0b0ff;
+            --brand-generic: #000000;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0b0c15 0%, #151621 100%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 20px;
+            font-size: 14px;
+            overflow-y: scroll;
+ zoom: 90%;
+        }
+
+        .container { max-width: 1800px; margin: 0 auto; padding-bottom: 100px; }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 0 20px rgba(52, 152, 219, 0.1);
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .header-subtitle {
+            font-size: 1.1em;
+            color: var(--text-muted);
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        /* Auto-Fetch Status Bar */
+        .status-bar-container {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+        }
+
+        .status-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-reload {
+            background: #2c3e50;
+            color: white;
+            border: 1px solid #555;
+            padding: 5px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-reload:hover { background: var(--accent); border-color: var(--accent); }
+
+        .file-status-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .file-tag {
+            background: #2c3e50;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+            border: 1px solid #444;
+            color: #7f8c8d;
+            transition: 0.3s;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .file-tag.loaded {
+            background: rgba(46, 204, 113, 0.15);
+            border-color: var(--success);
+            color: var(--success);
+        }
+        .file-tag.error {
+            background: rgba(231, 76, 60, 0.15);
+            border-color: var(--error);
+            color: var(--error);
+        }
+        .file-tag.loading {
+            background: rgba(52, 152, 219, 0.15);
+            border-color: var(--accent);
+            color: var(--accent);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
+        /* Controls */
+        .controls-wrapper {
+            background: var(--bg-panel);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 30px;
+            opacity: 0.6;
+            pointer-events: none;
+            transition: 0.3s;
+        }
+        .controls-wrapper.active { opacity: 1; pointer-events: all; }
+
+        .section-header {
+            font-size: 1.3em;
+            color: var(--accent);
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Benchmark Toggle */
+        .benchmark-toggle {
+            display: flex;
+            gap: 0;
+            margin-bottom: 25px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+            width: fit-content;
+        }
+        .mode-btn {
+            padding: 12px 30px;
+            font-size: 1.1em;
+            font-weight: bold;
+            background: #0f0f1e;
+            color: var(--text-muted);
+            border: none;
+            cursor: pointer;
+            transition: 0.2s;
+            border-right: 1px solid var(--border);
+        }
+        .mode-btn:last-child { border-right: none; }
+        .mode-btn:hover { background: rgba(230, 126, 34, 0.2); color: white; }
+        
+        .mode-btn.active { 
+            background: var(--highlight); 
+            color: white; 
+            border-color: var(--highlight);
+        }
+
+        /* Input Grid */
+        .input-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .ram-grid {
+            display: grid;
+            grid-template-columns: 200px 150px 1fr; /* Fixed, Fixed, Fluid */
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        @media (max-width: 800px) { .ram-grid { grid-template-columns: 1fr; } }
+
+        .input-group { display: flex; flex-direction: column; }
+        .input-group label {
+            margin-bottom: 8px;
+            color: var(--text-muted);
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+        .input-group input, .input-group select {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 1em;
+        }
+        .input-group input:focus, .input-group select:focus {
+            border-color: var(--accent);
+            outline: none;
+            background: rgba(0,0,0,0.5);
+        }
+
+        /* Checkboxes */
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0,0,0,0.2);
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            height: 100%;
+        }
+        .checkbox-container input {
+            width: 20px;
+            height: 20px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+        .checkbox-container label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        /* Multi-Select Dropdowns */
+        .multi-select-container { position: relative; width: 100%; }
+        .multi-select-display {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+            padding: 12px;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 1.0em;
+            cursor: pointer;
+            min-height: 45px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            user-select: none;
+        }
+        .multi-select-display:hover { border-color: var(--accent); }
+        .multi-select-display:after {
+            content: '▼';
+            position: absolute;
+            right: 12px;
+            color: var(--text-muted);
+            font-size: 0.8em;
+        }
+
+        .multi-dropdown {
+            position: absolute;
+            top: 105%;
+            left: 0;
+            width: 100%;
+            background: #1e1e2f;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+            overflow: hidden;
+            flex-direction: column;
+        }
+        .multi-dropdown.show { display: flex; max-height: 500px; }
+
+        /* Quick Filter Bar */
+        .quick-filter-bar {
+            padding: 8px;
+            background: #151525;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .filter-btn {
+            padding: 5px 10px;
+            font-size: 0.85em;
+            background: transparent;
+            border: 1px solid #555;
+            color: #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-weight: 600;
+        }
+        .filter-btn:hover { color: #fff; }
+
+        .btn-clear { border-color: var(--brand-clear); color: var(--error); }
+        .btn-clear:hover { background: var(--brand-clear); color: white; }
+
+        .btn-amd { border-color: var(--brand-amd); color: var(--brand-amd); }
+        .btn-amd:hover { background: var(--brand-amd); color: white; }
+
+        .btn-intel { border-color: var(--brand-intel); color: var(--brand-intel); }
+        .btn-intel:hover { background: var(--brand-intel); color: white; }
+
+        .btn-nvidia { border-color: var(--brand-nvidia); color: var(--brand-nvidia); }
+        .btn-nvidia:hover { background: var(--brand-nvidia); color: white; }
+
+        .dropdown-search-container {
+            padding: 8px;
+            background: #151525;
+            border-bottom: 1px solid var(--border);
+        }
+        .dropdown-search {
+            width: 100%;
+            padding: 8px;
+            font-size: 0.9em;
+            border: 1px solid #444;
+            background: #0f0f1e;
+            color: white;
+            border-radius: 4px;
+        }
+        .dropdown-list-container {
+            overflow-y: auto;
+            max-height: 300px;
+        }
+        .multi-option {
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: 0.1s;
+            user-select: none;
+        }
+        .multi-option:hover { background: rgba(52, 152, 219, 0.2); }
+        .multi-option.selected { background: rgba(52, 152, 219, 0.4); }
+        .multi-option.selected .cb-custom {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        .multi-option .cb-custom {
+            width: 16px;
+            height: 16px;
+            border: 1px solid var(--text-muted);
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+        .multi-option.selected .cb-custom:after {
+            content: '✓';
+            font-size: 12px;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Generate Button */
+        .btn-generate {
+            width: 100%;
+            padding: 18px;
+            font-size: 1.5em;
+            font-weight: 800;
+            background: linear-gradient(90deg, #2980b9, var(--accent));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 20px;
+        }
+        .btn-generate:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        /* Results Meta Bar */
+        .results-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-panel);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .result-count {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+        .sort-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .sort-select {
+            padding: 15px 20px;
+            background: #0f0f1e;
+            border: 1px solid var(--accent);
+            color: white;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 1.1em;
+            min-width: 320px;
+            height: 60px;
+            cursor: pointer;
+        }
+
+        .min-score-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(52, 152, 219, 0.15);
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            height: 60px;
+        }
+        .min-score-label {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #4169E1;
+            white-space: nowrap;
+        }
+        #minScoreInput {
+            width: 150px;
+            font-size: 1.2em;
+            padding: 10px;
+            height: 40px;
+            background: #0f0f1e;
+            border: 1px solid var(--accent);
+            font-weight: bold;
+            color: #fff;
+            border-radius: 4px;
+        }
+
+        /* Build Cards */
+        .build-card {
+            background: var(--bg-panel);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            animation: slideIn 0.4s ease-out forwards;
+            opacity: 0;
+            border-left: 6px solid #444;
+        }
+        .build-card:hover {
+            border-color: var(--accent);
+            box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+        }
+
+        .card-header {
+            background: rgba(0,0,0,0.3);
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .score-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .build-number {
+            color: #666;
+            font-size: 0.9em;
+            width: 40px;
+        }
+        .score-box {
+            font-size: 2.2em;
+            font-weight: 900;
+            color: #fff;
+            line-height: 1;
+        }
+        .diff-box {
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .diff-pos { color: var(--success); }
+        .diff-neg { color: var(--error); }
+
+        .header-stats {
+            text-align: right;
+        }
+        .price-box {
+            font-size: 1.8em;
+            color: var(--price-red);
+            font-weight: bold;
+        }
+        .watts-box {
+            font-size: 1.1em;
+            color: var(--watt-lime);
+            font-weight: 600;
+            margin-top: 5px;
+        }
+        .level-box {
+            font-size: 0.95em;
+            color: #cd853f;
+            font-weight: bold;
+            margin-top: 2px;
+        }
+
+        .card-body {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        /* Part Rows */
+        .part-row {
+            display: flex;
+            flex-direction: column;
+            background: rgba(255,255,255,0.03);
+            border-radius: 6px;
+            padding: 12px;
+            border-left: 4px solid #555;
+            position: relative;
+            --row-color: #fff;
+        }
+
+        .part-row.brand-amd { border-left-color: var(--brand-amd); --row-color: var(--brand-amd); }
+        .part-row.brand-intel { border-left-color: var(--brand-intel); --row-color: var(--brand-intel); }
+        .part-row.brand-intel-gpu { border-left-color: var(--brand-intel-gpu); --row-color: var(--brand-intel-gpu); }
+        .part-row.brand-nvidia { border-left-color: var(--brand-nvidia); --row-color: var(--brand-nvidia); }
+        .part-row.brand-ram { border-left-color: var(--brand-ram); --row-color: var(--brand-ram); }
+        .part-row.brand-aux { border-left-color: var(--brand-aux); --row-color: var(--brand-aux); }
+        
+        .part-row.brand-generic .part-label,
+        .part-row.brand-generic .part-name,
+        .part-row.brand-generic .part-specs,
+        .part-row.brand-generic .part-price {
+            color: #95a5a6 !important;
+        }
+
+        .part-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .part-label {
+            font-size: 0.85em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: bold;
+        }
+        .part-price {
+            color: var(--price-red);
+            font-weight: 400;
+            font-size: 1.25em;
+        }
+        .part-name {
+            font-size: 1.35em;
+            font-weight: 800;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: #fff; 
+        }
+
+        .part-row.text-colored .part-label,
+        .part-row.text-colored .part-price,
+        .part-row.text-colored .part-name,
+        .part-row.text-colored .part-specs {
+            color: var(--row-color) !important;
+        }
+
+        .part-row.brand-generic .part-label,
+        .part-row.brand-generic .part-name,
+        .part-row.brand-generic .part-specs {
+            color: #95a5a6 !important;
+        }
+
+        .part-specs {
+            font-size: 1.25em;
+            font-weight: 600;
+            line-height: 1.4;
+            margin-top: 5px;
+            padding: 2px 0;
+            color: #bdc3c7;
+        }
+
+        /* Interactive Parts */
+        .part-row.interactive {
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px dashed rgba(255,255,255,0.1);
+        }
+        .part-row.interactive:hover {
+            background: rgba(52, 152, 219, 0.1);
+            border-color: var(--accent);
+        }
+
+        .btn-change {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+            opacity: 0;
+            transition: 0.2s;
+            cursor: pointer;
+        }
+        .part-row.interactive:hover .btn-change { opacity: 1; }
+
+        /* Popup Overlay */
+        #popupOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 9998;
+            display: none;
+            backdrop-filter: blur(5px);
+        }
+        #popupContainer {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 95%;
+            max-width: 1200px;
+            height: 90vh;
+            background: #151525;
+            border: 2px solid var(--accent);
+            border-radius: 12px;
+            z-index: 9999;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+        }
+        .popup-header {
+            padding: 20px;
+            background: rgba(0,0,0,0.3);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .popup-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+        .popup-close {
+            font-size: 2em;
+            cursor: pointer;
+            color: var(--text-muted);
+            line-height: 0.5;
+        }
+        .popup-close:hover { color: var(--error); }
+
+        .popup-filters {
+            padding: 15px;
+            display: flex;
+            gap: 15px;
+            background: #0f0f1e;
+            border-bottom: 1px solid var(--border);
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        #popupSearch {
+            padding: 12px 15px;
+            background: #0b0c15;
+            border: 1px solid var(--accent);
+            color: white;
+            border-radius: 4px;
+            font-size: 1.1em;
+            width: 300px;
+            margin-left: 20px;
+        }
+
+        #popupSort {
+            width: 250px;
+            padding: 12px 15px;
+            height: 50px;
+            font-size: 1.1em;
+            background: #0f0f1e;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .popup-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .popup-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .popup-table th {
+            text-align: left;
+            padding: 15px;
+            background: #202030;
+            color: #ccc;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        .popup-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: #ddd;
+            vertical-align: middle;
+        }
+        .popup-table tr:hover { background: rgba(255,255,255,0.05); }
+
+        .price-red-cell {
+            color: var(--price-red) !important;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .val-pos {
+            color: var(--success);
+            font-weight: bold;
+        }
+        .val-neg {
+            color: var(--error);
+            font-weight: bold;
+        }
+        
+        .btn-select-part {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-select-part:hover {
+            background: #27ae60;
+            transform: scale(1.05);
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 40px;
+            padding: 20px;
+            display: none;
+            align-items: center;
+        }
+        .page-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .page-btn:disabled {
+            background: #444;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .page-info {
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 4px;
+        }
+        .page-jump-input {
+            width: 80px;
+            padding: 5px;
+            background: #0f0f1e;
+            border: 1px solid var(--accent);
+            color: white;
+            text-align: center;
+            font-size: 1.1em;
+            border-radius: 4px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .card-body { grid-template-columns: 1fr; }
+            .card-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .header-stats {
+                text-align: left;
+                align-items: flex-start;
+            }
+            .results-meta {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Popup Overlay for Part Swapping -->
+<div id="popupOverlay" onclick="closePopup()"></div>
+<div id="popupContainer">
+    <div class="popup-header">
+        <div class="popup-title" id="popupTitle">Select Replacement Part</div>
+        <div class="popup-close" onclick="closePopup()">&times;</div>
+    </div>
+    <div class="popup-filters">
+        <div class="checkbox-container">
+            <input type="checkbox" id="popupFit" checked onchange="refreshPopup()">
+            <label for="popupFit">Show Only Fitting Parts</label>
+        </div>
+        
+        <input type="text" id="popupSearch" placeholder="🔍 Search part by name..." oninput="refreshPopup()">
+
+        <div style="flex:1;"></div>
+        <label>Sort By:</label>
+        <select id="popupSort" onchange="refreshPopup()">
+            <option value="price_asc">Lowest Price</option>
+            <option value="price_desc">Highest Price</option>
+            <option value="perf_desc">Highest Performance</option>
+            <option value="val_desc">Most Overperforming (Best Value)</option>
+            <option value="val_asc">Most Underperforming (Worst Value)</option>
+        </select>
+    </div>
+    <div class="popup-body">
+        <table class="popup-table">
+            <thead>
+                <tr>
+                    <th style="width:80px;">Action</th>
+                    <th>Part Name</th>
+                    <th>Specs</th>
+                    <th>Price</th>
+                    <th>Cost Diff</th>
+                </tr>
+            </thead>
+            <tbody id="popupTableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="container">
+    <header>
+        <h1>PCBS2 Ultimate Builder</h1>
+        <div class="header-subtitle">contact me on discord for bug reports @timmy2131_</div>
+    </header>
+
+    <!-- REPLACED DROP ZONE WITH AUTO-FETCH STATUS BAR -->
+    <div class="status-bar-container">
+        <div class="status-header">
+            <div class="status-title">
+                <span>📁 Data Source: "datas/" folder</span>
+            </div>
+            <button class="btn-reload" onclick="initAutoFetcher()">↻ Reload Data</button>
+        </div>
+        <div class="file-status-container" id="fileStatus">
+            <div style="color:#777; font-style:italic;">Initializing data fetch...</div>
+        </div>
+        <div style="margin-top:10px; font-size:0.9em; color:#666;">
+            Note: Ensure you are running this file via a local server (e.g., Live Server) to allow file fetching.
+        </div>
+    </div>
+
+    <div class="controls-wrapper" id="controls">
+        <div class="section-header">1. Benchmarking & Goals</div>
+
+        <div class="benchmark-toggle">
+            <button id="btnTS" class="mode-btn active" onclick="setMode('TS')">Time Spy (Standard)</button>
+            <button id="btnTSX" class="mode-btn" onclick="setMode('TSX')">Time Spy Extreme (4K)</button>
+        </div>
+
+        <div class="input-grid">
+            <div class="input-group">
+                <label>Budget ($)</label>
+                <input type="text" id="budget" value="3,500">
+            </div>
+            <div class="input-group">
+                <label>Target 3DMark Score</label>
+                <input type="text" id="targetScore" value="20,000">
+            </div>
+            <div class="input-group">
+                <label>GPU Count</label>
+                <select id="gpuCount">
+                    <option value="1">Single GPU</option>
+                    <option value="2">Dual GPU (SLI/CF)</option>
+                    <option value="3">Triple GPU</option>
+                    <option value="4">Quad GPU</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Max Player Level</label>
+                <input type="number" id="level" value="30" min="1">
+            </div>
+            <div class="input-group">
+                <label>Max Results Pool</label>
+                <input type="text" id="resLimit" value="1,200,000">
+            </div>
+            <div class="input-group">
+                <label>Results Per Page</label>
+                <input type="number" id="resultsPerPage" value="100" min="1" max="1000">
+            </div>
+        </div>
+
+        <div class="section-header">2. RAM Configuration</div>
+        <div class="ram-grid">
+            <div class="input-group">
+                <label>Include RAM</label>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="incRam" checked>
+                    <label for="incRam">Suggest RAM</label>
+                </div>
+            </div>
+            <div class="input-group">
+                <label>Stick Count</label>
+                <select id="ramSticks">
+                    <option value="0" selected>Any</option>
+                    <option value="1">1 Stick</option>
+                    <option value="2">2 Sticks</option>
+                    <option value="4">4 Sticks</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Specify RAM Model(s)</label>
+                <div id="multiRam" class="multi-select-container">
+                    <div class="multi-select-display" onclick="toggleDropdown('ramDropdown')">Any</div>
+                    <div id="ramDropdown" class="multi-dropdown">
+                        <div class="quick-filter-bar">
+                            <button class="filter-btn btn-clear" onclick="clearFilter('ramNames')">Clear</button>
+                        </div>
+                        <div class="dropdown-search-container">
+                            <input type="text" class="dropdown-search" placeholder="Filter RAM..." oninput="filterDropdownList(this)">
+                        </div>
+                        <div class="dropdown-list-container" id="ramListContainer"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-header">3. Additional Components</div>
+        <div class="input-grid">
+            <div class="checkbox-container">
+                <input type="checkbox" id="incMobo" checked>
+                <label for="incMobo">Motherboard</label>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" id="incCase" checked>
+                <label for="incCase">Case</label>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" id="incCooler" checked>
+                <label for="incCooler">CPU Cooler</label>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" id="incPsu" checked>
+                <label for="incPsu">PSU</label>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" id="incFans">
+                <label for="incFans">Case Fans (x1)</label>
+            </div>
+        </div>
+
+        <div class="section-header">4. Component Filters</div>
+        <div class="input-grid">
+            <!-- CPU Socket Multi-Select -->
+            <div class="input-group">
+                <label>CPU Socket (Shift/Ctrl Click)</label>
+                <div id="multiSocket" class="multi-select-container">
+                    <div class="multi-select-display" onclick="toggleDropdown('socketDropdown')">Any</div>
+                    <div id="socketDropdown" class="multi-dropdown">
+                        <div class="quick-filter-bar">
+                            <button class="filter-btn btn-clear" onclick="clearFilter('socket')">Clear</button>
+                            <button class="filter-btn btn-amd" onclick="applyQuickFilter('socket', 'AMD')">Add AMD</button>
+                            <button class="filter-btn btn-intel" onclick="applyQuickFilter('socket', 'Intel')">Add Intel</button>
+                        </div>
+                        <div class="dropdown-list-container" id="socketListContainer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Specific CPU Multi-Select -->
+            <div class="input-group">
+                <label>Specific CPU Model(s)</label>
+                <div id="multiCpu" class="multi-select-container">
+                    <div class="multi-select-display" onclick="toggleDropdown('cpuDropdown')">Any</div>
+                    <div id="cpuDropdown" class="multi-dropdown">
+                        <div class="quick-filter-bar">
+                            <button class="filter-btn btn-clear" onclick="clearFilter('cpuNames')">Clear</button>
+                            <button class="filter-btn btn-amd" onclick="applyQuickFilter('cpuNames', 'AMD')">Add AMD</button>
+                            <button class="filter-btn btn-intel" onclick="applyQuickFilter('cpuNames', 'Intel')">Add Intel</button>
+                        </div>
+                        <div class="dropdown-search-container">
+                            <input type="text" class="dropdown-search" placeholder="Filter CPUs..." oninput="filterDropdownList(this)">
+                        </div>
+                        <div class="dropdown-list-container" id="cpuListContainer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Specific GPU Multi-Select -->
+            <div class="input-group">
+                <label>Specific GPU Model(s)</label>
+                <div id="multiGpu" class="multi-select-container">
+                    <div class="multi-select-display" onclick="toggleDropdown('gpuDropdown')">Any</div>
+                    <div id="gpuDropdown" class="multi-dropdown">
+                        <div class="quick-filter-bar">
+                            <button class="filter-btn btn-clear" onclick="clearFilter('gpuNames')">Clear</button>
+                            <button class="filter-btn btn-nvidia" onclick="applyQuickFilter('gpuNames', 'NVIDIA')">Add NVIDIA</button>
+                            <button class="filter-btn btn-amd" onclick="applyQuickFilter('gpuNames', 'AMD')">Add AMD</button>
+                            <button class="filter-btn btn-intel" onclick="applyQuickFilter('gpuNames', 'Intel')">Add Intel</button>
+                        </div>
+                        <div class="dropdown-search-container">
+                            <input type="text" class="dropdown-search" placeholder="Filter GPUs..." oninput="filterDropdownList(this)">
+                        </div>
+                        <div class="dropdown-list-container" id="gpuListContainer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VRAM Multi-Select -->
+            <div class="input-group">
+                <label>Target VRAM</label>
+                <div id="multiVram" class="multi-select-container">
+                    <div class="multi-select-display" onclick="toggleDropdown('vramDropdown')">Any</div>
+                    <div id="vramDropdown" class="multi-dropdown">
+                        <div class="quick-filter-bar">
+                            <button class="filter-btn btn-clear" onclick="clearFilter('vram')">Clear Selection</button>
+                        </div>
+                        <div class="dropdown-list-container" id="vramListContainer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GPU Length Multi-Select -->
+            <div class="input-group">
+                <label>GPU Length</label>
+                <div id="multiLength" class="multi-select-container">
+                    <div class="multi-select-display" onclick="toggleDropdown('lengthDropdown')">Any</div>
+                    <div id="lengthDropdown" class="multi-dropdown">
+                        <div class="quick-filter-bar">
+                            <button class="filter-btn btn-clear" onclick="clearFilter('length')">Clear Selection</button>
+                        </div>
+                        <div class="dropdown-list-container" id="lengthListContainer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Specific Motherboard Multi-Select -->
+            <div class="input-group">
+                <label>Specific Motherboard(s)</label>
+                <div id="multiMobo" class="multi-select-container">
+                    <div class="multi-select-display" onclick="toggleDropdown('moboDropdown')">Any</div>
+                    <div id="moboDropdown" class="multi-dropdown">
+                        <div class="quick-filter-bar">
+                            <button class="filter-btn btn-clear" onclick="clearFilter('moboNames')">Clear</button>
+                        </div>
+                        <div class="dropdown-search-container">
+                            <input type="text" class="dropdown-search" placeholder="Filter Motherboards..." oninput="filterDropdownList(this)">
+                        </div>
+                        <div class="dropdown-list-container" id="moboListContainer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Specific Case Multi-Select -->
+            <div class="input-group">
+                <label>Specific Case(s)</label>
+                <div id="multiCase" class="multi-select-container">
+                    <div class="multi-select-display" onclick="toggleDropdown('caseDropdown')">Any</div>
+                    <div id="caseDropdown" class="multi-dropdown">
+                        <div class="quick-filter-bar">
+                            <button class="filter-btn btn-clear" onclick="clearFilter('caseNames')">Clear</button>
+                        </div>
+                        <div class="dropdown-search-container">
+                            <input type="text" class="dropdown-search" placeholder="Filter Cases..." oninput="filterDropdownList(this)">
+                        </div>
+                        <div class="dropdown-list-container" id="caseListContainer"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-header">5. Power Constraints</div>
+        <div class="input-grid">
+            <div class="input-group">
+                <label>Max Total Watts</label>
+                <input type="number" id="maxTotalWatts" placeholder="No Limit">
+            </div>
+            <div class="input-group">
+                <label>Max CPU Watts</label>
+                <input type="number" id="maxCpuWatts" placeholder="No Limit">
+            </div>
+            <div class="input-group">
+                <label>Max GPU Watts</label>
+                <input type="number" id="maxGpuWatts" placeholder="No Limit">
+            </div>
+        </div>
+
+        <button class="btn-generate" onclick="generateBuilds()">GENERATE BUILDS</button>
+    </div>
+
+    <!-- Results Meta Bar -->
+    <div class="results-meta">
+        <div class="result-count" id="resCount">Ready</div>
+        <div class="sort-controls">
+            <label>Sort By:</label>
+            <select id="mainSort" class="sort-select" onchange="renderPage(1)">
+                <option value="diff">Closest to Target Score</option>
+                <option value="price_asc">Lowest Price</option>
+                <option value="price_desc">Highest Price</option>
+                <option value="score_desc">Highest Score</option>
+                <option value="score_asc">Lowest Score</option>
+                <option value="value_desc">Most Overperforming (Best Value)</option>
+                <option value="value_asc">Most Underperforming (Worst Value)</option>
+            </select>
+
+            <div class="min-score-container">
+                <label class="min-score-label">Min 3D Score (press enter to apply):</label>
+                <input type="text" id="minScoreInput" placeholder="0" onchange="generateBuilds()">
+            </div>
+        </div>
+    </div>
+
+    <div id="resultsList"></div>
+
+    <div class="pagination" id="pagination">
+        <button class="page-btn" id="btnPrev" onclick="changePage(-1)">Previous</button>
+        <div class="page-info-container" style="flex:1; display:flex; justify-content:center;">
+            <span class="page-info" id="pageInfo" onclick="makePageEditable()" title="Click to jump to page">Page 1 of 1</span>
+        </div>
+        <button class="page-btn" id="btnNext" onclick="changePage(1)">Next</button>
+    </div>
+</div>
+
+<script>
+    // ==================== UNIQUE STORAGE SYSTEM ====================
+    const DB = { 
+        cpu: new Map(), 
+        gpu: new Map(), 
+        ram: new Map(), 
+        mobo: new Map(), 
+        cases: new Map(), 
+        psu: new Map(), 
+        cooler: new Map(), 
+        fan: new Map() 
+    };
+    
+    const Loaded = { cpu: false, gpu: false, ram: false, mobo: false, cases: false, psu: false, cooler: false, fan: false };
+
+    // Selected filters for multi-selects
+    const selectedOptions = {
+        vram: new Set(),
+        length: new Set(),
+        socket: new Set(),
+        cpuNames: new Set(),
+        gpuNames: new Set(),
+        moboNames: new Set(),
+        caseNames: new Set(),
+        ramNames: new Set()
+    };
+
+    let lastClickedOption = { category: null, index: -1 };
+
+    const filterKeywords = {
+        cpuNames: {
+            'AMD': ['AMD', 'Ryzen', 'Threadripper'],
+            'Intel': ['Intel', 'Core', 'Pentium', 'Celeron']
+        },
+        gpuNames: {
+            'NVIDIA': ['NVIDIA', 'GeForce', 'RTX', 'GTX', 'PNY', 'Palit', 'Colorful', 'ZOTAC', 'EVGA', 'ASUS'],
+            'AMD': ['AMD', 'Radeon', 'RX', 'ASRock', 'Sapphire'],
+            'Intel': ['Intel Arc', 'Arc A', 'Arc B']
+        },
+        socket: {
+            'AMD': ['AM4', 'AM5', 'TR4', 'sTRX4'],
+            'Intel': ['LGA 1151', 'LGA 1200', 'LGA 1700', 'LGA 1851', 'LGA 2066']
+        }
+    };
+
+    let builds = [];
+    let currentMode = 'TS';
+    let currentPage = 1;
+    let itemsPerPage = 100;
+    let currentPopupData = null;
+
+    // ==================== UTILITY FUNCTIONS ====================
+    const formatCurrency = num => '$' + num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    const formatNumber = num => num.toLocaleString('en-US');
+    const parseVal = id => parseFloat(document.getElementById(id).value.replace(/,/g, '')) || 0;
+    const parseIntVal = id => parseInt(document.getElementById(id).value.replace(/,/g, '')) || 0;
+
+    // ==================== INPUT FORMATTING ====================
+    ['budget', 'targetScore', 'minScoreInput', 'resLimit'].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) {
+            el.addEventListener('input', e => {
+                let v = e.target.value.replace(/\D/g, '');
+                e.target.value = v ? parseInt(v).toLocaleString('en-US') : '';
+            });
+        }
+    });
+
+    // ==================== MODE SELECTION ====================
+    function setMode(m) {
+        currentMode = m;
+        document.getElementById('btnTS').classList.toggle('active', m === 'TS');
+        document.getElementById('btnTSX').classList.toggle('active', m === 'TSX');
+        if(Loaded.cpu && Loaded.gpu) generateBuilds();
+    }
+
+    // ==================== AUTO-FETCHER LOGIC ====================
+    
+    // Trigger on load
+    window.addEventListener('DOMContentLoaded', initAutoFetcher);
+
+    async function initAutoFetcher() {
+        // Reset state
+        Object.keys(DB).forEach(k => DB[k].clear());
+        Object.keys(Loaded).forEach(k => Loaded[k] = false);
+
+        const statusContainer = document.getElementById('fileStatus');
+        statusContainer.innerHTML = ''; // Clear previous status
+
+        // List of expected files in the datas/ folder
+        // Mapping simple ID to likely filename
+        const targets = [
+            { id: 'cpu', file: 'CPU.txt', label: 'CPU' },
+            { id: 'gpu', file: 'GPU.txt', label: 'GPU' },
+            { id: 'ram', file: 'RAM.txt', label: 'RAM' },
+            { id: 'mobo', file: 'Motherboards.txt', label: 'Motherboard' },
+            { id: 'cases', file: 'Cases.txt', label: 'Cases' },
+            { id: 'cooler', file: 'CPU Coolers.txt', label: 'Cooler' },
+            { id: 'psu', file: 'Power Supplies.txt', label: 'PSU' },
+            { id: 'fan', file: 'Case Fans.txt', label: 'Fans' }
+        ];
+
+        // Create initial UI elements for status
+        const statusEls = {};
+        targets.forEach(t => {
+            const el = document.createElement('div');
+            el.className = 'file-tag loading';
+            el.innerHTML = `${t.label} ⏳`;
+            statusContainer.appendChild(el);
+            statusEls[t.id] = el;
+        });
+
+        for (const t of targets) {
+            try {
+                const response = await fetch(`datas/${t.file}`);
+                if (!response.ok) throw new Error(`Status ${response.status}`);
+                const text = await response.text();
+                
+                // Parse it
+                parseHTML(t.file, text);
+
+                // Update UI Success
+                const count = DB[t.id].size;
+                statusEls[t.id].className = 'file-tag loaded';
+                statusEls[t.id].innerHTML = `${t.label} ✓ (${count})`;
+
+            } catch (err) {
+                console.warn(`Could not load ${t.file}:`, err);
+                // Update UI Error
+                statusEls[t.id].className = 'file-tag error';
+                statusEls[t.id].innerHTML = `${t.label} ❌ (Missing)`;
+            }
+        }
+    }
+
+    // ==================== FILE PARSING ====================
+    function parseHTML(fname, html) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const rows = Array.from(doc.querySelectorAll('tr'));
+        if (rows.length < 2) return;
+
+        const headers = Array.from(rows[0].querySelectorAll('td')).map(td => td.getAttribute('div') || td.textContent.trim());
+        const idx = {};
+        headers.forEach((h, i) => idx[h] = i);
+        const get = (cells, key) => (idx[key] !== undefined && cells[idx[key]]) ? cells[idx[key]].textContent.trim() : '';
+
+        // Determine File Type based on name
+        let type = '';
+        const n = fname.toLowerCase();
+        
+        if (n.includes('cpu.txt')) type = 'cpu';
+        else if (n.includes('gpu')) type = 'gpu';
+        else if (n.includes('ram')) type = 'ram';
+        else if (n.includes('motherboard')) type = 'mobo';
+        else if (n.includes('cases')) type = 'cases';
+        else if (n.includes('cooler')) type = 'cooler';
+        else if (n.includes('psu') || n.includes('power supplies')) type = 'psu';
+        else if (n.includes('case fans') || n.includes('fans')) type = 'fan';
+
+        if (!type) return; 
+
+        for (let i = 1; i < rows.length; i++) {
+            const cells = rows[i].querySelectorAll('td');
+            if (!cells.length) continue;
+            
+            const price = parseFloat(get(cells, 'Price'));
+            if (isNaN(price) || price <= 0) continue;
+
+            const base = {
+                name: get(cells, 'Part Name'),
+                price: price,
+                level: parseInt(get(cells, 'Level')) || 0,
+                mfgr: get(cells, 'Manufacturer')
+            };
+
+            if (type === 'cpu') {
+                base.scoreTS = parseInt(get(cells, 'Basic CPU Score (TS)')) || 0;
+                base.scoreTSX = parseInt(get(cells, 'Basic CPU Score (TSX)')) || 0;
+                if (!base.scoreTS) base.scoreTS = base.scoreTSX;
+                base.socket = get(cells, 'CPU Socket');
+                base.series = get(cells, 'CPU Series');
+                base.watts = parseInt(get(cells, 'Wattage')) || 0;
+                base.multTS = parseFloat(get(cells, 'Mem Clock Multiplier (TS)')) || 0;
+                base.multTSX = parseFloat(get(cells, 'Mem Clock Multiplier (TSX)')) || 0;
+                base.defaultMem = parseInt(get(cells, 'Default Memory Speed')) || 2133;
+                base.memTypes = get(cells, 'Supported Memory Types');
+                base.cores = get(cells, 'Cores');
+                base.maxFreq = get(cells, 'Frequency'); 
+                base.baseFreq = get(cells, 'Base Frequency');
+                base.voltage = get(cells, 'Voltage');
+                base.maxVoltage = get(cells, 'Max Voltage');
+                base.canOC = get(cells, 'Can Overclock');
+                base.ocScore = get(cells, 'Overclock Basic CPU Score') || "-";
+                base.canDelid = get(cells, 'Can Delid');
+
+            } else if (type === 'gpu') {
+                base.score = parseInt(get(cells, 'Single GPU Graphics Score')) || 0;
+                base.score2 = parseInt(get(cells, 'Double GPU Graphics Score')) || 0;
+                base.score3 = parseInt(get(cells, 'Triple GPU Graphics Score')) || 0;
+                base.score4 = parseInt(get(cells, 'Quad GPU Graphics Score')) || 0;
+                base.watts = parseInt(get(cells, 'Wattage')) || 0;
+                base.vram = parseInt(get(cells, 'VRAM (GB)')) || 0;
+                base.length = parseInt(get(cells, 'Length')) || 0;
+                base.multi = get(cells, 'Double GPU supported') === 'Yes';
+                base.isWater = n.includes('water');
+                
+                base.baseCore = get(cells, 'Base Core Clock Freq');
+                base.baseMem = get(cells, 'Base Mem Clock Freq');
+                base.maxCore = get(cells, 'GPU max clock');
+                base.maxMem = get(cells, 'GPU max mem clock');
+                base.chipset = get(cells, 'Chipset');
+
+            } else if (type === 'ram') {
+                base.freq = parseInt(get(cells, 'Frequency')) || 0;
+                base.type = get(cells, 'Ram Type');
+                base.size = parseInt(get(cells, 'Size each (GB)')) || 0;
+                base.totalSize = parseInt(get(cells, 'Total Size (GB)')) || 0;
+                base.voltage = get(cells, 'Voltage');
+                base.maxVoltage = get(cells, 'Max Voltage');
+                base.maxSpeed = parseInt(get(cells, 'Max Speed')) || 0;
+            } else if (type === 'mobo') {
+                base.socket = get(cells, 'CPU Socket');
+                base.ramType = get(cells, 'Ram Type');
+                base.size = get(cells, 'Motherboard Size');
+            } else if (type === 'cases') {
+                base.size = get(cells, 'Case Size');
+                base.moboSizes = get(cells, 'Motherboard Size');
+                base.maxGpuLen = parseInt(get(cells, 'Max GPU length')) || 0;
+                base.maxCpuHeight = parseInt(get(cells, 'Max CPU Fan Height')) || 0;
+                base.maxPsuLen = parseInt(get(cells, 'Max PSU length')) || 0;
+                base.radSizes = get(cells, 'Max Radiator Sizes') || "";
+            } else if (type === 'cooler') {
+                base.type = get(cells, 'Type');
+                base.height = parseInt(get(cells, 'Height')) || 0;
+                base.size = parseInt(get(cells, 'Size')) || 0;
+                base.sockets = get(cells, 'CPU Socket List');
+                base.flow = parseFloat(get(cells, 'Air Flow')) || 0;
+            } else if (type === 'psu') {
+                base.watts = parseInt(get(cells, 'Wattage')) || 0;
+                base.length = parseInt(get(cells, 'Length')) || 0;
+            } else if (type === 'fan') {
+                base.size = parseInt(get(cells, 'Size')) || 0;
+                base.flow = parseFloat(get(cells, 'Air Flow')) || 0;
+            }
+
+            DB[type].set(base.name, base);
+        }
+
+        Loaded[type] = true;
+        updateStatus();
+    }
+
+    function updateStatus() {
+        if (Loaded.cpu && Loaded.gpu) {
+            document.querySelector('.controls-wrapper').classList.add('active');
+
+            const cpus = Array.from(DB.cpu.values());
+            const gpus = Array.from(DB.gpu.values());
+            const rams = Array.from(DB.ram.values());
+            const mobos = Array.from(DB.mobo.values());
+            const cases = Array.from(DB.cases.values());
+
+            populateMultiSelect('socket', [...new Set(cpus.map(c => c.socket).filter(s => s))].sort(), 'socketListContainer');
+            populateMultiSelect('cpuNames', cpus.map(c => c.name).sort(), 'cpuListContainer');
+            populateMultiSelect('vram', [...new Set(gpus.map(g => g.vram).filter(v => v))].sort((a,b) => a-b), 'vramListContainer');
+            populateMultiSelect('length', [...new Set(gpus.map(g => g.length).filter(l => l))].sort((a,b) => a-b), 'lengthListContainer');
+            populateMultiSelect('gpuNames', [...new Set(gpus.map(g => g.name))].sort(), 'gpuListContainer');
+            
+            if(Loaded.ram) populateMultiSelect('ramNames', rams.map(r => r.name).sort(), 'ramListContainer');
+            if(Loaded.mobo) populateMultiSelect('moboNames', mobos.map(m => m.name).sort(), 'moboListContainer');
+            if(Loaded.cases) populateMultiSelect('caseNames', cases.map(c => c.name).sort(), 'caseListContainer');
+        }
+    }
+
+    // ==================== MULTI-SELECT FUNCTIONS (SHIFT/CTRL SUPPORT) ====================
+    window.addEventListener('click', function(e) {
+        if (!e.target.matches('.multi-select-display') && !e.target.closest('.multi-dropdown')) {
+            document.querySelectorAll('.multi-dropdown').forEach(d => d.classList.remove('show'));
+        }
+    });
+
+    function toggleDropdown(id) {
+        const target = document.getElementById(id);
+        const isShown = target.classList.contains('show');
+        document.querySelectorAll('.multi-dropdown').forEach(d => d.classList.remove('show'));
+        if (!isShown) target.classList.add('show');
+        const searchInput = target.querySelector('.dropdown-search');
+        if (searchInput && !isShown) setTimeout(() => searchInput.focus(), 100);
+    }
+    
+    function populateMultiSelect(category, options, containerId) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        options.forEach((opt, index) => {
+            const div = document.createElement('div');
+            div.className = 'multi-option';
+            div.dataset.value = opt;
+            div.dataset.index = index; 
+            
+            let label = opt;
+            
+            if (category === 'ramNames') {
+                const r = DB.ram.get(opt);
+                if (r) {
+                    label = `<span style="font-size:0.9em">
+                        ${r.name} | ${r.totalSize}GB | Size Each: ${r.size} | ${r.type} | ${r.freq} MHz | ${r.voltage}v | ${r.maxVoltage}v | Max Speed: ${r.maxSpeed}
+                    </span>`;
+                }
+            } else {
+                if (category === 'vram') label += ' GB';
+                if (category === 'length') label += ' mm';
+            }
+
+            div.innerHTML = `<div class="cb-custom"></div><span>${label}</span>`;
+            div.onclick = (e) => toggleOption(category, opt, div, e);
+            container.appendChild(div);
+        });
+    }
+
+    function toggleOption(category, value, element, event) {
+        if (event.shiftKey && lastClickedOption.category === category && lastClickedOption.index !== -1) {
+            const container = element.parentElement;
+            const options = Array.from(container.children).filter(c => c.style.display !== 'none');
+            
+            const currentIndex = options.indexOf(element);
+            const lastIndex = options.findIndex(opt => parseInt(opt.dataset.index) === lastClickedOption.index);
+
+            if (currentIndex !== -1 && lastIndex !== -1) {
+                const start = Math.min(currentIndex, lastIndex);
+                const end = Math.max(currentIndex, lastIndex);
+                
+                for (let i = start; i <= end; i++) {
+                    const opt = options[i];
+                    const val = opt.dataset.value;
+                    selectedOptions[category].add(val);
+                    opt.classList.add('selected');
+                }
+            }
+        } 
+        else {
+            if (selectedOptions[category].has(value)) {
+                selectedOptions[category].delete(value);
+                element.classList.remove('selected');
+            } else {
+                selectedOptions[category].add(value);
+                element.classList.add('selected');
+            }
+        }
+
+        lastClickedOption = { 
+            category: category, 
+            index: parseInt(element.dataset.index) 
+        };
+
+        updateDisplayLabel(category);
+    }
+
+    function applyQuickFilter(category, type) {
+        const keywords = filterKeywords[category][type];
+        if (!keywords) return;
+        let containerId = category === 'cpuNames' ? 'cpuListContainer' :
+                         category === 'gpuNames' ? 'gpuListContainer' : 'socketListContainer';
+        const container = document.getElementById(containerId);
+        container.querySelectorAll('.multi-option').forEach(opt => {
+            const val = opt.dataset.value;
+            if (keywords.some(kw => val.includes(kw))) {
+                opt.classList.add('selected');
+                selectedOptions[category].add(val);
+            }
+        });
+        updateDisplayLabel(category);
+    }
+
+    function clearFilter(category) {
+        selectedOptions[category].clear();
+        let containerId = category === 'cpuNames' ? 'cpuListContainer' :
+                         category === 'gpuNames' ? 'gpuListContainer' :
+                         category === 'socket' ? 'socketListContainer' :
+                         category === 'vram' ? 'vramListContainer' : 
+                         category === 'moboNames' ? 'moboListContainer' : 
+                         category === 'ramNames' ? 'ramListContainer' :
+                         category === 'caseNames' ? 'caseListContainer' : 'lengthListContainer';
+        const container = document.getElementById(containerId);
+        if(container) container.querySelectorAll('.multi-option').forEach(opt => opt.classList.remove('selected'));
+        updateDisplayLabel(category);
+    }
+
+    function updateDisplayLabel(category) {
+        let displayId;
+        switch(category) {
+            case 'vram': displayId = 'multiVram'; break;
+            case 'length': displayId = 'multiLength'; break;
+            case 'socket': displayId = 'multiSocket'; break;
+            case 'cpuNames': displayId = 'multiCpu'; break;
+            case 'gpuNames': displayId = 'multiGpu'; break;
+            case 'ramNames': displayId = 'multiRam'; break;
+            case 'moboNames': displayId = 'multiMobo'; break;
+            case 'caseNames': displayId = 'multiCase'; break;
+        }
+
+        const display = document.getElementById(displayId).querySelector('.multi-select-display');
+        const size = selectedOptions[category].size;
+
+        if (size === 0) {
+            display.textContent = 'Any';
+        } else if (size === 1) {
+            let val = Array.from(selectedOptions[category])[0];
+            if (category === 'vram') val += ' GB';
+            if (category === 'length') val += ' mm';
+            display.textContent = val;
+        } else {
+            if (['cpuNames','gpuNames','moboNames','caseNames','ramNames'].includes(category)) {
+                display.textContent = `${size} models selected`;
+            } else {
+                const arr = Array.from(selectedOptions[category]).sort((a,b) =>
+                    (typeof a === 'number' ? a - b : String(a).localeCompare(String(b)))
+                );
+                let suffix = (category === 'vram' ? ' GB' : (category === 'length' ? ' mm' : ''));
+                display.textContent = `${arr[0]}${suffix} + ${size - 1} others`;
+            }
+        }
+    }
+
+    function filterDropdownList(input) {
+        const filter = input.value.toLowerCase();
+        const container = input.closest('.multi-dropdown').querySelector('.dropdown-list-container');
+        if (!container) return;
+        container.querySelectorAll('.multi-option').forEach(item => {
+            item.style.display = item.textContent.toLowerCase().includes(filter) ? 'flex' : 'none';
+        });
+    }
+
+    // ==================== BRAND COLOR HELPER ====================
+    function getBrandClass(item) {
+        if (!item) return '';
+        if (item.mfgr === 'Intel') {
+            if (item.vram !== undefined) return 'brand-intel-gpu'; 
+            return 'brand-intel'; 
+        }
+        if (item.mfgr === 'AMD') return 'brand-amd';
+        if (item.mfgr === 'NVIDIA') return 'brand-nvidia';
+        const searchStr = (item.name + " " + (item.chipset || "")).toLowerCase();
+        if (searchStr.includes('radeon') || searchStr.includes('ryzen') || searchStr.includes('threadripper')) return 'brand-amd';
+        if (searchStr.includes('geforce') || searchStr.includes('gtx') || searchStr.includes('rtx')) return 'brand-nvidia';
+        if (searchStr.includes('arc ')) return 'brand-intel-gpu';
+        return '';
+    }
+
+    // ==================== 3DMARK CALCULATION ====================
+    function calculate3DMark(cpuScore, gpuScore) {
+        if (!cpuScore || !gpuScore) return 0;
+        return Math.floor(1 / ((0.85 / gpuScore) + (0.15 / cpuScore)));
+    }
+
+    function generateBuilds() {
+        if (!Loaded.cpu || !Loaded.gpu) return alert("Wait for CPU and GPU files to load from datas/ folder!");
+
+        const allCpus = Array.from(DB.cpu.values());
+        const allGpus = Array.from(DB.gpu.values());
+        const allRams = Array.from(DB.ram.values());
+        const allMobos = Array.from(DB.mobo.values());
+        const allCases = Array.from(DB.cases.values());
+        const allCoolers = Array.from(DB.cooler.values());
+        const allPsu = Array.from(DB.psu.values());
+        const allFans = Array.from(DB.fan.values());
+
+        const budget = parseVal('budget');
+        const target = parseVal('targetScore');
+        const minScore = parseVal('minScoreInput');
+        const lvl = parseInt(document.getElementById('level').value);
+        const gpuCnt = parseInt(document.getElementById('gpuCount').value);
+        const maxPoolSize = parseIntVal('resLimit'); 
+        const sort = document.getElementById('mainSort').value;
+
+        const limitTotalW = parseInt(document.getElementById('maxTotalWatts').value);
+        const limitCpuW = parseInt(document.getElementById('maxCpuWatts').value);
+        const limitGpuW = parseInt(document.getElementById('maxGpuWatts').value);
+
+        const useRam = document.getElementById('incRam').checked && Loaded.ram;
+        const reqSticks = parseInt(document.getElementById('ramSticks').value);
+        const stickCounts = reqSticks === 0 ? [1, 2, 4] : [reqSticks];
+
+        const useMobo = document.getElementById('incMobo').checked && Loaded.mobo;
+        const useCase = document.getElementById('incCase').checked && Loaded.cases;
+        const useCooler = document.getElementById('incCooler').checked && Loaded.cooler;
+        const usePsu = document.getElementById('incPsu').checked && Loaded.psu;
+        const useFan = document.getElementById('incFans').checked && Loaded.fan;
+
+        if (useMobo) allMobos.sort((a,b) => a.price - b.price);
+        if (useCase) allCases.sort((a,b) => a.price - b.price);
+        if (usePsu) allPsu.sort((a,b) => a.price - b.price);
+        if (useCooler) allCoolers.sort((a,b) => b.flow - a.flow || a.price - b.price);
+        if (useFan) allFans.sort((a,b) => b.flow - a.flow || a.price - b.price);
+
+        const validCpu = allCpus.filter(c => {
+            if (c.level > lvl) return false;
+            if (limitCpuW && (c.watts || 0) > limitCpuW) return false;
+            if (selectedOptions.socket.size > 0 && !selectedOptions.socket.has(c.socket)) return false;
+            if (selectedOptions.cpuNames.size > 0 && !selectedOptions.cpuNames.has(c.name)) return false;
+            return true;
+        });
+
+        const validGpu = allGpus.filter(g => {
+            if (g.level > lvl) return false;
+            if (limitGpuW && (g.watts || 0) > limitGpuW) return false;
+            if (gpuCnt === 2 && !g.score2) return false;
+            if (gpuCnt === 3 && !g.score3) return false;
+            if (gpuCnt === 4 && !g.score4) return false;
+            if (selectedOptions.vram.size > 0 && !selectedOptions.vram.has(g.vram)) return false;
+            if (selectedOptions.length.size > 0 && !selectedOptions.length.has(g.length)) return false;
+            if (selectedOptions.gpuNames.size > 0 && !selectedOptions.gpuNames.has(g.name)) return false;
+            return true;
+        });
+
+        validCpu.sort((a,b) => {
+            const scoreA = currentMode === 'TS' ? a.scoreTS : a.scoreTSX;
+            const scoreB = currentMode === 'TS' ? b.scoreTS : b.scoreTSX;
+            return scoreB - scoreA;
+        });
+
+        validGpu.sort((a,b) => {
+            const scoreA = gpuCnt === 1 ? a.score : (gpuCnt === 2 ? a.score2 : (gpuCnt === 3 ? a.score3 : a.score4));
+            const scoreB = gpuCnt === 1 ? b.score : (gpuCnt === 2 ? b.score2 : (gpuCnt === 3 ? b.score3 : b.score4));
+            return scoreB - scoreA;
+        });
+
+        builds = [];
+        
+        for (const cpu of validCpu) {
+            if (builds.length >= maxPoolSize) break;
+
+            let baseScore = currentMode === 'TS' ? cpu.scoreTS : cpu.scoreTSX;
+            if (!baseScore) continue;
+
+            let ramTiers = [];
+
+            if (useRam) {
+                const isDDR5 = cpu.memTypes.includes('DDR5');
+                let compatibleRam = allRams.filter(r => 
+                    r.level <= lvl && 
+                    (isDDR5 ? r.type === 'DDR5' : r.type === 'DDR4') &&
+                    (selectedOptions.ramNames.size === 0 || selectedOptions.ramNames.has(r.name))
+                );
+                
+                const bestValueByFreq = new Map();
+                for (const r of compatibleRam) {
+                    if (!bestValueByFreq.has(r.freq) || r.price < bestValueByFreq.get(r.freq).price) {
+                        bestValueByFreq.set(r.freq, r);
+                    }
+                }
+                ramTiers = Array.from(bestValueByFreq.values()).sort((a,b) => a.freq - b.freq);
+            } else {
+                ramTiers.push(null); 
+            }
+
+            for (const ram of ramTiers) {
+                if (builds.length >= maxPoolSize) break;
+
+                for(const sticks of stickCounts) {
+                    if (builds.length >= maxPoolSize) break;
+
+                    let ramCost = 0, ramWatts = 0, adjScore = baseScore;
+                    
+                    if (ram) {
+                        ramCost = ram.price * sticks;
+                        ramWatts = 10 * sticks;
+                        const m = currentMode === 'TS' ? cpu.multTS : cpu.multTSX;
+                        if (m && ram.freq > cpu.defaultMem) {
+                            adjScore += ((ram.freq - cpu.defaultMem) * m);
+                        }
+                    }
+
+                    let mobo = null;
+                    if (useMobo) {
+                        const type = ram ? ram.type : (cpu.memTypes.includes('DDR4') ? 'DDR4' : 'DDR5');
+                        const found = allMobos.find(m =>
+                            m.level <= lvl &&
+                            m.socket === cpu.socket &&
+                            m.ramType === type &&
+                            (selectedOptions.moboNames.size === 0 || selectedOptions.moboNames.has(m.name))
+                        );
+                        if (!found) continue; 
+                        mobo = found; 
+                    }
+
+                    for (const gpu of validGpu) {
+                        let gpuScore = gpuCnt === 1 ? gpu.score :
+                                      gpuCnt === 2 ? gpu.score2 :
+                                      gpuCnt === 3 ? gpu.score3 : gpu.score4;
+                        if (!gpuScore) continue;
+
+                        let bCase = null;
+                        if (useCase) {
+                            const found = allCases.find(c => {
+                                if (c.level > lvl) return false;
+                                if (c.maxGpuLen < gpu.length) return false;
+                                if (mobo && !c.moboSizes.includes(mobo.size)) return false;
+                                if (selectedOptions.caseNames.size > 0 && !selectedOptions.caseNames.has(c.name)) return false;
+                                return true;
+                            });
+                            if (!found) continue;
+                            bCase = found; 
+                        }
+
+                        let cooler = null;
+                        if (useCooler) {
+                            cooler = { name: "None (Click to Select)", price: 0, level: 0, type: "N/A", height: 0, size: 0, flow: 0, sockets: [], mfgr: "Generic" };
+                        }
+
+                        let psu = null;
+                        const totalWatts = cpu.watts + (gpu.watts * gpuCnt) + ramWatts + 50;
+                        if (usePsu) {
+                            const found = allPsu.find(p => {
+                                if (p.level > lvl) return false;
+                                if (p.watts < totalWatts) return false;
+                                if (bCase && bCase.maxPsuLen > 0 && p.length > bCase.maxPsuLen) return false;
+                                return true;
+                            });
+                            if (!found) continue;
+                            psu = found;
+                        }
+
+                        let fan = null, fanCost = 0;
+                        if (useFan && bCase) {
+                            fan = { name: "None (Click to Select)", price: 0, level: 0, size: 0, flow: 0, mfgr: "Generic" };
+                        }
+
+                        if (limitTotalW && totalWatts > limitTotalW) continue;
+
+                        let total = cpu.price + (gpu.price * gpuCnt) + ramCost + fanCost;
+                        if (mobo) total += mobo.price;
+                        if (bCase) total += bCase.price;
+                        if (cooler) total += cooler.price;
+                        if (psu) total += psu.price;
+
+                        if (total > budget) continue;
+
+                        const final3D = calculate3DMark(adjScore, gpuScore);
+                        if (minScore > 0 && final3D < minScore) continue;
+
+                        builds.push({
+                            score: final3D,
+                            diff: final3D - target,
+                            price: total,
+                            watts: totalWatts,
+                            cpu, gpu, gpuCnt, ram, ramSticks: sticks, mobo,
+                            case: bCase, cooler, psu, fan
+                        });
+
+                        if (builds.length >= maxPoolSize) break;
+                    }
+                }
+            } 
+        }
+
+        builds.sort((a,b) => {
+            if (sort === 'score_desc') return b.score - a.score;
+            if (sort === 'score_asc') return a.score - b.score;
+            if (sort === 'price_asc') return a.price - b.price;
+            if (sort === 'price_desc') return b.price - a.price;
+            if (sort === 'value_desc') return (b.score / b.price) - (a.score / a.price);
+            if (sort === 'value_asc') return (a.score / a.price) - (b.score / b.price);
+            return Math.abs(a.diff) - Math.abs(b.diff); 
+        });
+
+        if (builds.length > maxPoolSize) {
+            builds = builds.slice(0, maxPoolSize);
+        }
+
+        document.getElementById('resCount').innerText = `${builds.length} Builds Found`;
+        document.getElementById('pagination').style.display = builds.length > 0 ? 'flex' : 'none';
+        renderPage(1);
+    }
+    
+    function renderPage(page) {
+        if (!builds.length) {
+            document.getElementById('resultsList').innerHTML = '<div style="text-align:center;padding:40px;color:#e74c3c;font-size:1.4em;">No Builds Found</div>';
+            return;
+        }
+
+        const sort = document.getElementById('mainSort').value;
+        builds.sort((a,b) => {
+            if (sort === 'score_desc') return b.score - a.score;
+            if (sort === 'score_asc') return a.score - b.score;
+            if (sort === 'price_asc') return a.price - b.price;
+            if (sort === 'price_desc') return b.price - a.price;
+            if (sort === 'value_desc') return (b.score / b.price) - (a.score / a.price);
+            if (sort === 'value_asc') return (a.score / a.price) - (b.score / b.price);
+            return Math.abs(a.diff) - Math.abs(b.diff); 
+        });
+
+        currentPage = page;
+        const start = (page - 1) * itemsPerPage;
+        const end = start + itemsPerPage;
+        const slice = builds.slice(start, end);
+        const total = Math.ceil(builds.length / itemsPerPage);
+
+        const list = document.getElementById('resultsList');
+        list.innerHTML = '';
+
+        slice.forEach((b, i) => {
+            const diffClass = b.diff > 0 ? 'diff-pos' : 'diff-neg';
+            const sign = b.diff > 0 ? '+' : '';
+            const gpuClass = getBrandClass(b.gpu);
+            const cpuClass = getBrandClass(b.cpu);
+            const buildIdx = start + i;
+
+            const gpuCountStr = b.gpuCnt > 1 ? `${b.gpuCnt}x ` : '';
+            const gpuEmoji = b.gpu.isWater ? '💧' : '💨';
+            
+            const gpuSpecs = `
+                ${b.gpu.vram}GB | ${b.gpu.length}mm | ${b.gpu.watts * b.gpuCnt}W | ${gpuEmoji} | 
+                Base Core/Max Core: ${b.gpu.baseCore || '?'}/${b.gpu.maxCore || '?'} MHz | 
+                Base Mem/Max Mem: ${b.gpu.baseMem || '?'}/${b.gpu.maxMem || '?'} MHz
+            `;
+
+            const cpuBaseScore = currentMode === 'TS' ? b.cpu.scoreTS : b.cpu.scoreTSX;
+            const ocText = b.cpu.canOC === 'Yes' ? `OC: ${b.cpu.ocScore}` : 'Locked';
+            
+            const cpuSpecs = `
+                Score: ${formatNumber(cpuBaseScore)} | ${ocText} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
+                ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
+                ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
+            `;
+
+            let ramHTML = '';
+            if (b.ram) {
+                ramHTML = `
+                <div class="part-row brand-ram text-colored">
+                    <div class="part-header">
+                        <span class="part-label">RAM</span>
+                        <span class="part-price">${formatCurrency(b.ram.price * b.ramSticks)}</span>
+                    </div>
+                    <div class="part-name">${b.ramSticks}x ${b.ram.name}</div>
+                    <div class="part-specs">${b.ram.freq} MHz | ${b.ram.type} | Size Each: ${b.ram.size}GB | Total: ${b.ram.size * b.ramSticks}GB</div>
+                </div>`;
+            }
+
+            let auxHTML = '';
+            if (b.mobo) {
+                auxHTML += `
+                <div class="part-row brand-aux text-colored">
+                    <div class="part-header">
+                        <span class="part-label">Motherboard</span>
+                        <span class="part-price">${formatCurrency(b.mobo.price)}</span>
+                    </div>
+                    <div class="part-name">${b.mobo.name}</div>
+                    <div class="part-specs">${b.mobo.socket} | ${b.mobo.ramType} | ${b.mobo.size} Form Factor</div>
+                </div>`;
+            }
+            if (b.psu) {
+                auxHTML += `
+                <div class="part-row brand-aux text-colored">
+                    <div class="part-header">
+                        <span class="part-label">PSU</span>
+                        <span class="part-price">${formatCurrency(b.psu.price)}</span>
+                    </div>
+                    <div class="part-name">${b.psu.name}</div>
+                    <div class="part-specs">${b.psu.watts}W | Length: ${b.psu.length}mm</div>
+                </div>`;
+            }
+
+            let interactiveHTML = '';
+            if (b.case) {
+                interactiveHTML += renderInteractive('Case', b.case, buildIdx, 'cases',
+                    `Max GPU: ${b.case.maxGpuLen}mm | CPU H: ${b.case.maxCpuHeight}mm | Size: ${b.case.size}`
+                );
+            }
+            if (b.cooler) {
+                interactiveHTML += renderInteractive('Cooler', b.cooler, buildIdx, 'cooler',
+                    `${b.cooler.type} | ${b.cooler.type.includes('Air') ? `Height: ${b.cooler.height}mm` : `Size: ${b.cooler.size}mm`} | Flow: ${b.cooler.flow} CFM`
+                );
+            }
+            if (b.fan) {
+                interactiveHTML += renderInteractive('Case Fans (x1)', b.fan, buildIdx, 'fan',
+                    `Size: ${b.fan.size}mm | Airflow: ${b.fan.flow} CFM`
+                );
+            }
+
+            const html = `
+            <div class="build-card" style="animation-delay:${i*0.02}s">
+                <div class="card-header">
+                    <div class="score-container">
+                        <span class="build-number">#${start + i + 1}</span>
+                        <div class="score-box">${formatNumber(b.score)}</div>
+                        <div class="diff-box ${diffClass}">${sign}${Math.abs(Math.round(b.diff))}</div>
+                    </div>
+                    <div class="header-stats">
+                        <div class="price-box">${formatCurrency(b.price)}</div>
+                        <div class="watts-box">⚡ ${b.watts}W</div>
+                        <div class="level-box">GPU L${b.gpu.level} | CPU L${b.cpu.level}</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="part-row ${gpuClass} text-colored">
+                        <div class="part-header">
+                            <span class="part-label">${gpuCountStr}GPU</span>
+                            <span class="part-price">${formatCurrency(b.gpu.price * b.gpuCnt)}</span>
+                        </div>
+                        <div class="part-name">${b.gpu.name}</div>
+                        <div class="part-specs">${gpuSpecs}</div>
+                    </div>
+                    <div class="part-row ${cpuClass} text-colored">
+                        <div class="part-header">
+                            <span class="part-label">CPU</span>
+                            <span class="part-price">${formatCurrency(b.cpu.price)}</span>
+                        </div>
+                        <div class="part-name">${b.cpu.name}</div>
+                        <div class="part-specs">${cpuSpecs}</div>
+                    </div>
+                    ${ramHTML}
+                    ${auxHTML}
+                    ${interactiveHTML}
+                </div>
+            </div>`;
+
+            list.innerHTML += html;
+        });
+
+        const pageInfo = document.getElementById('pageInfo');
+        if (!pageInfo.querySelector('input')) {
+            pageInfo.innerText = `Page ${page} of ${total}`;
+        }
+        document.getElementById('btnPrev').disabled = (page === 1);
+        document.getElementById('btnNext').disabled = (page === total || total === 0);
+    }
+
+    function renderInteractive(label, part, bIdx, type, specs) {
+        let price = part.price;
+        return `
+        <div class="part-row interactive brand-generic" onclick="openSwapPopup('${type}', ${bIdx})">
+            <button class="btn-change">Change</button>
+            <div class="part-header">
+                <span class="part-label">${label}</span>
+                <span class="part-price">${formatCurrency(price)}</span>
+            </div>
+            <div class="part-name">${part.name}</div>
+            <div class="part-specs">${specs}</div>
+        </div>`;
+    }
+
+    function changePage(d) {
+        const total = Math.ceil(builds.length / itemsPerPage);
+        const n = currentPage + d;
+        if (n > 0 && n <= total) renderPage(n);
+    }
+
+    function makePageEditable() {
+        const pageInfo = document.getElementById('pageInfo');
+        if (pageInfo.querySelector('input')) return;
+        const totalPages = Math.ceil(builds.length / itemsPerPage);
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.value = currentPage;
+        input.className = 'page-jump-input';
+        const save = () => {
+            let val = parseInt(input.value);
+            if (isNaN(val) || val < 1) val = 1;
+            if (val > totalPages) val = totalPages;
+            pageInfo.innerHTML = '';
+            renderPage(val);
+        };
+        input.onblur = save;
+        input.onkeydown = (e) => { if (e.key === 'Enter') input.blur(); };
+        pageInfo.innerHTML = '';
+        pageInfo.appendChild(input);
+        input.focus();
+        input.select();
+    }
+
+    // ==================== POPUP LOGIC ====================
+    function openSwapPopup(type, buildIdx) {
+        const build = builds[buildIdx];
+        currentPopupData = {
+            type,
+            buildIdx, 
+            originalPart: (type === 'fan' ? build.fan : type === 'cases' ? build.case : build.cooler)
+        };
+
+        document.getElementById('popupSearch').value = "";
+        document.getElementById('popupTitle').innerText = `Swap ${type.toUpperCase()}`;
+        document.getElementById('popupOverlay').style.display = 'block';
+        document.getElementById('popupContainer').style.display = 'flex';
+        refreshPopup();
+    }
+
+    function closePopup() {
+        document.getElementById('popupOverlay').style.display = 'none';
+        document.getElementById('popupContainer').style.display = 'none';
+        currentPopupData = null;
+    }
+
+    function refreshPopup() {
+        if (!currentPopupData) return;
+        const { type, buildIdx, originalPart } = currentPopupData;
+        const build = builds[buildIdx];
+        const fitOnly = document.getElementById('popupFit').checked;
+        const sortMode = document.getElementById('popupSort').value;
+        const searchVal = document.getElementById('popupSearch').value.toLowerCase();
+        
+        const tbody = document.getElementById('popupTableBody');
+        tbody.innerHTML = '';
+
+        let candidates = Array.from(DB[type].values());
+
+        if (fitOnly) {
+            candidates = candidates.filter(part => checkFit(type, part, build));
+        }
+
+        if (searchVal) {
+            candidates = candidates.filter(part => part.name.toLowerCase().includes(searchVal));
+        }
+
+        candidates.sort((a,b) => {
+            if (sortMode === 'price_asc') return a.price - b.price;
+            if (sortMode === 'price_desc') return b.price - a.price;
+            
+            let valA = a.flow || 0;
+            let valB = b.flow || 0;
+            if (type === 'cases') { valA = a.maxGpuLen; valB = b.maxGpuLen; } 
+            
+            if (sortMode === 'perf_desc') return valB - valA;
+
+            let scoreA = (valA / a.price) || 0;
+            let scoreB = (valB / b.price) || 0;
+
+            if (sortMode === 'val_desc') return scoreB - scoreA; 
+            if (sortMode === 'val_asc') return scoreA - scoreB; 
+            
+            return 0;
+        });
+
+        const subset = candidates.slice(0, 100);
+
+        subset.forEach((p, idx) => {
+            let origPrice = originalPart ? originalPart.price : 0;
+            let newPrice = p.price;
+            
+            const diff = newPrice - origPrice;
+            const diffStr = diff > 0 ? `+${formatCurrency(diff)}` :
+                           (diff < 0 ? `-${formatCurrency(Math.abs(diff))}` : '$0.00');
+            const diffClass = diff > 0 ? 'val-neg' : (diff < 0 ? 'val-pos' : '');
+
+            let details = '';
+            if (type === 'cases') details = `Max GPU: ${p.maxGpuLen}mm | CPU H: ${p.maxCpuHeight}mm | Size: ${p.size}`;
+            if (type === 'cooler') details = `${p.type} | ${p.type.includes('Air') ? `Height: ${p.height}mm` : `Size: ${p.size}mm`} | Flow: ${p.flow}`;
+            if (type === 'fan') details = `Size: ${p.size}mm | Flow: ${p.flow} CFM`;
+
+            const tr = document.createElement('tr');
+            
+            const safeName = p.name.replace(/'/g, "\\'");
+            
+            tr.innerHTML = `
+                <td><button class="btn-select-part" onclick="selectReplacementPart('${safeName}')">SELECT</button></td>
+                <td style="font-weight:bold; color:#fff;">${p.name}</td>
+                <td style="font-size:0.9em; color:#aaa;">${details}</td>
+                <td class="price-red-cell">${formatCurrency(newPrice)}</td>
+                <td class="${diffClass}">${diffStr}</td>
+            `;
+            
+            tbody.appendChild(tr);
+        });
+    }
+
+    window.selectReplacementPart = function(partName) {
+        if (!currentPopupData) return;
+        
+        const newPart = DB[currentPopupData.type].get(partName);
+        if(!newPart) return;
+
+        const { type, buildIdx, originalPart } = currentPopupData;
+        const build = builds[buildIdx];
+
+        let priceDiff = newPart.price - (originalPart ? originalPart.price : 0);
+        
+        if (type === 'cases') build.case = newPart;
+        else if (type === 'cooler') build.cooler = newPart;
+        else if (type === 'fan') build.fan = newPart;
+
+        build.price += priceDiff;
+
+        closePopup();
+        renderPage(currentPage); 
+    }
+
+    function checkFit(type, part, build) {
+        const lvl = parseInt(document.getElementById('level').value);
+        if (part.level > lvl) return false;
+
+        if (type === 'cases') {
+            if (part.maxGpuLen < build.gpu.length) return false;
+            if (build.mobo && !part.moboSizes.includes(build.mobo.size)) return false;
+            if (build.cooler && build.cooler.type.includes('Air') &&
+                part.maxCpuHeight < build.cooler.height) return false;
+            if (build.psu && part.maxPsuLen > 0 && build.psu.length > part.maxPsuLen) return false;
+            return true;
+        }
+
+        if (type === 'cooler') {
+            if (!part.sockets.includes(build.cpu.socket)) return false;
+            if (build.case) {
+                if (part.type.includes('Air')) return build.case.maxCpuHeight >= part.height;
+                if (part.type.includes('Liquid')) return build.case.radSizes.includes(part.size.toString());
+            }
+            return true;
+        }
+
+        if (type === 'fan') {
+            if (!build.case) return true;
+            const s120 = build.case.radSizes.includes('120');
+            const s140 = build.case.radSizes.includes('140');
+            if (part.size === 120 && !s120) return false;
+            if (part.size === 140 && !s140) return false;
+            return true;
+        }
+
+        return true;
+    }
+</script>
+</body>
+</html>

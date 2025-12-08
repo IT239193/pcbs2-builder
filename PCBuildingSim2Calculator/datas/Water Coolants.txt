@@ -1,0 +1,1173 @@
+Water Coolants
+<table>
+	<tr>
+		<td></td>
+		<td>Part Type</td>
+		<td>Class</td>
+		<td>Manufacturer</td>
+		<td>ID</td>
+		<td>Part Name</td>
+		<td>In Game</td>
+		<td>PCBS</td>
+		<td>Imported to Game</td>
+		<td>Working in game</td>
+		<td>In Shop</td>
+		<td>In Open Beta</td>
+		<td>Start In Freebuild Inventory</td>
+		<td>Start In Career Inventory</td>
+		<td>Price</td>
+		<td>SellPrice</td>
+		<td>Level</td>
+		<td>Percent Through</td>
+		<td>Headline</td>
+		<td>Colour</td>
+		<td>Type</td>
+		<td>UV</td>
+		<td>Asset Path</td>
+		<td>Notes</td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT</td>
+		<td div="Part Name"> Clear Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">100</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">10</td>
+		<td div="Percent Through">1</td>
+		<td div="Headline"></td>
+		<td div="Colour"></td>
+		<td div="Type">Clear</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_BLACK_CLEAR</td>
+		<td div="Part Name">Black Clear Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">200</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">10</td>
+		<td div="Percent Through">90</td>
+		<td div="Headline"></td>
+		<td div="Colour">Black</td>
+		<td div="Type">Clear</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_BLACK_FLECKED</td>
+		<td div="Part Name">Black Flecked Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">400</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">21</td>
+		<td div="Percent Through">90</td>
+		<td div="Headline"></td>
+		<td div="Colour">Black</td>
+		<td div="Type">Flecked</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultFlecked</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_BLACK_OPAQUE</td>
+		<td div="Part Name">Black Opaque Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">300</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">17</td>
+		<td div="Percent Through">90</td>
+		<td div="Headline"></td>
+		<td div="Colour">Black</td>
+		<td div="Type">Opaque</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/OpaqueWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_BLUE_CLEAR</td>
+		<td div="Part Name">Blue Clear Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">200</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">10</td>
+		<td div="Percent Through">1</td>
+		<td div="Headline"></td>
+		<td div="Colour">Blue</td>
+		<td div="Type">Clear</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_BLUE_CLEAR_UV</td>
+		<td div="Part Name">UV Blue Clear Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">500</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">23</td>
+		<td div="Percent Through">1</td>
+		<td div="Headline"></td>
+		<td div="Colour">Blue</td>
+		<td div="Type">Clear</td>
+		<td div="UV">Yes</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_BLUE_FLECKED</td>
+		<td div="Part Name">Blue Flecked Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">400</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">19</td>
+		<td div="Percent Through">1</td>
+		<td div="Headline"></td>
+		<td div="Colour">Blue</td>
+		<td div="Type">Flecked</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultFlecked</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_BLUE_OPAQUE</td>
+		<td div="Part Name">Blue Opaque Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">300</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">14</td>
+		<td div="Percent Through">1</td>
+		<td div="Headline"></td>
+		<td div="Colour">Blue</td>
+		<td div="Type">Opaque</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/OpaqueWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_BLUE_OPAQUE_UV</td>
+		<td div="Part Name">UV Blue Opaque Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">500</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">25</td>
+		<td div="Percent Through">60</td>
+		<td div="Headline"></td>
+		<td div="Colour">Blue</td>
+		<td div="Type">Opaque</td>
+		<td div="UV">Yes</td>
+		<td div="Asset Path">Prefabs/Coolant/OpaqueWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_CYAN_CLEAR</td>
+		<td div="Part Name">Cyan Clear Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">200</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">10</td>
+		<td div="Percent Through">60</td>
+		<td div="Headline"></td>
+		<td div="Colour">Cyan</td>
+		<td div="Type">Clear</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_CYAN_FLECKED</td>
+		<td div="Part Name">Cyan Flecked Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">400</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">21</td>
+		<td div="Percent Through">60</td>
+		<td div="Headline"></td>
+		<td div="Colour">Cyan</td>
+		<td div="Type">Flecked</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultFlecked</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_CYAN_OPAQUE</td>
+		<td div="Part Name">Cyan Opaque Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">300</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">17</td>
+		<td div="Percent Through">60</td>
+		<td div="Headline"></td>
+		<td div="Colour">Cyan</td>
+		<td div="Type">Opaque</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/OpaqueWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_DIRTY</td>
+		<td div="Part Name">Dirty</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">No</td>
+		<td div="In Open Beta">No</td>
+		<td div="Start In Freebuild Inventory">No</td>
+		<td div="Start In Career Inventory">No</td>
+		<td div="Price">100</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">1</td>
+		<td div="Percent Through">1</td>
+		<td div="Headline"></td>
+		<td div="Colour"></td>
+		<td div="Type">Clear</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/Dirty</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_GREEN_CLEAR</td>
+		<td div="Part Name">Green Clear Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">200</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">10</td>
+		<td div="Percent Through">1</td>
+		<td div="Headline"></td>
+		<td div="Colour">Green</td>
+		<td div="Type">Clear</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_GREEN_CLEAR_UV</td>
+		<td div="Part Name">UV Green Clear Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">500</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">23</td>
+		<td div="Percent Through">1</td>
+		<td div="Headline"></td>
+		<td div="Colour">Green</td>
+		<td div="Type">Clear</td>
+		<td div="UV">Yes</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_GREEN_FLECKED</td>
+		<td div="Part Name">Green Flecked Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">400</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">19</td>
+		<td div="Percent Through">1</td>
+		<td div="Headline"></td>
+		<td div="Colour">Green</td>
+		<td div="Type">Flecked</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultFlecked</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_GREEN_OPAQUE</td>
+		<td div="Part Name">Green Opaque Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">300</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">14</td>
+		<td div="Percent Through">1</td>
+		<td div="Headline"></td>
+		<td div="Colour">Green</td>
+		<td div="Type">Opaque</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/OpaqueWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_GREEN_OPAQUE_UV</td>
+		<td div="Part Name">UV Green Opaque Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">500</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">25</td>
+		<td div="Percent Through">60</td>
+		<td div="Headline"></td>
+		<td div="Colour">Green</td>
+		<td div="Type">Opaque</td>
+		<td div="UV">Yes</td>
+		<td div="Asset Path">Prefabs/Coolant/OpaqueWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_LIME_CLEAR</td>
+		<td div="Part Name">Lime Clear Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">200</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">10</td>
+		<td div="Percent Through">60</td>
+		<td div="Headline"></td>
+		<td div="Colour">Lime</td>
+		<td div="Type">Clear</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_LIME_FLECKED</td>
+		<td div="Part Name">Lime Flecked Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">400</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">21</td>
+		<td div="Percent Through">60</td>
+		<td div="Headline"></td>
+		<td div="Colour">Lime</td>
+		<td div="Type">Flecked</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultFlecked</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_LIME_OPAQUE</td>
+		<td div="Part Name">Lime Opaque Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">300</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">17</td>
+		<td div="Percent Through">60</td>
+		<td div="Headline"></td>
+		<td div="Colour">Lime</td>
+		<td div="Type">Opaque</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/OpaqueWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_ORANGE_CLEAR_UV</td>
+		<td div="Part Name">UV Orange Clear Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">500</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">27</td>
+		<td div="Percent Through">30</td>
+		<td div="Headline"></td>
+		<td div="Colour">Orange</td>
+		<td div="Type">Clear</td>
+		<td div="UV">Yes</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_ORANGE_OPAQUE_UV</td>
+		<td div="Part Name">UV Orange Opaque Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">500</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">29</td>
+		<td div="Percent Through">90</td>
+		<td div="Headline"></td>
+		<td div="Colour">Orange</td>
+		<td div="Type">Opaque</td>
+		<td div="UV">Yes</td>
+		<td div="Asset Path">Prefabs/Coolant/OpaqueWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_PINK_CLEAR</td>
+		<td div="Part Name">Pink Clear Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">200</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">10</td>
+		<td div="Percent Through">30</td>
+		<td div="Headline"></td>
+		<td div="Colour">Pink</td>
+		<td div="Type">Clear</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_PINK_FLECKED</td>
+		<td div="Part Name">Pink Flecked Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">400</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">21</td>
+		<td div="Percent Through">30</td>
+		<td div="Headline"></td>
+		<td div="Colour">Pink</td>
+		<td div="Type">Flecked</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultFlecked</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_PINK_OPAQUE</td>
+		<td div="Part Name">Pink Opaque Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">300</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">17</td>
+		<td div="Percent Through">30</td>
+		<td div="Headline"></td>
+		<td div="Colour">Pink</td>
+		<td div="Type">Opaque</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/OpaqueWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_PURPLE_CLEAR</td>
+		<td div="Part Name">Purple Clear Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">200</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">10</td>
+		<td div="Percent Through">30</td>
+		<td div="Headline"></td>
+		<td div="Colour">Purple</td>
+		<td div="Type">Clear</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_PURPLE_CLEAR_UV</td>
+		<td div="Part Name">UV Purple Clear Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">500</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">27</td>
+		<td div="Percent Through">30</td>
+		<td div="Headline"></td>
+		<td div="Colour">Purple</td>
+		<td div="Type">Clear</td>
+		<td div="UV">Yes</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_PURPLE_FLECKED</td>
+		<td div="Part Name">Purple Flecked Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">400</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">21</td>
+		<td div="Percent Through">30</td>
+		<td div="Headline"></td>
+		<td div="Colour">Purple</td>
+		<td div="Type">Flecked</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultFlecked</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_PURPLE_OPAQUE</td>
+		<td div="Part Name">Purple Opaque Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">300</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">17</td>
+		<td div="Percent Through">30</td>
+		<td div="Headline"></td>
+		<td div="Colour">Purple</td>
+		<td div="Type">Opaque</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/OpaqueWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_PURPLE_OPAQUE_UV</td>
+		<td div="Part Name">UV Purple Opaque Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">500</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">29</td>
+		<td div="Percent Through">90</td>
+		<td div="Headline"></td>
+		<td div="Colour">Purple</td>
+		<td div="Type">Opaque</td>
+		<td div="UV">Yes</td>
+		<td div="Asset Path">Prefabs/Coolant/OpaqueWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_RED_CLEAR</td>
+		<td div="Part Name">Red Clear Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">200</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">10</td>
+		<td div="Percent Through">1</td>
+		<td div="Headline"></td>
+		<td div="Colour">Red</td>
+		<td div="Type">Clear</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_RED_CLEAR_UV</td>
+		<td div="Part Name">UV Red Clear Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">500</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">23</td>
+		<td div="Percent Through">1</td>
+		<td div="Headline">UV Coolant</td>
+		<td div="Colour">Red</td>
+		<td div="Type">Clear</td>
+		<td div="UV">Yes</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_RED_FLECKED</td>
+		<td div="Part Name">Red Flecked Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">400</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">19</td>
+		<td div="Percent Through">1</td>
+		<td div="Headline">Flecked Coolant</td>
+		<td div="Colour">Red</td>
+		<td div="Type">Flecked</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultFlecked</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_RED_OPAQUE</td>
+		<td div="Part Name">Red Opaque Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">300</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">14</td>
+		<td div="Percent Through">1</td>
+		<td div="Headline">Opaque Coolant</td>
+		<td div="Colour">Red</td>
+		<td div="Type">Opaque</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/OpaqueWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_RED_OPAQUE_UV</td>
+		<td div="Part Name">UV Red Opaque Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">500</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">25</td>
+		<td div="Percent Through">60</td>
+		<td div="Headline"></td>
+		<td div="Colour">Red</td>
+		<td div="Type">Opaque</td>
+		<td div="UV">Yes</td>
+		<td div="Asset Path">Prefabs/Coolant/OpaqueWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_WHITE_CLEAR</td>
+		<td div="Part Name">White Clear Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">200</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">10</td>
+		<td div="Percent Through">90</td>
+		<td div="Headline"></td>
+		<td div="Colour">White</td>
+		<td div="Type">Clear</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_WHITE_FLECKED</td>
+		<td div="Part Name">White Flecked Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">400</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">21</td>
+		<td div="Percent Through">90</td>
+		<td div="Headline"></td>
+		<td div="Colour">White</td>
+		<td div="Type">Flecked</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultFlecked</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_WHITE_OPAQUE</td>
+		<td div="Part Name">White Opaque Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">300</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">17</td>
+		<td div="Percent Through">90</td>
+		<td div="Headline"></td>
+		<td div="Colour">White</td>
+		<td div="Type">Opaque</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/OpaqueWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_YELLOW_CLEAR</td>
+		<td div="Part Name">Yellow Clear Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">200</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">10</td>
+		<td div="Percent Through">1</td>
+		<td div="Headline"></td>
+		<td div="Colour">Yellow</td>
+		<td div="Type">Clear</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_YELLOW_CLEAR_UV</td>
+		<td div="Part Name">UV Yellow Clear Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">500</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">23</td>
+		<td div="Percent Through">1</td>
+		<td div="Headline"></td>
+		<td div="Colour">Yellow</td>
+		<td div="Type">Clear</td>
+		<td div="UV">Yes</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_YELLOW_FLECKED</td>
+		<td div="Part Name">Yellow Flecked Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">400</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">19</td>
+		<td div="Percent Through">1</td>
+		<td div="Headline"></td>
+		<td div="Colour">Yellow</td>
+		<td div="Type">Flecked</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/DefaultFlecked</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_YELLOW_OPAQUE</td>
+		<td div="Part Name">Yellow Opaque Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">300</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">14</td>
+		<td div="Percent Through">1</td>
+		<td div="Headline"></td>
+		<td div="Colour">Yellow</td>
+		<td div="Type">Opaque</td>
+		<td div="UV">No</td>
+		<td div="Asset Path">Prefabs/Coolant/OpaqueWater</td>
+		<td div="Notes"></td>
+	</tr>
+	<tr>
+		<td div=""></td>
+		<td div="Part Type">Coolant</td>
+		<td div="Class">Normal</td>
+		<td div="Manufacturer"></td>
+		<td div="ID">WC_COOLANT_YELLOW_OPAQUE_UV</td>
+		<td div="Part Name">UV Yellow Opaque Coolant</td>
+		<td div="In Game">Yes</td>
+		<td div="PCBS">1</td>
+		<td div="Imported to Game"></td>
+		<td div="Working in game"></td>
+		<td div="In Shop">Yes</td>
+		<td div="In Open Beta">Yes</td>
+		<td div="Start In Freebuild Inventory">Yes</td>
+		<td div="Start In Career Inventory">Yes</td>
+		<td div="Price">500</td>
+		<td div="SellPrice">100</td>
+		<td div="Level">25</td>
+		<td div="Percent Through">60</td>
+		<td div="Headline"></td>
+		<td div="Colour">Yellow</td>
+		<td div="Type">Opaque</td>
+		<td div="UV">Yes</td>
+		<td div="Asset Path">Prefabs/Coolant/OpaqueWater</td>
+		<td div="Notes"></td>
+	</tr>
+</table>
