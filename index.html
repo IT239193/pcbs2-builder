@@ -1366,12 +1366,21 @@ function parseHTML(fname, html, statusId, statusEl) {
   
   if (!type) {
     console.warn(`❌ Unknown type for ${fname}`);
+    if (statusEl) {
+      statusEl.className = 'file-tag loaded';
+      statusEl.innerHTML = `${fname} (No data)`;
+    }
+    Loaded[type] = true;
     return;
   }
   
   if (rows.length < 2) {
     console.log(`⚠️ No table in ${fname}, marking loaded`);
     Loaded[type] = true;
+    if (statusEl) {
+      statusEl.className = 'file-tag loaded';
+      statusEl.innerHTML = `${fname.split('.')[0]} (0)`;
+    }
     return;
   }
   
@@ -1396,9 +1405,13 @@ function parseHTML(fname, html, statusId, statusEl) {
     if (isNaN(price) || price === 0) continue;
     
     const baseName = get(cells, 'Part Name');
-    if (DB[type].has(baseName)) continue;
+    if (DB[type].has(baseName)) {
+      console.log(`Duplicate skipped: ${baseName} from ${fname}`);
+      continue;
+    }
     
-    const base = { 
+    // ✅ DÜZELTME: const → let base
+    let base = { 
       name: baseName, 
       price, 
       level: parseInt(get(cells, 'Level') || 0), 
@@ -1492,8 +1505,14 @@ function parseHTML(fname, html, statusId, statusEl) {
   }
   
   Loaded[type] = true;
-  console.log(`✅ ${fname}: ${newEntries} entries, type: ${type}`);
+  console.log(`✅ ${fname}: ${newEntries} entries loaded, type: ${type}`);
+  
+  if (statusEl) {
+    statusEl.className = 'file-tag loaded';
+    statusEl.innerHTML = `${fname.split('.')[0]} (${DB[type].size})`;
+  }
 }
+
 
 
 
