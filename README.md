@@ -1,4 +1,4 @@
-https://it239193.github.io/pcbs2-builder/        |  Using this link you can access to the website where the calculator is hosted. You can also access our open source raw data and code in our current github page.
+https://pcbs2builder.site/    |  Using this link you can access to the website where the calculator is hosted. You can also access our open source raw data and code in our current github page.
 
 # PC Building Simulator 2 Calculator
 
