@@ -1286,185 +1286,207 @@
     // Trigger on load
     window.addEventListener('DOMContentLoaded', initAutoFetcher);
 
-    async function initAutoFetcher() {
-        // Reset state
-        Object.keys(DB).forEach(k => DB[k].clear());
-        Object.keys(Loaded).forEach(k => Loaded[k] = false);
-
-        const statusContainer = document.getElementById('fileStatus');
-        statusContainer.innerHTML = ''; // Clear previous status
-
-        // List of expected files in the datas/ folder
-        // Mapping simple ID to likely filename
-const targets = [
-    { id: 'cpu', db: 'cpu', file: 'CPU.txt', label: 'CPU' },
-    { id: 'gpu', db: 'gpu', file: 'GPU.txt', label: 'GPU' },
-    { id: 'wc_gpu', db: 'gpu', file: 'Water Cooled GPU.txt', label: 'WC GPU' }, // Unique ID, shared DB
-    { id: 'ram', db: 'ram', file: 'RAM.txt', label: 'RAM' },
-    { id: 'mobo', db: 'mobo', file: 'Motherboard.txt', label: 'Motherboard' },
-    { id: 'cases', db: 'cases', file: 'Cases.txt', label: 'Cases' },
-    { id: 'cooler', db: 'cooler', file: 'Coolers.txt', label: 'Cooler' },
-    { id: 'psu', db: 'psu', file: 'PSU.txt', label: 'PSU' },
-    { id: 'fan', db: 'fan', file: 'Case Fans.txt', label: 'Fans' }
-];
-
-        // Create initial UI elements for status
-        const statusEls = {};
-        targets.forEach(t => {
-            const el = document.createElement('div');
-            el.className = 'file-tag loading';
-            el.innerHTML = `${t.label} ⏳`;
-            statusContainer.appendChild(el);
-            statusEls[t.id] = el;
-        });
-
-for (const t of targets) {
+async function initAutoFetcher() {
+  // Reset state
+  Object.keys(DB).forEach(k => DB[k].clear());
+  Object.keys(Loaded).forEach(k => Loaded[k] = false);
+  
+  const statusContainer = document.getElementById('fileStatus');
+  statusContainer.innerHTML = ''; // Clear previous status
+  
+  // List of expected files in the datas folder
+  const targets = [
+    {id: 'cpu', db: 'cpu', file: 'CPU.txt', label: 'CPU'},
+    {id: 'gpu', db: 'gpu', file: 'GPU.txt', label: 'GPU'},
+    {id: 'wcgpu', db: 'gpu', file: 'Water Cooled GPU.txt', label: 'WC GPU'},
+    {id: 'ram', db: 'ram', file: 'RAM.txt', label: 'RAM'},
+    {id: 'mobo', db: 'mobo', file: 'Motherboard.txt', label: 'Motherboard'},
+    {id: 'cases', db: 'cases', file: 'Cases.txt', label: 'Cases'},
+    {id: 'cooler', db: 'cooler', file: 'Coolers.txt', label: 'Cooler'},
+    {id: 'psu', db: 'psu', file: 'PSU.txt', label: 'PSU'},
+    {id: 'fan', db: 'fan', file: 'Case Fans.txt', label: 'Fans'}
+  ];
+  
+  // Create initial UI elements for status
+  const statusEls = {};
+  targets.forEach(t => {
+    const el = document.createElement('div');
+    el.className = 'file-tag loading';
+    el.innerHTML = `${t.label}...`;
+    statusContainer.appendChild(el);
+    statusEls[t.id] = el;
+  });
+  
+  // Load files sequentially
+  for (const t of targets) {
     try {
-        const response = await fetch(`datas/${t.file}`);
-        if (!response.ok) throw new Error(`Status ${response.status}`);
-        const text = await response.text();
-        
-        parseHTML(t.file, text);
-
-        // FIX: Use the specific DB key if provided, otherwise fallback to ID
-        const dbKey = t.db || t.id; 
-        const count = DB[dbKey].size;
-
-        // Update the correct UI element using the unique ID
-        statusEls[t.id].className = 'file-tag loaded';
-        statusEls[t.id].innerHTML = `${t.label} ✓ (${count})`;
-
+      const response = await fetch(`datas/${t.file}`);
+      if (!response.ok) throw new Error(`Status: ${response.status}`);
+      
+      const text = await response.text();
+      parseHTML(t.file, text);
+      
+      // Update the correct UI element using the unique ID
+      const dbKey = t.db || t.id;
+      const count = DB[dbKey].size;
+      statusEls[t.id].className = 'file-tag loaded';
+      statusEls[t.id].innerHTML = `${t.label} (${count})`;
+      
     } catch (err) {
-        console.warn(`Could not load ${t.file}:`, err);
-        statusEls[t.id].className = 'file-tag error';
-        statusEls[t.id].innerHTML = `${t.label} ❌ (Missing)`;
+      console.warn(`Could not load ${t.file}:`, err);
+      statusEls[t.id].className = 'file-tag error';
+      statusEls[t.id].innerHTML = `${t.label} Missing`;
     }
+  }
+  
+  updateStatus();
 }
-        }
+
 
     // ==================== FILE PARSING ====================
     function parseHTML(fname, html) {
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const rows = Array.from(doc.querySelectorAll('tr'));
-        if (rows.length < 2) return;
-
-        const headers = Array.from(rows[0].querySelectorAll('td')).map(td => td.getAttribute('div') || td.textContent.trim());
-        const idx = {};
-        headers.forEach((h, i) => idx[h] = i);
-        const get = (cells, key) => (idx[key] !== undefined && cells[idx[key]]) ? cells[idx[key]].textContent.trim() : '';
-
-        // Determine File Type based on name
-        let type = '';
-        const n = fname.toLowerCase();
-        
-        if (n.includes('cpu.txt')) type = 'cpu';
-        else if (n.includes('gpu')) type = 'gpu';
-        else if (n.includes('ram')) type = 'ram';
-        else if (n.includes('motherboard')) type = 'mobo';
-        else if (n.includes('cases')) type = 'cases';
-        else if (n.includes('cooler')) type = 'cooler';
-        else if (n.includes('psu') || n.includes('power supplies')) type = 'psu';
-        else if (n.includes('case fans') || n.includes('fans')) type = 'fan';
-
-        if (!type) return; 
-
-        for (let i = 1; i < rows.length; i++) {
-            const cells = rows[i].querySelectorAll('td');
-            if (!cells.length) continue;
-            
-            const price = parseFloat(get(cells, 'Price'));
-            if (isNaN(price) || price <= 0) continue;
-
-            const base = {
-                name: get(cells, 'Part Name'),
-                price: price,
-                level: parseInt(get(cells, 'Level')) || 0,
-                mfgr: get(cells, 'Manufacturer')
-            };
-
-            if (type === 'cpu') {
-                base.scoreTS = parseInt(get(cells, 'Basic CPU Score (TS)')) || 0;
-                base.scoreTSX = parseInt(get(cells, 'Basic CPU Score (TSX)')) || 0;
-                if (!base.scoreTS) base.scoreTS = base.scoreTSX;
-                base.socket = get(cells, 'CPU Socket');
-                base.series = get(cells, 'CPU Series');
-                base.watts = parseInt(get(cells, 'Wattage')) || 0;
-                base.multTS = parseFloat(get(cells, 'Mem Clock Multiplier (TS)')) || 0;
-                base.multTSX = parseFloat(get(cells, 'Mem Clock Multiplier (TSX)')) || 0;
-                base.defaultMem = parseInt(get(cells, 'Default Memory Speed')) || 2133;
-                base.memTypes = get(cells, 'Supported Memory Types');
-                base.cores = get(cells, 'Cores');
-                base.maxFreq = get(cells, 'Frequency'); 
-                base.baseFreq = get(cells, 'Base Frequency');
-                base.voltage = get(cells, 'Voltage');
-                base.maxVoltage = get(cells, 'Max Voltage');
-                base.canOC = get(cells, 'Can Overclock');
-                base.ocScore = get(cells, 'Overclock Basic CPU Score') || "-";
-                base.canDelid = get(cells, 'Can Delid');
-            } else if (type === 'gpu') {
-                base.score = parseInt(get(cells, 'Single GPU Graphics Score')) || 0;
-                base.score2 = parseInt(get(cells, 'Double GPU Graphics Score')) || 0;
-                base.score3 = parseInt(get(cells, 'Triple GPU Graphics Score')) || 0;
-                base.score4 = parseInt(get(cells, 'Quad GPU Graphics Score')) || 0;
-                base.watts = parseInt(get(cells, 'Wattage')) || 0;
-                base.vram = parseInt(get(cells, 'VRAM (GB)')) || 0;
-                base.length = parseInt(get(cells, 'Length')) || 0;
-                base.multi = get(cells, 'Double GPU supported') === 'Yes';
-                base.isWater = n.includes('water');
-                
-                base.baseCore = get(cells, 'Base Core Clock Freq');
-                base.baseMem = get(cells, 'Base Mem Clock Freq');
-                base.maxCore = get(cells, 'GPU max clock');
-                base.maxMem = get(cells, 'GPU max mem clock');
-                base.chipset = get(cells, 'Chipset');
-
-            } else if (type === 'ram') {
-                base.freq = parseInt(get(cells, 'Frequency')) || 0;
-                base.type = get(cells, 'Ram Type');
-                base.size = parseInt(get(cells, 'Size each (GB)')) || 0;
-                base.totalSize = parseInt(get(cells, 'Total Size (GB)')) || 0;
-                base.voltage = get(cells, 'Voltage');
-                base.maxVoltage = get(cells, 'Max Voltage');
-                base.maxSpeed = parseInt(get(cells, 'Max Speed')) || 0;
-            } else if (type === 'mobo') {
-                base.socket = get(cells, 'CPU Socket');
-                base.ramType = get(cells, 'Ram Type');
-                base.size = get(cells, 'Motherboard Size');
-            } else if (type === 'cases') {
-                base.size = get(cells, 'Case Size');
-                base.moboSizes = get(cells, 'Motherboard Size');
-                base.maxGpuLen = parseInt(get(cells, 'Max GPU length')) || 0;
-                base.maxCpuHeight = parseInt(get(cells, 'Max CPU Fan Height')) || 0;
-                base.maxPsuLen = parseInt(get(cells, 'Max PSU length')) || 0;
-                base.radSizes = get(cells, 'Max Radiator Sizes') || "";
-            } else if (type === 'cooler') {
-                base.type = get(cells, 'Type');
-                base.height = parseInt(get(cells, 'Height')) || 0;
-                base.size = parseInt(get(cells, 'Size')) || 0;
-                base.sockets = get(cells, 'CPU Socket List');
-                base.flow = parseFloat(get(cells, 'Air Flow')) || 0;
-            } else if (type === 'psu') {
-                base.watts = parseInt(get(cells, 'Wattage')) || 0;
-                base.length = parseInt(get(cells, 'Length')) || 0;
-            } else if (type === 'fan') {
-                base.size = parseInt(get(cells, 'Size')) || 0;
-                base.flow = parseFloat(get(cells, 'Air Flow')) || 0;
-            }
-
-            DB[type].set(base.name, base);
-        }
-
-        Loaded[type] = true;
-        updateStatus();
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const rows = Array.from(doc.querySelectorAll('tr'));
+  
+  if (rows.length < 2) return;
+  
+  const headers = Array.from(rows[0].querySelectorAll('td')).map(td => 
+    td.getAttribute('div') || td.textContent.trim()
+  );
+  
+  const idx = {};
+  headers.forEach((h, i) => idx[h] = i);
+  
+  const get = (cells, key) => {
+    const i = idx[key];
+    return i !== undefined ? cells[i]?.textContent.trim() : '';
+  };
+  
+  // Determine File Type based on name
+  let type;
+  const n = fname.toLowerCase();
+  if (n.includes('cpu.txt')) type = 'cpu';
+  else if (n.includes('gpu')) type = 'gpu';
+  else if (n.includes('ram')) type = 'ram';
+  else if (n.includes('motherboard')) type = 'mobo';
+  else if (n.includes('cases')) type = 'cases';
+  else if (n.includes('cooler')) type = 'cooler';
+  else if (n.includes('psu') || n.includes('power supplies')) type = 'psu';
+  else if (n.includes('case fans') || n.includes('fans')) type = 'fan';
+  
+  if (!type) return;
+  
+  let newEntries = 0;
+  
+  for (let i = 1; i < rows.length; i++) {
+    const cells = rows[i].querySelectorAll('td');
+    if (!cells.length) continue;
+    
+    const price = parseFloat(get(cells, 'Price'));
+    if (isNaN(price)) price = 0;
+    if (price === 0) continue;
+    
+    const baseName = get(cells, 'Part Name');
+    
+    // DUPLICATE KONTROLÜ - CRITICAL FIX
+    if (DB[type].has(baseName)) {
+      console.log(`Duplicate skipped: ${baseName} from ${fname}`);
+      continue;
     }
-
-    function updateStatus() {
-        if (Loaded.cpu && Loaded.gpu && Loaded.mobo && Loaded.ram && Loaded.cases) {
-            document.querySelector('.controls-wrapper').classList.add('active');
-            refreshDropdowns();
-        }
+    
+    const base = {
+      name: baseName,
+      price: price,
+      level: parseInt(get(cells, 'Level') || 0),
+      mfgr: get(cells, 'Manufacturer')
+    };
+    
+    if (type === 'cpu') {
+      base.scoreTS = parseInt(get(cells, 'Basic CPU Score TS') || 0);
+      base.scoreTSX = parseInt(get(cells, 'Basic CPU Score TSX') || 0);
+      if (!base.scoreTS) base.scoreTS = base.scoreTSX;
+      base.socket = get(cells, 'CPU Socket');
+      base.series = get(cells, 'CPU Series');
+      base.watts = parseInt(get(cells, 'Wattage') || 0);
+      base.multTS = parseFloat(get(cells, 'Mem Clock Multiplier TS') || 0);
+      base.multTSX = parseFloat(get(cells, 'Mem Clock Multiplier TSX') || 0);
+      base.defaultMem = parseInt(get(cells, 'Default Memory Speed') || 2133);
+      base.memTypes = get(cells, 'Supported Memory Types');
+      base.cores = get(cells, 'Cores');
+      base.maxFreq = get(cells, 'Frequency');
+      base.baseFreq = get(cells, 'Base Frequency');
+      base.voltage = get(cells, 'Voltage');
+      base.maxVoltage = get(cells, 'Max Voltage');
+      base.canOC = get(cells, 'Can Overclock');
+      base.ocScore = get(cells, 'Overclock Basic CPU Score');
+      base.canDelid = get(cells, 'Can Delid');
+    } else if (type === 'gpu') {
+      base.score = parseInt(get(cells, 'Single GPU Graphics Score') || 0);
+      base.score2 = parseInt(get(cells, 'Double GPU Graphics Score') || 0);
+      base.score3 = parseInt(get(cells, 'Triple GPU Graphics Score') || 0);
+      base.score4 = parseInt(get(cells, 'Quad GPU Graphics Score') || 0);
+      base.watts = parseInt(get(cells, 'Wattage') || 0);
+      base.vram = parseInt(get(cells, 'VRAM GB') || 0);
+      base.length = parseInt(get(cells, 'Length') || 0);
+      base.multi = get(cells, 'Double GPU supported') === 'Yes';
+      base.isWater = n.includes('water');
+      base.baseCore = get(cells, 'Base Core Clock Freq');
+      base.baseMem = get(cells, 'Base Mem Clock Freq');
+      base.maxCore = get(cells, 'GPU max clock');
+      base.maxMem = get(cells, 'GPU max mem clock');
+      base.chipset = get(cells, 'Chipset');
+    } else if (type === 'ram') {
+      base.freq = parseInt(get(cells, 'Frequency') || 0);
+      base.type = get(cells, 'Ram Type');
+      base.size = parseInt(get(cells, 'Size each GB') || 0);
+      base.totalSize = parseInt(get(cells, 'Total Size GB') || 0);
+      base.voltage = get(cells, 'Voltage');
+      base.maxVoltage = get(cells, 'Max Voltage');
+      base.maxSpeed = parseInt(get(cells, 'Max Speed') || 0);
+    } else if (type === 'mobo') {
+      base.socket = get(cells, 'CPU Socket');
+      base.ramType = get(cells, 'Ram Type');
+      base.size = get(cells, 'Motherboard Size');
+    } else if (type === 'cases') {
+      base.size = get(cells, 'Case Size');
+      base.moboSizes = get(cells, 'Motherboard Size');
+      base.maxGpuLen = parseInt(get(cells, 'Max GPU length') || 0);
+      base.maxCpuHeight = parseInt(get(cells, 'Max CPU Fan Height') || 0);
+      base.maxPsuLen = parseInt(get(cells, 'Max PSU length') || 0);
+      base.radSizes = get(cells, 'Max Radiator Sizes');
+    } else if (type === 'cooler') {
+      base.type = get(cells, 'Type');
+      base.height = parseInt(get(cells, 'Height') || 0);
+      base.size = parseInt(get(cells, 'Size') || 0);
+      base.sockets = get(cells, 'CPU Socket List');
+      base.flow = parseFloat(get(cells, 'Air Flow') || 0);
+    } else if (type === 'psu') {
+      base.watts = parseInt(get(cells, 'Wattage') || 0);
+      base.length = parseInt(get(cells, 'Length') || 0);
+    } else if (type === 'fan') {
+      base.size = parseInt(get(cells, 'Size') || 0);
+      base.flow = parseFloat(get(cells, 'Air Flow') || 0);
     }
+    
+    DB[type].set(base.name, base);
+    newEntries++;
+  }
+  
+  // LOADED status only at the end
+  if (newEntries > 0) {
+    Loaded[type] = true;
+  }
+}
+
+
+function updateStatus() {
+  if (Loaded.cpu && Loaded.gpu && Loaded.mobo && Loaded.ram && Loaded.cases) {
+    document.querySelector('.controls-wrapper').classList.add('active');
+    refreshDropdowns();
+  }
+}
+
 
     // ==================== REAL-TIME LEVEL FILTERING ====================
     function refreshDropdowns() {
