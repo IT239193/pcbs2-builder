@@ -1,3 +1,5 @@
+https://it239193.github.io/pcbs2-builder/
+
 # PC Building Simulator 2 Calculator
 
 This project started from a simple idea — planning builds in PC Building Simulator 2 shouldn’t take guessing or switching tabs a hundred times. The calculator helps you figure out total cost, power draw, cooling, and part compatibility before you start building in-game. It runs entirely in your browser and doesn’t use any frameworks or external services.
@@ -18,6 +20,3 @@ Everything runs with plain HTML, CSS, and JavaScript.
 No backend. No database servers. No dependencies.  
 
 The part data comes from simple JSON files that you can edit yourself. If you want to tweak values, add new parts, or change categories, go ahead — nothing’s hidden or locked behind scripts..
-
-
-https://it239193.github.io/pcbs2-builder/
