@@ -2000,8 +2000,9 @@
             const buildIdx = start + i;
 
            // Style the "4x", "3x" text to be larger and heavier
+// Şununla değiştir:
 const gpuCountStr = b.gpuCnt > 1 
-    ? `<span style="font-size: 1.5em; font-weight: 900; color: #fff; vertical-align: middle; margin-right: 5px;">${b.gpuCnt}x</span>` 
+    ? `${b.gpuCnt}x ` 
     : '';
             const gpuEmoji = b.gpu.isWater ? '💧' : '💨';
 
@@ -2096,7 +2097,7 @@ const gpuCountStr = b.gpuCnt > 1
                 <div class="card-body">
                     <div class="part-row ${gpuClass} text-colored">
                         <div class="part-header">
-                            <span class="part-label">${gpuCountStr}GPU</span>
+                            <span class="part-label" style="font-size: 1.5em; font-weight: 900;">${gpuCountStr}GPU</span>
                             <span class="part-price">${formatCurrency(b.gpu.price * b.gpuCnt)}</span>
                         </div>
                         <div class="part-name">${b.gpu.name}</div>
