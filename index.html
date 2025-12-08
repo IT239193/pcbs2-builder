@@ -1999,7 +1999,10 @@
             const cpuClass = getBrandClass(b.cpu);
             const buildIdx = start + i;
 
-           const gpuCountStr = b.gpuCnt > 1 ? `${b.gpuCnt}x ` : '';
+           // Style the "4x", "3x" text to be larger and heavier
+const gpuCountStr = b.gpuCnt > 1 
+    ? `<span style="font-size: 1.5em; font-weight: 900; color: #fff; vertical-align: middle; margin-right: 5px;">${b.gpuCnt}x</span>` 
+    : '';
             const gpuEmoji = b.gpu.isWater ? '💧' : '💨';
 
             // Calculate the specific score used for this count
