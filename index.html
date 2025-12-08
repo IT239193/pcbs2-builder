@@ -1292,9 +1292,8 @@ async function initAutoFetcher() {
   Object.keys(Loaded).forEach(k => Loaded[k] = false);
   
   const statusContainer = document.getElementById('fileStatus');
-  statusContainer.innerHTML = ''; // Clear previous status
+  statusContainer.innerHTML = '';
   
-  // List of expected files in the datas folder
   const targets = [
     {id: 'cpu', db: 'cpu', file: 'CPU.txt', label: 'CPU'},
     {id: 'gpu', db: 'gpu', file: 'GPU.txt', label: 'GPU'},
@@ -1307,7 +1306,6 @@ async function initAutoFetcher() {
     {id: 'fan', db: 'fan', file: 'Case Fans.txt', label: 'Fans'}
   ];
   
-  // Create initial UI elements for status
   const statusEls = {};
   targets.forEach(t => {
     const el = document.createElement('div');
@@ -1317,18 +1315,16 @@ async function initAutoFetcher() {
     statusEls[t.id] = el;
   });
   
-  // Load files sequentially
   for (const t of targets) {
     try {
       const response = await fetch(`datas/${t.file}`);
       if (!response.ok) throw new Error(`Status: ${response.status}`);
       
       const text = await response.text();
-      parseHTML(t.file, text);
+      await parseHTML(t.file, text);
       
-      // Update the correct UI element using the unique ID
       const dbKey = t.db || t.id;
-      const count = DB[dbKey].size;
+      const count = DB[dbKey]?.size || 0;
       statusEls[t.id].className = 'file-tag loaded';
       statusEls[t.id].innerHTML = `${t.label} (${count})`;
       
@@ -1343,13 +1339,30 @@ async function initAutoFetcher() {
 }
 
 
+
     // ==================== FILE PARSING ====================
     function parseHTML(fname, html) {
   const parser = new DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
   const rows = Array.from(doc.querySelectorAll('tr'));
   
-  if (rows.length < 2) return;
+  if (rows.length < 2) {
+    console.log(`No table data in ${fname}`);
+    // Type belirle ve loaded set et
+    let type;
+    const n = fname.toLowerCase();
+    if (n.includes('cpu.txt')) type = 'cpu';
+    else if (n.includes('gpu')) type = 'gpu';
+    else if (n.includes('ram')) type = 'ram';
+    else if (n.includes('motherboard')) type = 'mobo';
+    else if (n.includes('cases')) type = 'cases';
+    else if (n.includes('cooler')) type = 'cooler';
+    else if (n.includes('psu') || n.includes('power supplies')) type = 'psu';
+    else if (n.includes('case fans') || n.includes('fans')) type = 'fan';
+    
+    if (type) Loaded[type] = true;
+    return;
+  }
   
   const headers = Array.from(rows[0].querySelectorAll('td')).map(td => 
     td.getAttribute('div') || td.textContent.trim()
@@ -1363,7 +1376,6 @@ async function initAutoFetcher() {
     return i !== undefined ? cells[i]?.textContent.trim() : '';
   };
   
-  // Determine File Type based on name
   let type;
   const n = fname.toLowerCase();
   if (n.includes('cpu.txt')) type = 'cpu';
@@ -1378,6 +1390,7 @@ async function initAutoFetcher() {
   if (!type) return;
   
   let newEntries = 0;
+  let hasValidData = false;
   
   for (let i = 1; i < rows.length; i++) {
     const cells = rows[i].querySelectorAll('td');
@@ -1387,9 +1400,10 @@ async function initAutoFetcher() {
     if (isNaN(price)) price = 0;
     if (price === 0) continue;
     
+    hasValidData = true;
+    
     const baseName = get(cells, 'Part Name');
     
-    // DUPLICATE KONTROLÜ - CRITICAL FIX
     if (DB[type].has(baseName)) {
       console.log(`Duplicate skipped: ${baseName} from ${fname}`);
       continue;
@@ -1473,11 +1487,10 @@ async function initAutoFetcher() {
     newEntries++;
   }
   
-  // LOADED status only at the end
-  if (newEntries > 0) {
-    Loaded[type] = true;
-  }
+  Loaded[type] = true;
+  console.log(`${fname}: ${newEntries} entries loaded, type: ${type}`);
 }
+
 
 
 function updateStatus() {
