@@ -41,7 +41,7 @@
             padding: 20px;
             font-size: 14px;
             overflow-y: scroll;
- zoom: 90%;
+            zoom: 90%;
         }
 
         .container { max-width: 1800px; margin: 0 auto; padding-bottom: 100px; }
@@ -937,7 +937,6 @@
 
     <div class="controls-wrapper" id="controls">
         <div class="section-header">1. Benchmarking & Goals</div>
-
         <div class="benchmark-toggle">
             <button id="btnTS" class="mode-btn active" onclick="setMode('TS')">Time Spy (Standard)</button>
             <button id="btnTSX" class="mode-btn" onclick="setMode('TSX')">Time Spy Extreme (4K)</button>
@@ -962,8 +961,8 @@
                 </select>
             </div>
             <div class="input-group">
-                <label>Max Player Level</label>
-                <input type="number" id="level" value="30" min="1">
+                <label>Career Level</label>
+                <input type="number" id="level" value="30" min="1" oninput="refreshDropdowns()">
             </div>
             <div class="input-group">
                 <label>Max Results Pool</label>
@@ -1029,7 +1028,7 @@
                 <label for="incPsu">PSU</label>
             </div>
             <div class="checkbox-container">
-                <input type="checkbox" id="incFans">
+                <input type="checkbox" id="incFans" checked>
                 <label for="incFans">Case Fans (x1)</label>
             </div>
         </div>
@@ -1401,7 +1400,6 @@
                 base.canOC = get(cells, 'Can Overclock');
                 base.ocScore = get(cells, 'Overclock Basic CPU Score') || "-";
                 base.canDelid = get(cells, 'Can Delid');
-
             } else if (type === 'gpu') {
                 base.score = parseInt(get(cells, 'Single GPU Graphics Score')) || 0;
                 base.score2 = parseInt(get(cells, 'Double GPU Graphics Score')) || 0;
@@ -1460,24 +1458,51 @@
     }
 
     function updateStatus() {
-        if (Loaded.cpu && Loaded.gpu) {
+        if (Loaded.cpu && Loaded.gpu && Loaded.mobo && Loaded.ram && Loaded.cases) {
             document.querySelector('.controls-wrapper').classList.add('active');
+            refreshDropdowns();
+        }
+    }
 
-            const cpus = Array.from(DB.cpu.values());
-            const gpus = Array.from(DB.gpu.values());
-            const rams = Array.from(DB.ram.values());
-            const mobos = Array.from(DB.mobo.values());
-            const cases = Array.from(DB.cases.values());
+    // ==================== REAL-TIME LEVEL FILTERING ====================
+    function refreshDropdowns() {
+        if (!Loaded.cpu) return;
 
-            populateMultiSelect('socket', [...new Set(cpus.map(c => c.socket).filter(s => s))].sort(), 'socketListContainer');
-            populateMultiSelect('cpuNames', cpus.map(c => c.name).sort(), 'cpuListContainer');
-            populateMultiSelect('vram', [...new Set(gpus.map(g => g.vram).filter(v => v))].sort((a,b) => a-b), 'vramListContainer');
-            populateMultiSelect('length', [...new Set(gpus.map(g => g.length).filter(l => l))].sort((a,b) => a-b), 'lengthListContainer');
-            populateMultiSelect('gpuNames', [...new Set(gpus.map(g => g.name))].sort(), 'gpuListContainer');
-            
-            if(Loaded.ram) populateMultiSelect('ramNames', rams.map(r => r.name).sort(), 'ramListContainer');
-            if(Loaded.mobo) populateMultiSelect('moboNames', mobos.map(m => m.name).sort(), 'moboListContainer');
-            if(Loaded.cases) populateMultiSelect('caseNames', cases.map(c => c.name).sort(), 'caseListContainer');
+        const currentLvl = parseInt(document.getElementById('level').value) || 30;
+
+        // Filter Databases by Level
+        const cpus = Array.from(DB.cpu.values()).filter(c => c.level <= currentLvl);
+        const gpus = Array.from(DB.gpu.values()).filter(g => g.level <= currentLvl);
+        const rams = Array.from(DB.ram.values()).filter(r => r.level <= currentLvl);
+        const mobos = Array.from(DB.mobo.values()).filter(m => m.level <= currentLvl);
+        const cases = Array.from(DB.cases.values()).filter(c => c.level <= currentLvl);
+
+        // Populate Dropdowns with Filtered Data
+        populateMultiSelect('socket', [...new Set(cpus.map(c => c.socket).filter(s => s))].sort(), 'socketListContainer');
+        populateMultiSelect('cpuNames', cpus.map(c => c.name).sort(), 'cpuListContainer');
+        populateMultiSelect('vram', [...new Set(gpus.map(g => g.vram).filter(v => v))].sort((a,b) => a-b), 'vramListContainer');
+        populateMultiSelect('length', [...new Set(gpus.map(g => g.length).filter(l => l))].sort((a,b) => a-b), 'lengthListContainer');
+        populateMultiSelect('gpuNames', [...new Set(gpus.map(g => g.name))].sort(), 'gpuListContainer');
+        populateMultiSelect('moboNames', mobos.map(m => m.name).sort(), 'moboListContainer');
+        populateMultiSelect('caseNames', cases.map(c => c.name).sort(), 'caseListContainer');
+        populateMultiSelect('ramNames', rams.map(r => r.name).sort(), 'ramListContainer');
+
+        // Dynamic Stick Count Logic: 
+        // If ALL available motherboards are Mini-ITX (2 slots), disable/hide 4 sticks.
+        // Otherwise allow 4 sticks.
+        const stickSelect = document.getElementById('ramSticks');
+        const fourStickOption = stickSelect.querySelector('option[value="4"]');
+        
+        // Assumption: Mini-ITX has 2 slots, others have 4.
+        const canSupport4Sticks = mobos.some(m => m.size !== 'Mini-ITX');
+        
+        if (canSupport4Sticks) {
+            fourStickOption.disabled = false;
+            fourStickOption.innerText = "4 Sticks";
+        } else {
+            fourStickOption.disabled = true;
+            fourStickOption.innerText = "4 Sticks (Not Available at Level " + currentLvl + ")";
+            if(stickSelect.value == "4") stickSelect.value = "2";
         }
     }
 
@@ -1503,6 +1528,7 @@
         options.forEach((opt, index) => {
             const div = document.createElement('div');
             div.className = 'multi-option';
+            if (selectedOptions[category].has(opt)) div.classList.add('selected'); // Preserve selection state visually
             div.dataset.value = opt;
             div.dataset.index = index; 
             
@@ -1524,6 +1550,7 @@
             div.onclick = (e) => toggleOption(category, opt, div, e);
             container.appendChild(div);
         });
+        updateDisplayLabel(category);
     }
 
     function toggleOption(category, value, element, event) {
@@ -1742,7 +1769,6 @@
             if (!baseScore) continue;
 
             let ramTiers = [];
-
             if (useRam) {
                 const isDDR5 = cpu.memTypes.includes('DDR5');
                 let compatibleRam = allRams.filter(r => 
@@ -1790,6 +1816,9 @@
                         );
                         if (!found) continue; 
                         mobo = found; 
+                        
+                        // Enforce stick count limitation by mobo size if relevant
+                        if (sticks === 4 && mobo.size === 'Mini-ITX') continue;
                     }
 
                     for (const gpu of validGpu) {
@@ -1855,7 +1884,7 @@
                             cpu, gpu, gpuCnt, ram, ramSticks: sticks, mobo,
                             case: bCase, cooler, psu, fan
                         });
-
+                        
                         if (builds.length >= maxPoolSize) break;
                     }
                 }
@@ -2022,7 +2051,6 @@
                     ${interactiveHTML}
                 </div>
             </div>`;
-
             list.innerHTML += html;
         });
 
@@ -2132,7 +2160,6 @@
 
             let scoreA = (valA / a.price) || 0;
             let scoreB = (valB / b.price) || 0;
-
             if (sortMode === 'val_desc') return scoreB - scoreA; 
             if (sortMode === 'val_asc') return scoreA - scoreB; 
             
