@@ -17,4 +17,4 @@ You pick parts, and the calculator keeps track of how everything adds up. Power,
 Everything runs with plain HTML, CSS, and JavaScript.  
 No backend. No database servers. No dependencies.  
 
-The part data comes from simple JSON files that you can edit yourself. If you want to tweak values, add new parts, or change categories, go ahead — nothing’s hidden or locked behind scripts.
+The part data comes from simple JSON files that you can edit yourself. If you want to tweak values, add new parts, or change categories, go ahead — nothing’s hidden or locked behind scripts..
