@@ -1026,11 +1026,6 @@
             }
         }
 
-
-#dataView { position: relative !important; z-index: 1 !important; }
-#resultsList { position: static !important; z-index: auto !important; }
-
-
     </style>
 </head>
 <body>
@@ -1478,7 +1473,7 @@
     </div>
 
     <!-- DATA VIEWER VIEW -->
-    <div id="dataView" class="none">
+    <div id="dataView" style="display: none;">
         <div class="viewer-tabs">
             <button class="v-tab-btn active" onclick="switchDataTab('gpu')">GPUs</button>
             <button class="v-tab-btn" onclick="switchDataTab('cpu')">CPUs</button>
@@ -1827,29 +1822,32 @@
         }
     }
 
-   
-
-function toggleView() {
+    function toggleView() {
     const calcView = document.getElementById('calculatorView');
     const dataView = document.getElementById('dataView');
     const btn = document.getElementById('mainViewToggle');
-    
+
     if (dataView.style.display === 'none' || !dataView.style.display) {
+        // SWITCHING TO DATA VIEW
         calcView.style.display = 'none';
         dataView.style.display = 'block';
-        btn.innerHTML = '<span style="font-size:1.4em;display:block;margin-bottom:5px;">Calculator</span><span style="font-size:1.1em;font-weight:normal;color:#ccc;">click to swap back to calculator</span>';
+        
+        // Set button text to point back to Calculator
+        btn.innerHTML = `<span style="font-size:1.4em; display:block; margin-bottom:5px;">Return to Calculator</span><span style="font-size:1.1em; font-weight:normal; color:#ccc;">Click to go back to the build calculator</span>`;
+        
         renderDataList();
     } else {
+        // SWITCHING TO CALCULATOR VIEW
         calcView.style.display = 'block';
         dataView.style.display = 'none';
-        const resultsList = document.getElementById('resultsList');
-        resultsList.style.display = 'block';
-        resultsList.innerHTML = '';
-        btn.innerHTML = '<span style="font-size:1.4em;display:block;margin-bottom:5px;">Data Viewer</span><span style="font-size:1.1em;font-weight:normal;color:#ccc;">click this box to swap to the data info page where u can know right OC values, more info about parts, and countless more stuff</span>';
+        
+        // Set button text to point to Data Viewer
+        btn.innerHTML = `
+            <span style="font-size:1.4em; display:block; margin-bottom:5px;">Data Viewer</span>
+            <span style="font-size:1.1em; font-weight:normal; color:#ccc;">click this box to swap to the data info page where u can know right OC values, more info about parts, and countless more stuff</span>
+        `;
     }
 }
-
-
 
     function switchDataTab(tab) {
         currentDataTab = tab;
