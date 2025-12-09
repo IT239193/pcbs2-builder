@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1469,13 +1468,22 @@
         }
     });
 
-    // ==================== MODE SELECTION ====================
-    function setMode(m) {
-        currentMode = m;
-        document.getElementById('btnTS').classList.toggle('active', m === 'TS');
-        document.getElementById('btnTSX').classList.toggle('active', m === 'TSX');
-        if(Loaded.cpu && Loaded.gpu) generateBuilds();
+function setMode(m) {
+    currentMode = m;
+    document.getElementById('btnTS').classList.toggle('active', m === 'TS');
+    document.getElementById('btnTSX').classList.toggle('active', m === 'TSX');
+    
+    // TSX Override: Force disable CPU Overclock
+    if (m === 'TSX') {
+        const ocCheckbox = document.getElementById('useOC');
+        ocCheckbox.checked = false;
+        ocCheckbox.disabled = true;
+    } else {
+        document.getElementById('useOC').disabled = false;
     }
+    
+    if(Loaded.cpu && Loaded.gpu) generateBuilds();
+}
 
     function dismissWarning() {
         document.getElementById('perfWarning').classList.add('hidden');
@@ -1518,15 +1526,24 @@
             }
         }
 
-        // All done
+// All done
         loadingText.innerText = "Processing Data...";
         setTimeout(() => {
              document.getElementById('loadingOverlay').style.opacity = '0';
              setTimeout(() => {
                  document.getElementById('loadingOverlay').style.display = 'none';
+                 
+                 // Initialize OC checkbox state based on current mode
+                 if (currentMode === 'TSX') {
+                     const ocCheckbox = document.getElementById('useOC');
+                     ocCheckbox.checked = false;
+                     ocCheckbox.disabled = true;
+                 }
              }, 500);
         }, 500);
     }
+
+
 
     // ==================== FILE PARSING ====================
     function parseHTML(fname, html) {
@@ -2434,10 +2451,18 @@
                     let ramCost = 0;
                     if (ram) ramCost = ram.price * sticks;
     
-                    // IMPLEMENTATION: Use LIVE score logic
-                    const liveCpuScore = calculateCpuScore(cpu, ram, sticks, currentMode, useOC);
-                    
-                    if (liveCpuScore === 0) continue; // Skip invalid configs
+                    // IMPLEMENTATION: Use LIVE score logic (but TSX uses static scores)
+let liveCpuScore;
+
+if (currentMode === 'TSX') {
+    // TSX Mode: Always use static base score, ignore RAM/OC
+    liveCpuScore = cpu.scoreTSX;
+} else {
+    // TS Mode: Use live calculation
+    liveCpuScore = calculateCpuScore(cpu, ram, sticks, currentMode, useOC);
+}
+
+if (liveCpuScore === 0) continue; // Skip invalid configs
 
                     let mobo = null;
                     if (useMobo) {
@@ -2657,28 +2682,34 @@
             `;
             
             // Display Live Score with new formatting logic based on OC Toggle
-            const displayCpuScore = b.liveCpuScore;
-            const baseScoreVal = currentMode === 'TS' ? b.cpu.scoreTS : b.cpu.scoreTSX;
-            const ocStatus = useOC ? "(OC Enabled)" : "(Base)";
-            
-            let cpuSpecs = "";
-            
-            if (useOC) {
-                // If Overclocked is Checked: Show OC Score first
-                cpuSpecs = `
-                    OC Score: ${formatNumber(displayCpuScore)} | Base Score: ${formatNumber(baseScoreVal)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
-                    ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
-                    ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
-                `;
-            } else {
-                // Default: Base Score first
-                const ocText = b.cpu.canOC === 'Yes' ? `OC Potential: ${b.cpu.ocScore}` : 'Locked';
-                cpuSpecs = `
-                    Base Score: ${formatNumber(displayCpuScore)} | ${ocText} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
-                    ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
-                    ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
-                `;
-            }
+const displayCpuScore = b.liveCpuScore;
+const baseScoreVal = currentMode === 'TS' ? b.cpu.scoreTS : b.cpu.scoreTSX;
+
+let cpuSpecs = "";
+
+if (currentMode === 'TSX') {
+    // TSX Mode: Only show Base Score (TSX), no OC references
+    cpuSpecs = `
+        Base Score (TSX): ${formatNumber(displayCpuScore)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
+        ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
+        ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
+    `;
+} else if (useOC) {
+    // TS Mode with OC Enabled: Show OC Score first
+    cpuSpecs = `
+        OC Score: ${formatNumber(displayCpuScore)} | Base Score: ${formatNumber(baseScoreVal)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
+        ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
+        ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
+    `;
+} else {
+    // TS Mode, Base: Show Base Score first with OC Potential
+    const ocText = b.cpu.canOC === 'Yes' ? `OC Potential: ${b.cpu.ocScore}` : 'Locked';
+    cpuSpecs = `
+        Base Score: ${formatNumber(displayCpuScore)} | ${ocText} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
+        ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
+        ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
+    `;
+}
 
             let ramHTML = '';
             if (b.ram) {
