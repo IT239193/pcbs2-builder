@@ -1469,11 +1469,10 @@
                 <div class="score-range-text" id="scoreRangeDisplay"></div>
             </div>
             <div class="sort-controls">
-<div class="checkbox-container" style="margin-right: 15px;">
-    <input type="checkbox" id="useOC" onchange="generateBuilds()">
-    <label for="useOC">Use OC</label>
-</div>
-
+               <div class="checkbox-container" style="margin-right: 15px; width: auto;">
+                    <input type="checkbox" id="useOC" onchange="generateBuilds()">
+                    <label for="useOC">Use CPU overclocked values</label>
+                </div>
 
                 <label>Sort By:</label>
                 <select id="mainSort" class="sort-select" onchange="renderPage(1)">
@@ -2780,9 +2779,7 @@
                     ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
                 `;
             } else {
-
-                          const ocText = b.cpu.canOC === "Yes" ? `OC Potential: ${b.cpu.ocScore}` : "Locked";
-                
+                const ocText = b.cpu.canOC === 'Yes' ? `OC Potential: ${b.cpu.ocScore}` : 'Locked';
                 cpuSpecs = `
                     Base Score: ${formatNumber(displayCpuScore)} | ${ocText} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
                     ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
