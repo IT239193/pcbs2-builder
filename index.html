@@ -1685,7 +1685,15 @@
         const headers = Array.from(rows[0].querySelectorAll('td')).map(td => td.getAttribute('div') || td.textContent.trim());
         const idx = {};
         headers.forEach((h, i) => idx[h] = i);
+        
+        // Helper to safely clean and parse numbers
         const get = (cells, key) => (idx[key] !== undefined && cells[idx[key]]) ? cells[idx[key]].textContent.trim() : '';
+        const getNum = (cells, key) => {
+            const val = get(cells, key);
+            if (!val) return 0;
+            // Remove 'MHz', 'GB', 'W', commas, etc
+            return parseFloat(val.replace(/[^\d.-]/g, '')) || 0;
+        };
 
         let type = '';
         const n = fname.toLowerCase();
@@ -1708,127 +1716,130 @@
             const cells = rows[i].querySelectorAll('td');
             if (!cells.length) continue;
             
-            const price = parseFloat(get(cells, 'Price'));
-            if (isNaN(price) || price <= 0) continue;
+            const price = getNum(cells, 'Price');
+            if (price <= 0) continue;
 
             const base = {
                 name: get(cells, 'Part Name'),
                 price: price,
-                sellPrice: get(cells, 'Sell Price') || "0", // NEW: Captured for Data Viewer
+                sellPrice: get(cells, 'Sell Price') || "0",
                 level: parseInt(get(cells, 'Level')) || 0,
                 mfgr: get(cells, 'Manufacturer')
             };
 
             if (type === 'cpu') {
-                base.scoreTS = parseInt(get(cells, 'Basic CPU Score (TS)')) || 0;
-                base.scoreTSX = parseInt(get(cells, 'Basic CPU Score (TSX)')) || 0;
+                base.scoreTS = getNum(cells, 'Basic CPU Score (TS)');
+                base.scoreTSX = getNum(cells, 'Basic CPU Score (TSX)');
                 if (!base.scoreTS) base.scoreTS = base.scoreTSX;
                 base.socket = get(cells, 'CPU Socket');
-                base.watts = parseInt(get(cells, 'Wattage')) || 0;
+                base.watts = getNum(cells, 'Wattage');
                 
-                // Calc Params
-                base.coreClockMultTS = parseFloat(get(cells, 'Core Clock Multiplier (TS)')) || 0;
-                base.multTS = parseFloat(get(cells, 'Mem Clock Multiplier (TS)')) || 0;
-                base.memChannelMultTS = parseFloat(get(cells, 'Mem Channels Multiplier (TS)')) || 0;
-                base.finalAdjTS = parseFloat(get(cells, 'Final Adjustment (TS)')) || 0;
-                base.coreClockMultTSX = parseFloat(get(cells, 'Core Clock Multiplier (TSX)')) || 0;
-                base.multTSX = parseFloat(get(cells, 'Mem Clock Multiplier (TSX)')) || 0;   
-                base.memChannelMultTSX = parseFloat(get(cells, 'Mem Channels Multiplier (TSX)')) || 0;
-                base.finalAdjTSX = parseFloat(get(cells, 'Final Adjustment (TSX)')) || 0;
+                base.coreClockMultTS = getNum(cells, 'Core Clock Multiplier (TS)');
+                base.multTS = getNum(cells, 'Mem Clock Multiplier (TS)');
+                base.memChannelMultTS = getNum(cells, 'Mem Channels Multiplier (TS)');
+                base.finalAdjTS = getNum(cells, 'Final Adjustment (TS)');
+                base.coreClockMultTSX = getNum(cells, 'Core Clock Multiplier (TSX)');
+                base.multTSX = getNum(cells, 'Mem Clock Multiplier (TSX)');   
+                base.memChannelMultTSX = getNum(cells, 'Mem Channels Multiplier (TSX)');
+                base.finalAdjTSX = getNum(cells, 'Final Adjustment (TSX)');
 
-                base.maxMemChannels = parseInt(get(cells, 'Max Memory Channels')) || 2;
-                base.maxMemChannelsRaw = get(cells, 'Max Memory Channels'); // Store text for viewer
-                base.defaultMem = parseInt(get(cells, 'Default Memory Speed')) || 2133;
+                base.maxMemChannels = getNum(cells, 'Max Memory Channels') || 2;
+                base.maxMemChannelsRaw = get(cells, 'Max Memory Channels');
+                base.defaultMem = getNum(cells, 'Default Memory Speed') || 2133;
                 base.memTypes = get(cells, 'Supported Memory Types');
                 base.cores = get(cells, 'Cores');
                 
-                // Frequency Parsing
-                base.maxFreq = get(cells, 'Frequency'); // Usually 'Frequency' col is Max or Mid
-                base.freqMid = get(cells, 'Frequency'); // Capture specifically for viewer
-                base.baseFreq = get(cells, 'Base Frequency');
+                // === FREQUENCY PARSING FIX ===
+                // We capture all 3 potential frequency columns explicitly
+                base.stdFreq = getNum(cells, 'Frequency');       // The 4200 value
+                base.baseFreq = getNum(cells, 'Base Frequency'); // The 2800 value
+                base.maxFreq = getNum(cells, 'Max Freq');        // The 4300 value
                 
+                // Fallbacks just in case a column is missing
+                if (!base.stdFreq) base.stdFreq = base.baseFreq;
+                if (!base.maxFreq) base.maxFreq = base.stdFreq;
+
                 base.voltage = get(cells, 'Voltage');
                 base.maxVoltage = get(cells, 'Max Voltage');
                 base.canOC = get(cells, 'Can Overclock');
                 base.ocScore = get(cells, 'Overclock Basic CPU Score') || "-";
                 base.canDelid = get(cells, 'Can Delid');
+
             } else if (type === 'gpu') {
-                base.score = parseInt(get(cells, 'Single GPU Graphics Score')) || 0;
-                base.score2 = parseInt(get(cells, 'Double GPU Graphics Score')) || 0;
-                base.score3 = parseInt(get(cells, 'Triple GPU Graphics Score')) || 0;
-                base.score4 = parseInt(get(cells, 'Quad GPU Graphics Score')) || 0;
-                
-                // Store raw string scores for Viewer (handling empty cells nicely)
+                base.score = getNum(cells, 'Single GPU Graphics Score');
+                base.score2 = getNum(cells, 'Double GPU Graphics Score');
+                base.score3 = getNum(cells, 'Triple GPU Graphics Score');
+                base.score4 = getNum(cells, 'Quad GPU Graphics Score');
                 base.rawScore = get(cells, 'Single GPU Graphics Score');
                 base.rawScore2 = get(cells, 'Double GPU Graphics Score');
                 base.rawScore3 = get(cells, 'Triple GPU Graphics Score');
                 base.rawScore4 = get(cells, 'Quad GPU Graphics Score');
-
-                base.watts = parseInt(get(cells, 'Wattage')) || 0;
-                base.vram = parseInt(get(cells, 'VRAM (GB)')) || 0;
-                base.length = parseInt(get(cells, 'Length')) || 0;
+                base.watts = getNum(cells, 'Wattage');
+                base.vram = getNum(cells, 'VRAM (GB)');
+                base.length = getNum(cells, 'Length');
                 base.multi = get(cells, 'Double GPU supported') === 'Yes';
                 base.sliType = get(cells, 'Double GPU SLI') === 'Yes' ? 'SLI' : 'Crossfire';
                 base.isWater = n.includes('water');
-                
                 base.baseCore = get(cells, 'Base Core Clock Freq');
                 base.baseMem = get(cells, 'Base Mem Clock Freq');
                 base.maxCore = get(cells, 'GPU max clock');
                 base.maxMem = get(cells, 'GPU max mem clock');
                 base.chipset = get(cells, 'Chipset');
-                
-                // New Fields for Data Viewer
-                base.slotSize = get(cells, 'Slot Size') || get(cells, 'Size') || get(cells, 'Multi-GPU Slot Size') || "N/A";
+                base.slotSize = get(cells, 'Slot Size') || get(cells, 'Size') || "N/A";
 
             } else if (type === 'ram') {
-                base.freq = parseInt(get(cells, 'Frequency')) || 0;
+                base.freq = getNum(cells, 'Frequency');
                 base.type = get(cells, 'Ram Type');
-                base.size = parseInt(get(cells, 'Size each (GB)')) || 0;
-                base.totalSize = parseInt(get(cells, 'Total Size (GB)')) || 0;
+                base.size = getNum(cells, 'Size each (GB)');
+                base.totalSize = getNum(cells, 'Total Size (GB)');
                 base.voltage = get(cells, 'Voltage');
                 base.maxVoltage = get(cells, 'Max Voltage');
-                base.maxSpeed = parseInt(get(cells, 'Max Speed')) || 0;
-                base.mfgr = get(cells, 'Manufacturer');
-                if(!base.mfgr) base.mfgr = get(cells, 'Brand'); 
+                base.maxSpeed = getNum(cells, 'Max Speed');
+                base.mfgr = get(cells, 'Manufacturer') || get(cells, 'Brand');
+                
+                // === RAM VISIBILITY FIX ===
+                // Appends specs to name so duplicates don't overwrite each other
+                // Example: "Vengeance Black DDR5 4800MHz 16GB"
+                base.name = `${base.name} ${base.freq}MHz ${base.size}GB`;
+
             } else if (type === 'mobo') {
                 base.socket = get(cells, 'CPU Socket');
                 base.ramType = get(cells, 'Ram Type');
                 base.size = get(cells, 'Motherboard Size');
-                base.pciSlots = parseInt(get(cells, 'PCI Slots')) || 0;
+                base.pciSlots = getNum(cells, 'PCI Slots');
                 base.supportSLI = get(cells, 'Support SLI') === 'Yes';
                 base.supportCF = get(cells, 'Support Crossfire') === 'Yes';
             } else if (type === 'cases') {
                 base.size = get(cells, 'Case Size');
                 base.moboSizes = get(cells, 'Motherboard Size');
-                base.maxGpuLen = parseInt(get(cells, 'Max GPU length')) || 0;
-                base.maxCpuHeight = parseInt(get(cells, 'Max CPU Fan Height')) || 0;
-                base.maxPsuLen = parseInt(get(cells, 'Max PSU length')) || 0;
+                base.maxGpuLen = getNum(cells, 'Max GPU length');
+                base.maxCpuHeight = getNum(cells, 'Max CPU Fan Height');
+                base.maxPsuLen = getNum(cells, 'Max PSU length');
                 base.radSizes = get(cells, 'Max Radiator Sizes') || "";
-                base.gpuSlots = parseInt(get(cells, 'GPU Slots')) || 0;
-                base.ssdSlots = parseInt(get(cells, 'SSD Slots')) || 0;
-                base.hddSlots = parseInt(get(cells, 'HDD Slots')) || 0;
+                base.gpuSlots = getNum(cells, 'GPU Slots');
+                base.ssdSlots = getNum(cells, 'SSD Slots');
+                base.hddSlots = getNum(cells, 'HDD Slots');
             } else if (type === 'cooler') {
                 base.type = get(cells, 'Type');
-                base.height = parseInt(get(cells, 'Height')) || 0;
-                base.size = parseInt(get(cells, 'Size')) || 0;
+                base.height = getNum(cells, 'Height');
+                base.size = getNum(cells, 'Size');
                 base.sockets = get(cells, 'CPU Socket List');
-                base.flow = parseFloat(get(cells, 'Air Flow')) || 0;
+                base.flow = getNum(cells, 'Air Flow');
             } else if (type === 'psu') {
-                base.watts = parseInt(get(cells, 'Wattage')) || 0;
-                base.length = parseInt(get(cells, 'Length')) || 0;
+                base.watts = getNum(cells, 'Wattage');
+                base.length = getNum(cells, 'Length');
             } else if (type === 'fan') {
-                base.size = parseInt(get(cells, 'Size')) || 0;
-                base.flow = parseFloat(get(cells, 'Air Flow')) || 0;
+                base.size = getNum(cells, 'Size');
+                base.flow = getNum(cells, 'Air Flow');
             } else if (type === 'storage') {
-                let sizeVal = parseFloat(get(cells, 'Size (GB)')) || 0;
-                base.sizeGB = sizeVal;
-                if (sizeVal >= 1000) base.sizeStr = (sizeVal / 1000) + 'TB';
-                else base.sizeStr = sizeVal + 'GB';
-                let speedRaw = get(cells, 'Speed'); 
-                if (!speedRaw) speedRaw = get(cells, 'Transfer Speed');
-                base.speed = parseInt((speedRaw || "0").replace(/[^0-9]/g, '')) || 0;
+                base.sizeGB = getNum(cells, 'Size (GB)');
+                base.sizeStr = base.sizeGB >= 1000 ? (base.sizeGB/1000)+'TB' : base.sizeGB+'GB';
+                base.speed = getNum(cells, 'Transfer Speed') || getNum(cells, 'Speed');
                 base.type = get(cells, 'Type');
                 base.mfgr = get(cells, 'Manufacturer');
+                
+                // === STORAGE VISIBILITY FIX ===
+                base.name = `${base.name} (${base.sizeStr})`;
             }
 
             DB[type].set(base.name, base);
@@ -2347,26 +2358,43 @@
 
     // ==================== CALCULATION LOGIC ====================
     
+// ==================== CALCULATION LOGIC ====================
+    
     function calculateCpuScore(cpu, ram, stickCount, mode, useOC) {
-        let rawFreq = useOC ? cpu.maxFreq : cpu.baseFreq;
-        let freq = parseFloat(rawFreq) || 0;
+        // === CPU CALCULATION FIX ===
+        // If OC is ON, use Max Freq (4300).
+        // If OC is OFF, use the 'Frequency' column (stdFreq) which is 4200.
+        // We do NOT use 'Base Frequency' (2800) for scoring.
+        let freq = useOC ? cpu.maxFreq : cpu.stdFreq;
+        
+        // Safety Fallback
+        if (!freq) freq = cpu.baseFreq;
+        if (!freq) return 0; 
+
         const isTS = (mode === 'TS');
         const coreMult = isTS ? cpu.coreClockMultTS : cpu.coreClockMultTSX;
         const memChanMult = isTS ? cpu.memChannelMultTS : cpu.memChannelMultTSX;
         const memClockMult = isTS ? cpu.multTS : cpu.multTSX;
         const adjustment = isTS ? cpu.finalAdjTS : cpu.finalAdjTSX;
+
         let activeChannels, actualMemSpeed;
+        
         if (ram) {
+            // Logic: Min of sticks available OR CPU max support
             activeChannels = Math.min(stickCount, cpu.maxMemChannels);
             actualMemSpeed = ram.freq;
         } else {
+            // Default PCBS logic if RAM is missing from calc
             activeChannels = cpu.maxMemChannels;
             actualMemSpeed = cpu.defaultMem;
         }
+
         const coreScore = coreMult * freq;
         const chanScore = memChanMult * activeChannels;
         const speedScore = memClockMult * actualMemSpeed;
         const sum = coreScore + chanScore + speedScore + adjustment;
+
+        // Standard PCBS2 Formula: Floor(Sum * 298)
         const final = Math.floor(sum * 298);
         return final > 0 ? final : 0;
     }
