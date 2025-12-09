@@ -609,6 +609,14 @@
             color: white;
             box-shadow: inset 0 0 10px rgba(52, 152, 219, 0.2);
         }
+        /* New GREEN Active state */
+        .toggle-btn.active-green {
+            background: rgba(46, 204, 113, 0.6) !important; /* Green */
+            color: white;
+            box-shadow: inset 0 0 10px rgba(46, 204, 113, 0.3);
+            border: 1px solid var(--success);
+        }
+
         .toggle-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
@@ -1587,14 +1595,25 @@
             globalUseOC = state;
             
             // Visual Updates
-            document.getElementById('btnOC_On').classList.toggle('active', state);
-            document.getElementById('btnOC_Off').classList.toggle('active', !state);
+            const onBtn = document.getElementById('btnOC_On');
+            const offBtn = document.getElementById('btnOC_Off');
+            
+            onBtn.classList.toggle('active', state);
+            onBtn.classList.toggle('active-green', state); // Highlight Green if ON
+
+            offBtn.classList.toggle('active', !state);
+            // OFF stays default color (blue/grey based on css 'active')
+            
         } else if (type === 'xmp') {
             globalUseXMP = state;
             
-            // Visual Updates
-            document.getElementById('btnXMP_On').classList.toggle('active', state);
-            document.getElementById('btnXMP_Off').classList.toggle('active', !state);
+            const onBtn = document.getElementById('btnXMP_On');
+            const offBtn = document.getElementById('btnXMP_Off');
+            
+            onBtn.classList.toggle('active', state);
+            onBtn.classList.toggle('active-green', state); // Highlight Green if ON
+
+            offBtn.classList.toggle('active', !state);
         }
     }
 
@@ -2798,15 +2817,16 @@
                     ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
                 `;
             } else if (useOC) {
+                // OC ON: Hide Base Score, show OC Score
                 cpuSpecs = `
-                    OC Score: ${formatNumber(displayCpuScore)} | Base Score: ${formatNumber(baseScoreVal)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
+                    OC Score: ${formatNumber(displayCpuScore)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
                     ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
                     ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
                 `;
             } else {
-                const ocText = b.cpu.canOC === 'Yes' ? `OC Potential: ${b.cpu.ocScore}` : 'Locked';
+                // OC OFF: Hide OC Potential, show Base Score
                 cpuSpecs = `
-                    Base Score: ${formatNumber(displayCpuScore)} | ${ocText} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
+                    Base Score: ${formatNumber(displayCpuScore)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
                     ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
                     ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
                 `;
