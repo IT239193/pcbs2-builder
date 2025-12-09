@@ -2779,7 +2779,8 @@
                     ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
                 `;
             } else {
-                const ocText = b.cpu.canOC === 'Yes' ? `OC Potential: ${b.cpu.ocScore}` : 'Locked';
+                // SHORTENED TICK BAR SCRIPT
+const ocText = b.cpu.canOC === "Yes" ? `OC Potential: ${b.cpu.ocScore.substring(0, 10)}` : "Locked";
                 cpuSpecs = `
                     Base Score: ${formatNumber(displayCpuScore)} | ${ocText} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
                     ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
