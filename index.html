@@ -1167,19 +1167,25 @@
 
             <div class="section-header">2. RAM Configuration</div>
             <div class="ram-grid">
+                <!-- FIXED: Separated "Suggest RAM" into its own group -->
                 <div class="input-group">
                     <label>Include RAM</label>
-                    <div style="display:flex; gap:10px;">
-                        <div class="checkbox-container" style="flex:1;">
-                            <input type="checkbox" id="incRam" checked>
-                            <label for="incRam">Suggest RAM</label>
-                        </div>
-                        <div class="checkbox-container" style="flex:1;">
-                            <input type="checkbox" id="ramPerfMode" checked>
-                            <label for="ramPerfMode">RAM Perf Mode</label>
-                        </div>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="incRam" checked>
+                        <label for="incRam">Suggest RAM</label>
                     </div>
                 </div>
+
+                <!-- FIXED: Separated "RAM Perf Mode" into its own group to prevent collision -->
+                <div class="input-group">
+                    <label>Optimization</label>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="ramPerfMode" checked>
+                        <label for="ramPerfMode">RAM Perf Mode</label>
+                    </div>
+                </div>
+
+                <!-- Existing Stick Count Input -->
                 <div class="input-group">
                     <label>Stick Count</label>
                     <select id="ramSticks">
