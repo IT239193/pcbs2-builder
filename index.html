@@ -1026,6 +1026,11 @@
             }
         }
 
+
+#dataView { position: relative !important; z-index: 1 !important; }
+#resultsList { position: static !important; z-index: auto !important; }
+
+
     </style>
 </head>
 <body>
@@ -1823,14 +1828,30 @@
     }
 
     function toggleView() {
-    const calcView = document.getElementById('calculatorView');
-    const dataView = document.getElementById('dataView');
-    const btn = document.getElementById('mainViewToggle');
-
+    const calcView = document.getElementById('calculatorView')
+    const dataView = document.getElementById('dataView')
+    const btn = document.getElementById('mainViewToggle')
+    
     if (dataView.style.display === 'none' || !dataView.style.display) {
         // SWITCHING TO DATA VIEW
-        calcView.style.display = 'none';
-        dataView.style.display = 'block';
+        calcView.style.display = 'none'
+        dataView.style.display = 'block'
+        // Z-index ve position temizliği
+        dataView.style.zIndex = '1'
+        dataView.style.position = 'relative'
+        document.getElementById('resultsList').style.zIndex = 'auto'
+        document.getElementById('resultsList').style.position = 'static'
+    } else {
+        // SWITCHING TO CALCULATOR VIEW
+        calcView.style.display = 'block'
+        dataView.style.display = 'none'
+        // ResultsList görünür ve temizle
+        const resultsList = document.getElementById('resultsList')
+        resultsList.style.display = 'block'
+        resultsList.style.zIndex = 'auto'
+        resultsList.style.position = 'static'
+        resultsList.innerHTML = '' // Temizle overlay'i
+
         
         // Set button text to point back to Calculator
         btn.innerHTML = `<span style="font-size:1.4em; display:block; margin-bottom:5px;">Return to Calculator</span><span style="font-size:1.1em; font-weight:normal; color:#ccc;">Click to go back to the build calculator</span>`;
