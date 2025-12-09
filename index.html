@@ -2616,46 +2616,55 @@
                         if (ram && (ram.size * sticks) !== targetRamVal) continue;
                     }
 
-                    let ramCost = 0;
-                    if (ram) ramCost = ram.price * sticks;
-    
-                    // Initial CPU Score Calculation (assuming no motherboard bottleneck)
-                    let baseCpuScore;
-                    if (currentMode === 'TSX') baseCpuScore = cpu.scoreTSX;
-                    else baseCpuScore = calculateCpuScore(cpu, ram, sticks, currentMode, useOC, useXMP, 0);
-
-                    if (baseCpuScore === 0) continue; 
-
+                    // 1. SELECT MOTHERBOARD FIRST (Optimization)
                     let mobo = null;
                     if (useMobo) {
                         const type = ram ? ram.type : (cpu.memTypes.includes("DDR5") ? "DDR5" : "DDR4");
                         const maxSelectedGpu = Math.max(...selectedGpuCounts);
                         const minPci = maxSelectedGpu > 1 ? 5 : 0;
-                        const found = allMobos.find(m =>
+                        
+                        // Find the cheapest fitting motherboard
+                        mobo = allMobos.find(m =>
                             m.level <= lvl &&
                             m.socket === cpu.socket &&
                             m.ramType === type &&
+                            m.pciSlots >= minPci &&
                             (selectedOptions.moboNames.size === 0 || selectedOptions.moboNames.has(m.name))
                         );
-                        if (!found) continue; 
-                        mobo = found; 
+
+                        // If no motherboard fits this CPU+RAM combo, skip this combo entirely.
+                        if (!mobo) continue; 
+                        
+                        // Mini-ITX check for 4 sticks
                         if (sticks === 4 && mobo.size === 'Mini-ITX') continue;
                     }
 
-                    // --- NEW LOGIC: Check for Motherboard Bottleneck ---
-                    let finalLiveCpuScore = baseCpuScore;
-                    
-                    // If we have a mobo, and we are using RAM with XMP enabled
-                    if (mobo && ram && useXMP && currentMode !== 'TSX') {
-                        // If RAM is faster than Mobo supports, recalculate
-                        if (mobo.maxMemSpeed > 0 && ram.freq > mobo.maxMemSpeed) {
-                            finalLiveCpuScore = calculateCpuScore(cpu, ram, sticks, currentMode, useOC, useXMP, mobo.maxMemSpeed);
-                        }
+                    // 2. DETERMINE MAX MEM SPEED
+                    let moboLimit = 0;
+                    if (mobo && mobo.maxMemSpeed > 0) {
+                        moboLimit = mobo.maxMemSpeed;
                     }
-                    // ---------------------------------------------------
+
+                    // 3. CALCULATE SCORE ONCE
+                    let liveCpuScore;
+                    if (currentMode === 'TSX') {
+                        liveCpuScore = cpu.scoreTSX;
+                    } else {
+                        // Pass the mobo limit directly. 
+                        // The function handles logic for XMP ON vs OFF.
+                        liveCpuScore = calculateCpuScore(cpu, ram, sticks, currentMode, useOC, useXMP, moboLimit);
+                    }
+
+                    if (liveCpuScore === 0) continue; 
+
+                    let ramCost = 0;
+                    if (ram) ramCost = ram.price * sticks;
 
                     for (const gpuCnt of selectedGpuCounts) {
                         if (builds.length >= maxPoolSize) break;
+                        
+                        // Re-check Mobo PCI slots if we didn't filter strictly earlier
+                        // (Though the 'minPci' logic above mostly handles this, this is a safety double-check)
                         if (mobo && gpuCnt > 1 && mobo.pciSlots < 5) continue;
 
                         for (const gpu of validGpuBase) {
@@ -2730,12 +2739,12 @@
 
                             if (total > budget) continue;
 
-                            const final3D = calculate3DMark(finalLiveCpuScore, gpuScore);
+                            const final3D = calculate3DMark(liveCpuScore, gpuScore);
                             if (minScore > 0 && final3D < minScore) continue;
 
                             builds.push({
                                 score: final3D,
-                                liveCpuScore: finalLiveCpuScore, 
+                                liveCpuScore: liveCpuScore, 
                                 gpuScore: gpuScore, 
                                 diff: final3D - target,
                                 price: total,
