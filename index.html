@@ -2359,15 +2359,14 @@
     
 // ==================== CALCULATION LOGIC ====================
     
+    // ==================== 2. UPDATED CALCULATION LOGIC ====================
+    
     function calculateCpuScore(cpu, ram, stickCount, mode, useOC) {
-        // === CPU CALCULATION FIX ===
-        // If OC is ON, use Max Freq (4300).
-        // If OC is OFF, use the 'Frequency' column (stdFreq) which is 4200.
-        // We do NOT use 'Base Frequency' (2800) for scoring.
+        // 1. CPU FREQUENCY LOGIC
+        // If OC is ON, use Max Freq (4300)
+        // If OC is OFF, use Std Freq (4200)
         let freq = useOC ? cpu.maxFreq : cpu.stdFreq;
-        
-        // Safety Fallback
-        if (!freq) freq = cpu.baseFreq;
+        if (!freq) freq = cpu.baseFreq; // Fallback
         if (!freq) return 0; 
 
         const isTS = (mode === 'TS');
@@ -2381,7 +2380,16 @@
         if (ram) {
             // Logic: Min of sticks available OR CPU max support
             activeChannels = Math.min(stickCount, cpu.maxMemChannels);
-            actualMemSpeed = ram.freq;
+            
+            // 2. RAM FREQUENCY LOGIC
+            if (useOC) {
+                // OC/XMP ON: Use the RAM's rated speed (e.g., 3466)
+                actualMemSpeed = ram.freq;
+            } else {
+                // OC/XMP OFF: Use the lower of the RAM stick speed OR the CPU's default limit
+                // This uses the value from CPU.txt (e.g., 2666)
+                actualMemSpeed = Math.min(ram.freq, (cpu.defaultMem || 2133));
+            }
         } else {
             // Default PCBS logic if RAM is missing from calc
             activeChannels = cpu.maxMemChannels;
