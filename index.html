@@ -1827,7 +1827,9 @@
         }
     }
 
-    function toggleView() {
+   
+
+function toggleView() {
     const calcView = document.getElementById('calculatorView');
     const dataView = document.getElementById('dataView');
     const btn = document.getElementById('mainViewToggle');
@@ -1848,35 +1850,6 @@
 }
 
 
-
-        
-                renderDataList();
-    } else {
-        // SWITCHING TO CALCULATOR VIEW
-        calcView.style.display = 'block';
-        dataView.style.display = 'none';
-        const resultsList = document.getElementById('resultsList');
-        resultsList.style.display = 'block';
-        resultsList.innerHTML = '';
-        btn.innerHTML = '<span style="font-size:1.4em;display:block;margin-bottom:5px;">Data Viewer</span><span style="font-size:1.1em;font-weight:normal;color:#ccc;">click this box to swap to the data info page where u can know right OC values, more info about parts, and countless more stuff</span>';
-    }
-}
-
-        dataView.style.display = 'none';
-        
-        // ResultsList'i temizle ve görünür yap
-        const resultsList = document.getElementById('resultsList');
-        resultsList.style.display = 'block';
-        resultsList.innerHTML = '';
-
-        
-        // Set button text to point to Data Viewer
-        btn.innerHTML = `
-            <span style="font-size:1.4em; display:block; margin-bottom:5px;">Data Viewer</span>
-            <span style="font-size:1.1em; font-weight:normal; color:#ccc;">click this box to swap to the data info page where u can know right OC values, more info about parts, and countless more stuff</span>
-        `;
-    }
-}
 
     function switchDataTab(tab) {
         currentDataTab = tab;
