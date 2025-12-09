@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1581,6 +1580,24 @@
     let globalUseOC = false;
     let globalUseXMP = false;
 
+    // UPDATED: Only updates visual state, DOES NOT start a scan
+    function setToggle(type, state) {
+        if (type === 'oc') {
+            if (currentMode === 'TSX' && state === true) return; // Prevent OC in TSX
+            globalUseOC = state;
+            
+            // Visual Updates
+            document.getElementById('btnOC_On').classList.toggle('active', state);
+            document.getElementById('btnOC_Off').classList.toggle('active', !state);
+        } else if (type === 'xmp') {
+            globalUseXMP = state;
+            
+            // Visual Updates
+            document.getElementById('btnXMP_On').classList.toggle('active', state);
+            document.getElementById('btnXMP_Off').classList.toggle('active', !state);
+        }
+    }
+
     const filterKeywords = {
         cpuNames: {
             'AMD': ['AMD', 'Ryzen', 'Threadripper'],
@@ -1610,21 +1627,6 @@
     const parseVal = id => parseFloat(document.getElementById(id).value.replace(/,/g, '')) || 0;
     const parseIntVal = id => parseInt(document.getElementById(id).value.replace(/,/g, '')) || 0;
 
-    // Toggle Handler
-    function setToggle(type, state) {
-        if (type === 'oc') {
-            if (currentMode === 'TSX' && state === true) return; // Prevent OC in TSX
-            globalUseOC = state;
-            document.getElementById('btnOC_On').classList.toggle('active', state);
-            document.getElementById('btnOC_Off').classList.toggle('active', !state);
-        } else if (type === 'xmp') {
-            globalUseXMP = state;
-            document.getElementById('btnXMP_On').classList.toggle('active', state);
-            document.getElementById('btnXMP_Off').classList.toggle('active', !state);
-        }
-        generateBuilds();
-    }
-
     ['budget', 'targetScore', 'minScoreInput', 'resLimit'].forEach(id => {
         const el = document.getElementById(id);
         if(el) {
@@ -1644,8 +1646,9 @@
         const btnOC_Off = document.getElementById('btnOC_Off');
 
         if (m === 'TSX') {
-            // Force OC OFF and disable buttons
-            setToggle('oc', false);
+            // Force OC OFF internally and visually
+            setToggle('oc', false); 
+            // Disable buttons
             btnOC_On.disabled = true;
             btnOC_Off.disabled = true;
         } else {
@@ -2376,7 +2379,6 @@
                 // XMP OFF: Use Lower of (RAM Freq, CPU Default Cap)
                 actualMemSpeed = Math.min(ram.freq, (cpu.defaultMem || 2133));
             }
-
         } else {
             activeChannels = cpu.maxMemChannels;
             actualMemSpeed = cpu.defaultMem;
@@ -2430,7 +2432,7 @@
         const sort = document.getElementById('mainSort').value;
         const useRamPerfMode = document.getElementById('ramPerfMode').checked; 
 
-        // Use global toggles
+        // READ GLOBAL STATE HERE
         const useOC = globalUseOC;
         const useXMP = globalUseXMP;
 
