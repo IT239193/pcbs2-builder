@@ -1691,7 +1691,7 @@
         const getNum = (cells, key) => {
             const val = get(cells, key);
             if (!val) return 0;
-            // Remove 'MHz', 'GB', 'W', commas, etc
+            // Remove 'MHz', 'GB', 'W' and commas, then parse
             return parseFloat(val.replace(/[^\d.-]/g, '')) || 0;
         };
 
@@ -1749,13 +1749,13 @@
                 base.memTypes = get(cells, 'Supported Memory Types');
                 base.cores = get(cells, 'Cores');
                 
-                // === FREQUENCY PARSING FIX ===
-                // We capture all 3 potential frequency columns explicitly
-                base.stdFreq = getNum(cells, 'Frequency');       // The 4200 value
-                base.baseFreq = getNum(cells, 'Base Frequency'); // The 2800 value
-                base.maxFreq = getNum(cells, 'Max Freq');        // The 4300 value
-                
-                // Fallbacks just in case a column is missing
+                // === CPU FREQ FIX ===
+                // Capture all 3 columns.
+                base.stdFreq = getNum(cells, 'Frequency');       // The game logic value (e.g. 4200)
+                base.baseFreq = getNum(cells, 'Base Frequency'); // The display value (e.g. 2800)
+                base.maxFreq = getNum(cells, 'Max Freq');        // The OC value (e.g. 4300)
+
+                // Fallbacks
                 if (!base.stdFreq) base.stdFreq = base.baseFreq;
                 if (!base.maxFreq) base.maxFreq = base.stdFreq;
 
@@ -1797,9 +1797,8 @@
                 base.maxSpeed = getNum(cells, 'Max Speed');
                 base.mfgr = get(cells, 'Manufacturer') || get(cells, 'Brand');
                 
-                // === RAM VISIBILITY FIX ===
-                // Appends specs to name so duplicates don't overwrite each other
-                // Example: "Vengeance Black DDR5 4800MHz 16GB"
+                // === RAM FIX ===
+                // This forces the map to save every stick, not just the last one.
                 base.name = `${base.name} ${base.freq}MHz ${base.size}GB`;
 
             } else if (type === 'mobo') {
@@ -1838,7 +1837,7 @@
                 base.type = get(cells, 'Type');
                 base.mfgr = get(cells, 'Manufacturer');
                 
-                // === STORAGE VISIBILITY FIX ===
+                // === STORAGE FIX ===
                 base.name = `${base.name} (${base.sizeStr})`;
             }
 
