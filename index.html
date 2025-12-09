@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1855,6 +1856,8 @@
                 base.pciSlots = getNum(cells, 'PCI Slots');
                 base.supportSLI = get(cells, 'Support SLI') === 'Yes';
                 base.supportCF = get(cells, 'Support Crossfire') === 'Yes';
+                base.maxMemSpeed = getNum(cells, 'Max Memory Speed'); 
+
             } else if (type === 'cases') {
                 base.size = get(cells, 'Case Size');
                 base.moboSizes = get(cells, 'Motherboard Size');
@@ -2373,7 +2376,7 @@
     }
     
     // UPDATED CALCULATION LOGIC
-    function calculateCpuScore(cpu, ram, stickCount, mode, useOC, useXMP) {
+    function calculateCpuScore(cpu, ram, stickCount, mode, useOC, useXMP, moboLimit = 0) {
         // 1. CPU Frequency Logic (Controlled by useOC)
         let freq = useOC ? cpu.maxFreq : cpu.stdFreq;
         if (!freq) freq = cpu.baseFreq;
@@ -2392,8 +2395,13 @@
             
             // 2. RAM Logic (Controlled by useXMP)
             if (useXMP) {
-                // XMP ON: Use RAM Frequency directly
+                // XMP ON: Start with RAM Frequency
                 actualMemSpeed = ram.freq;
+
+                // --- ADDED CHECK: Cap by Motherboard Limit ---
+                if (moboLimit > 0 && actualMemSpeed > moboLimit) {
+                    actualMemSpeed = moboLimit;
+                }
             } else {
                 // XMP OFF: Use Lower of (RAM Freq, CPU Default Cap)
                 actualMemSpeed = Math.min(ram.freq, (cpu.defaultMem || 2133));
@@ -2611,11 +2619,12 @@
                     let ramCost = 0;
                     if (ram) ramCost = ram.price * sticks;
     
-                    let liveCpuScore;
-                    if (currentMode === 'TSX') liveCpuScore = cpu.scoreTSX;
-                    else liveCpuScore = calculateCpuScore(cpu, ram, sticks, currentMode, useOC, useXMP);
+                    // Initial CPU Score Calculation (assuming no motherboard bottleneck)
+                    let baseCpuScore;
+                    if (currentMode === 'TSX') baseCpuScore = cpu.scoreTSX;
+                    else baseCpuScore = calculateCpuScore(cpu, ram, sticks, currentMode, useOC, useXMP, 0);
 
-                    if (liveCpuScore === 0) continue; 
+                    if (baseCpuScore === 0) continue; 
 
                     let mobo = null;
                     if (useMobo) {
@@ -2632,6 +2641,18 @@
                         mobo = found; 
                         if (sticks === 4 && mobo.size === 'Mini-ITX') continue;
                     }
+
+                    // --- NEW LOGIC: Check for Motherboard Bottleneck ---
+                    let finalLiveCpuScore = baseCpuScore;
+                    
+                    // If we have a mobo, and we are using RAM with XMP enabled
+                    if (mobo && ram && useXMP && currentMode !== 'TSX') {
+                        // If RAM is faster than Mobo supports, recalculate
+                        if (mobo.maxMemSpeed > 0 && ram.freq > mobo.maxMemSpeed) {
+                            finalLiveCpuScore = calculateCpuScore(cpu, ram, sticks, currentMode, useOC, useXMP, mobo.maxMemSpeed);
+                        }
+                    }
+                    // ---------------------------------------------------
 
                     for (const gpuCnt of selectedGpuCounts) {
                         if (builds.length >= maxPoolSize) break;
@@ -2709,12 +2730,12 @@
 
                             if (total > budget) continue;
 
-                            const final3D = calculate3DMark(liveCpuScore, gpuScore);
+                            const final3D = calculate3DMark(finalLiveCpuScore, gpuScore);
                             if (minScore > 0 && final3D < minScore) continue;
 
                             builds.push({
                                 score: final3D,
-                                liveCpuScore: liveCpuScore, 
+                                liveCpuScore: finalLiveCpuScore, 
                                 gpuScore: gpuScore, 
                                 diff: final3D - target,
                                 price: total,
@@ -2817,14 +2838,12 @@
                     ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
                 `;
             } else if (useOC) {
-                // OC ON: Hide Base Score, show OC Score
                 cpuSpecs = `
                     OC Score: ${formatNumber(displayCpuScore)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
                     ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
                     ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
                 `;
             } else {
-                // OC OFF: Hide OC Potential, show Base Score
                 cpuSpecs = `
                     Base Score: ${formatNumber(displayCpuScore)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
                     ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
