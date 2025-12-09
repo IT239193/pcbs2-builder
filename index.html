@@ -233,35 +233,59 @@
         }
 
         /* Input Grid */
-        .input-grid {
+        .input-grid, .ram-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 20px;
             margin-bottom: 25px;
-        }
-        .ram-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 25px;
+            /* ALIGNMENT FIX: Aligns all input boxes to the bottom line */
+            align-items: flex-end; 
         }
         
-        .input-group { display: flex; flex-direction: column; }
+        .input-group { 
+            display: flex; 
+            flex-direction: column; 
+            width: 100%;
+        }
+
         .input-group label {
             margin-bottom: 8px;
             color: var(--text-muted);
             font-size: 0.9em;
             font-weight: 600;
+            line-height: 1.2;
         }
-        .input-group input, .input-group select {
+
+        /* MASTER ALIGNMENT FIX: Force uniform height and box model on ALL input types */
+        .input-group input, 
+        .input-group select,
+        .multi-select-display,
+        .checkbox-container {
+            height: 48px; /* Fixed height for perfect alignment */
             background: rgba(0,0,0,0.3);
             border: 1px solid var(--border);
             color: white;
-            padding: 12px;
+            padding: 0 12px;
             border-radius: 6px;
             font-size: 1em;
+            width: 100%;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center; /* Centers text vertically */
         }
-        .input-group input:focus, .input-group select:focus {
+
+        /* Adjust native inputs specifically since they handle display:flex differently */
+        .input-group input, 
+        .input-group select {
+            display: block; 
+            padding-top: 10px;
+            padding-bottom: 10px;
+        }
+
+        .input-group input:focus, 
+        .input-group select:focus,
+        .multi-select-display:hover,
+        .checkbox-container:hover {
             border-color: var(--accent);
             outline: none;
             background: rgba(0,0,0,0.5);
@@ -272,48 +296,52 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            background: rgba(0,0,0,0.2);
-            padding: 12px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            height: 100%;
+            cursor: pointer;
         }
+        
+        /* Fix for the split "Include RAM" container */
+        .input-group > div[style*="display:flex"] .checkbox-container {
+            height: 48px;
+            white-space: nowrap;
+        }
+
         .checkbox-container input {
             width: 20px;
             height: 20px;
+            margin: 0; /* Remove default margins */
             accent-color: var(--accent);
             cursor: pointer;
+            border: none; /* Remove border from internal checkbox */
+            background: transparent;
         }
+        
         .checkbox-container label {
             margin: 0;
             cursor: pointer;
             font-weight: 600;
             font-size: 1em;
+            color: #fff;
         }
 
         /* Multi-Select Dropdowns */
         .multi-select-container { position: relative; width: 100%; }
+        
         .multi-select-display {
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid var(--border);
-            padding: 12px;
-            border-radius: 6px;
-            color: #fff;
-            font-size: 1.0em;
             cursor: pointer;
-            min-height: 45px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            display: flex;
-            align-items: center;
             user-select: none;
+            padding-right: 30px; /* Make room for arrow */
+            position: relative;
         }
-        .multi-select-display:hover { border-color: var(--accent); }
+        
         .multi-select-display:after {
             content: '▼';
             position: absolute;
             right: 12px;
+            top: 50%;
+            transform: translateY(-50%); /* Vertically center the arrow */
             color: var(--text-muted);
             font-size: 0.8em;
         }
