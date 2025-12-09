@@ -115,8 +115,11 @@
         }
 
         /* Perf Warning */
+        /* Perf Tip (Updated to Green) */
         #perfWarning {
+            /* Changed to very light green background */
             background: rgba(46, 204, 113, 0.15); 
+            /* Changed border to Success Green */
             border: 1px solid var(--success);
             color: var(--text-main);
             padding: 10px 15px;
@@ -134,6 +137,7 @@
         
         #perfWarning span { 
             font-weight: bold; 
+            /* Changed text color to Success Green */
             color: var(--success); 
         }
         .close-warning {
@@ -1592,7 +1596,6 @@ function setMode(m) {
                 base.socket = get(cells, 'CPU Socket');
                 base.series = get(cells, 'CPU Series');
                 base.watts = parseInt(get(cells, 'Wattage')) || 0;
-                base.sellPrice = parseFloat(get(cells, 'Sell Price')) || 0;
                 
                 // IMPLEMENTATION: Parse Data for Live Calculation
                 base.coreClockMultTS = parseFloat(get(cells, 'Core Clock Multiplier (TS)')) || 0;
@@ -1609,8 +1612,7 @@ function setMode(m) {
                 base.defaultMem = parseInt(get(cells, 'Default Memory Speed')) || 2133;
                 base.memTypes = get(cells, 'Supported Memory Types');
                 base.cores = get(cells, 'Cores');
-                base.midFreq = get(cells, 'Frequency'); 
-                base.maxCpuFreq = get(cells, 'Max Frequency');
+                base.maxFreq = get(cells, 'Frequency'); 
                 base.baseFreq = get(cells, 'Base Frequency');
                 base.voltage = get(cells, 'Voltage');
                 base.maxVoltage = get(cells, 'Max Voltage');
@@ -1628,8 +1630,6 @@ function setMode(m) {
                 base.multi = get(cells, 'Double GPU supported') === 'Yes';
                 base.sliType = get(cells, 'Double GPU SLI') === 'Yes' ? 'SLI' : 'Crossfire';
                 base.isWater = n.includes('water');
-                base.sellPrice = parseFloat(get(cells, 'Sell Price')) || 0;
-                base.slotSize = get(cells, 'Slot Size');
                 
                 base.baseCore = get(cells, 'Base Core Clock Freq');
                 base.baseMem = get(cells, 'Base Mem Clock Freq');
@@ -2192,7 +2192,7 @@ function setMode(m) {
     // IMPLEMENTATION: Live CPU Score Calculator
     function calculateCpuScore(cpu, ram, stickCount, mode, useOC) {
         // 1. Determine Freq
-        let rawFreq = useOC ? cpu.maxCpuFreq : cpu.baseFreq;
+        let rawFreq = useOC ? cpu.maxFreq : cpu.baseFreq;
         let freq = parseFloat(rawFreq) || 0;
 
         // 2. Select Multipliers
@@ -2673,41 +2673,43 @@ if (liveCpuScore === 0) continue; // Skip invalid configs
             const buildIdx = start + i;
 
             const gpuCountStr = b.gpuCnt > 1 ? `${b.gpuCnt}x ` : '';
+            const gpuEmoji = b.gpu.isWater ? '💧' : '💨';
             
-            // New GPU Specs Format
             const gpuSpecs = `
-                Single GPU Score: ${formatNumber(b.gpu.score)} | 
-                Double GPU Score ${formatNumber(b.gpu.score2 || 0)} | 
-                Triple GPU Score ${formatNumber(b.gpu.score3 || 0)} | 
-                Quad GPU Score ${formatNumber(b.gpu.score4 || 0)} | 
-                VRAM ${b.gpu.vram} | 
-                Length ${b.gpu.length} | 
-                Watt ${b.gpu.watts} | 
-                Air ${b.gpu.isWater ? 'Liquid' : 'Air'} | 
+                Score: ${formatNumber(b.gpuScore)} | ${b.gpu.vram}GB | ${b.gpu.length}mm | ${b.gpu.watts * b.gpuCnt}W | ${gpuEmoji} | 
                 Base Core/Max Core: ${b.gpu.baseCore || '?'}/${b.gpu.maxCore || '?'} MHz | 
-                Base Mem/Max Mem: ${b.gpu.baseMem || '?'}/${b.gpu.maxMem || '?'} MHz | 
-                Level ${b.gpu.level} | 
-                Price ${formatCurrency(b.gpu.price)} | 
-                Sell Price ${formatCurrency(b.gpu.sellPrice)} | 
-                Slot size: ${b.gpu.slotSize || 'N/A'} |
+                Base Mem/Max Mem: ${b.gpu.baseMem || '?'}/${b.gpu.maxMem || '?'} MHz
             `;
             
-            // New CPU Specs Format
-            const cpuSpecs = `
-                Basic Cpu Score: ${formatNumber(b.cpu.scoreTS)} | 
-                Basic CPU Score (TSX): ${formatNumber(b.cpu.scoreTSX)} | 
-                OC Score: ${b.cpu.ocScore} | 
-                Socket ${b.cpu.socket} | 
-                ${b.cpu.cores} Cores | 
-                BaseMidMaxFreq: ${b.cpu.baseFreq} / ${b.cpu.midFreq} / ${b.cpu.maxCpuFreq || b.cpu.midFreq} MHz | 
-                VoltageMinMax: ${b.cpu.voltage}/${b.cpu.maxVoltage} V | 
-                Can Delid ${b.cpu.canDelid} | 
-                Sell Price : ${formatCurrency(b.cpu.sellPrice)} | 
-                Price ${formatCurrency(b.cpu.price)} | 
-                Level ${b.cpu.level} | 
-                Max Memory Channels: ${b.cpu.maxMemChannels} | 
-                Supported Memory Types ${b.cpu.memTypes}
-            `;
+            // Display Live Score with new formatting logic based on OC Toggle
+const displayCpuScore = b.liveCpuScore;
+const baseScoreVal = currentMode === 'TS' ? b.cpu.scoreTS : b.cpu.scoreTSX;
+
+let cpuSpecs = "";
+
+if (currentMode === 'TSX') {
+    // TSX Mode: Only show Base Score (TSX), no OC references
+    cpuSpecs = `
+        Base Score (TSX): ${formatNumber(displayCpuScore)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
+        ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
+        ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
+    `;
+} else if (useOC) {
+    // TS Mode with OC Enabled: Show OC Score first
+    cpuSpecs = `
+        OC Score: ${formatNumber(displayCpuScore)} | Base Score: ${formatNumber(baseScoreVal)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
+        ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
+        ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
+    `;
+} else {
+    // TS Mode, Base: Show Base Score first with OC Potential
+    const ocText = b.cpu.canOC === 'Yes' ? `OC Potential: ${b.cpu.ocScore}` : 'Locked';
+    cpuSpecs = `
+        Base Score: ${formatNumber(displayCpuScore)} | ${ocText} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
+        ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
+        ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
+    `;
+}
 
             let ramHTML = '';
             if (b.ram) {
