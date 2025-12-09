@@ -37,15 +37,23 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0b0c15 0%, #151621 100%);
-            color: var(--text-main);
-            min-height: 100vh;
-            padding: 20px;
-            font-size: 14px;
-            overflow-y: scroll;
-            zoom: 90%;
-        }
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #0b0c15 0%, #151621 100%);
+    color: var(--text-main);
+    min-height: 100vh;
+    padding: 20px;
+    font-size: 14px;
+    overflow-y: scroll;
+    zoom: 90%;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.container { max-width: 1800px; margin: 0 auto; padding-bottom: 100px; }
+
+
 
         .container { max-width: 1800px; margin: 0 auto; padding-bottom: 100px; }
 
@@ -114,12 +122,32 @@
             font-weight: 500;
         }
 
+.view-toggle-btn {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            width: 350px; /* Made button much wider */
+            padding: 15px; /* Increased padding */
+            background: var(--bg-panel);
+            border: 2px solid var(--accent); /* Thicker border */
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+            text-align: center; /* Center the text */
+            white-space: normal; /* Allow text to wrap to next line */
+            line-height: 1.4; /* Improve readability of multiple lines */
+            z-index: 50;
+        }
+        .view-toggle-btn:hover { 
+            background: var(--accent); 
+            box-shadow: 0 0 15px var(--accent);
+        }
+
         /* Perf Warning */
-        /* Perf Tip (Updated to Green) */
         #perfWarning {
-            /* Changed to very light green background */
             background: rgba(46, 204, 113, 0.15); 
-            /* Changed border to Success Green */
             border: 1px solid var(--success);
             color: var(--text-main);
             padding: 10px 15px;
@@ -137,7 +165,6 @@
         
         #perfWarning span { 
             font-weight: bold; 
-            /* Changed text color to Success Green */
             color: var(--success); 
         }
         .close-warning {
@@ -916,7 +943,6 @@
             border-radius: 4px;
         }
 
-        /* Sadece RAM Models dropdown kutusunun yazısını büyütür */
         #multiRam .multi-select-display {
             font-size: 1.4em; 
         }
@@ -926,12 +952,80 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* DATA VIEWER STYLES */
+        .viewer-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: var(--bg-panel);
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .v-tab-btn {
+            padding: 10px 20px;
+            background: #0f0f1e;
+            color: var(--text-muted);
+            border: 1px solid #444;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 4px;
+            flex: 1;
+        }
+        .v-tab-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+.data-list-row {
+            background: rgba(255,255,255,0.03);
+            margin-bottom: 8px;
+            padding: 15px;      /* Increased padding */
+            border-left: 4px solid #555;
+            word-wrap: break-word; /* Prevents text cutoff */
+            white-space: normal;   /* Allows text to wrap to new lines */
+            font-family: 'Consolas', monospace;
+            font-size: 14px;    /* Increased font size */
+            line-height: 1.6;   /* Better spacing */
+        }
+        .data-list-row:hover { background: rgba(255,255,255,0.1); }
+        .data-list-row.brand-amd { border-left-color: var(--brand-amd); }
+        .data-list-row.brand-intel { border-left-color: var(--brand-intel); }
+        .data-list-row.brand-nvidia { border-left-color: var(--brand-nvidia); }
+        
+        .item-name-list {
+            display: block;
+            font-weight: bold;
+            font-size: 1.1em;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+        .raw-string {
+            color: #ddd;
+            line-height: 1.5;
+        }
+
         @media (max-width: 600px) {
             .card-body { grid-template-columns: 1fr; }
             .card-header { flex-direction: column; gap: 15px; }
             .header-stats { text-align: left; align-items: flex-start; }
             .results-meta { flex-direction: column; align-items: flex-start; }
+            header h1 { font-size: 1.8em; }
+            .view-toggle-btn { position: relative; top: 0; right: 0; margin-top: 10px; width: 100%; }
         }
+
+
+
+        @media (max-width: 900px) {
+            .view-toggle-btn {
+                position: relative;
+                top: 0;
+                right: 0;
+                width: 100%;
+                margin-top: 20px;
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -987,8 +1081,11 @@
     <header>
         <h1>PCBS2 Ultimate Builder</h1>
         <div class="header-subtitle">contact me on discord for bug reports @timmy2131_</div>
-        
-<!-- Performance Tip Moved Here -->
+<button class="view-toggle-btn" onclick="toggleView()" id="mainViewToggle">
+            <span style="font-size:1.4em; display:block; margin-bottom:5px;">Data Viewer</span>
+            <span style="font-size:1.1em; font-weight:normal; color:#ccc;">click this box to swap to the data info page where u can know right OC values, more info about parts, and countless more stuff</span>
+        </button>        
+        <!-- Performance Tip -->
         <div id="perfWarning" class="hidden">
             <span>💡 PRO TIP:</span> 
             If you don't specify preferred RAM brand, size, frequency, or other component filters, the generated results pool could become massive, and that can slow the scans.
@@ -996,388 +1093,393 @@
         </div>
     </header>
 
-    <div class="controls-wrapper" id="controls">
-        <div class="section-header">1. Benchmarking & Goals</div>
-        <div class="benchmark-toggle">
-            <button id="btnTS" class="mode-btn active" onclick="setMode('TS')">Time Spy (Standard)</button>
-            <button id="btnTSX" class="mode-btn" onclick="setMode('TSX')">Time Spy Extreme (4K)</button>
-        </div>
+    <!-- CALCULATOR VIEW -->
+    <div id="calculatorView" style="display: block;">
+        <div class="controls-wrapper" id="controls">
+            <div class="section-header">1. Benchmarking & Goals</div>
+            <div class="benchmark-toggle">
+                <button id="btnTS" class="mode-btn active" onclick="setMode('TS')">Time Spy (Standard)</button>
+                <button id="btnTSX" class="mode-btn" onclick="setMode('TSX')">Time Spy Extreme (4K)</button>
+            </div>
 
-        <div class="input-grid">
-            <div class="input-group">
-                <label>Budget ($)</label>
-                <input type="text" id="budget" value="3,500">
-            </div>
-            <div class="input-group">
-                <label>Target 3DMark Score</label>
-                <input type="text" id="targetScore" value="20,000">
-            </div>
-            <div class="input-group">
-                <label>GPU Count</label>
-                <!-- NEW: Multi-Select for GPU Count -->
-                <div id="multiGpuCount" class="multi-select-container">
-                    <div class="multi-select-display" onclick="toggleDropdown('gpuCountDropdown')">Any</div>
-                    <div id="gpuCountDropdown" class="multi-dropdown">
-                        <div class="quick-filter-bar">
-                            <button class="filter-btn btn-clear" onclick="clearFilter('gpuCount')">Clear</button>
+            <div class="input-grid">
+                <div class="input-group">
+                    <label>Budget ($)</label>
+                    <input type="text" id="budget" value="3,500">
+                </div>
+                <div class="input-group">
+                    <label>Target 3DMark Score</label>
+                    <input type="text" id="targetScore" value="20,000">
+                </div>
+                <div class="input-group">
+                    <label>GPU Count</label>
+                    <div id="multiGpuCount" class="multi-select-container">
+                        <div class="multi-select-display" onclick="toggleDropdown('gpuCountDropdown')">Any</div>
+                        <div id="gpuCountDropdown" class="multi-dropdown">
+                            <div class="quick-filter-bar">
+                                <button class="filter-btn btn-clear" onclick="clearFilter('gpuCount')">Clear</button>
+                            </div>
+                            <div class="dropdown-list-container" id="gpuCountListContainer"></div>
                         </div>
-                        <div class="dropdown-list-container" id="gpuCountListContainer"></div>
                     </div>
                 </div>
+                <div class="input-group">
+                    <label>Career Level</label>
+                    <input type="number" id="level" value="30" min="1" oninput="refreshDropdowns()">
+                </div>
+                <div class="input-group">
+                    <label>Max Results Pool (if you decrease it will be faster but show less results)</label>
+                    <input type="text" id="resLimit" value="4,000,000">
+                </div>
+                <div class="input-group">
+                    <label>Results Per Page</label>
+                    <input type="number" id="resultsPerPage" value="100" min="1" max="1000">
+                </div>
             </div>
-            <div class="input-group">
-                <label>Career Level</label>
-                <input type="number" id="level" value="30" min="1" oninput="refreshDropdowns()">
-            </div>
-            <div class="input-group">
-                <label>Max Results Pool (if you decrease it will be faster but show less results)</label>
-                <input type="text" id="resLimit" value="4,000,000">
-            </div>
-            <div class="input-group">
-                <label>Results Per Page</label>
-                <input type="number" id="resultsPerPage" value="100" min="1" max="1000">
-            </div>
-        </div>
 
-        <div class="section-header">2. RAM Configuration</div>
-        <div class="ram-grid">
-            <div class="input-group">
-                <label>Include RAM</label>
-                <div style="display:flex; gap:10px;">
-                    <div class="checkbox-container" style="flex:1;">
-                        <input type="checkbox" id="incRam" checked>
-                        <label for="incRam">Suggest RAM</label>
+            <div class="section-header">2. RAM Configuration</div>
+            <div class="ram-grid">
+                <div class="input-group">
+                    <label>Include RAM</label>
+                    <div style="display:flex; gap:10px;">
+                        <div class="checkbox-container" style="flex:1;">
+                            <input type="checkbox" id="incRam" checked>
+                            <label for="incRam">Suggest RAM</label>
+                        </div>
+                        <div class="checkbox-container" style="flex:1;">
+                            <input type="checkbox" id="ramPerfMode" checked>
+                            <label for="ramPerfMode">RAM Perf Mode</label>
+                        </div>
                     </div>
-                    <!-- NEW: RAM Performance Mode Checkbox -->
-                    <div class="checkbox-container" style="flex:1;">
-                        <input type="checkbox" id="ramPerfMode" checked>
-                        <label for="ramPerfMode">RAM Perf Mode</label>
+                </div>
+                <div class="input-group">
+                    <label>Stick Count</label>
+                    <select id="ramSticks">
+                        <option value="0" selected>Any</option>
+                        <option value="1">1 Stick</option>
+                        <option value="2">2 Sticks</option>
+                        <option value="4">4 Sticks</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label>Ram Stick Size</label>
+                    <div id="multiRamSize" class="multi-select-container">
+                        <div class="multi-select-display" onclick="toggleDropdown('ramSizeDropdown')">Any</div>
+                        <div id="ramSizeDropdown" class="multi-dropdown">
+                            <div class="quick-filter-bar">
+                                <button class="filter-btn btn-clear" onclick="clearFilter('ramSizes')">Clear</button>
+                            </div>
+                            <div class="dropdown-list-container" id="ramSizeListContainer"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Target Total Capacity</label>
+                    <input type="number" id="targetTotalRam" placeholder="e.g. 128">
+                </div>
+
+                <div class="input-group">
+                    <label>RAM Manufacturer</label>
+                    <div id="multiRamMfgr" class="multi-select-container">
+                        <div class="multi-select-display" onclick="toggleDropdown('ramMfgrDropdown')">Any</div>
+                        <div id="ramMfgrDropdown" class="multi-dropdown">
+                            <div class="quick-filter-bar">
+                                <button class="filter-btn btn-clear" onclick="clearFilter('ramMfgrs')">Clear</button>
+                            </div>
+                            <div class="dropdown-list-container" id="ramMfgrListContainer"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>RAM Frequency</label>
+                    <div id="multiRamFreq" class="multi-select-container">
+                        <div class="multi-select-display" onclick="toggleDropdown('ramFreqDropdown')">Any</div>
+                        <div id="ramFreqDropdown" class="multi-dropdown">
+                            <div class="quick-filter-bar">
+                                <button class="filter-btn btn-clear" onclick="clearFilter('ramFreqs')">Clear</button>
+                            </div>
+                            <div class="dropdown-list-container" id="ramFreqListContainer"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group" style="grid-column: 1 / -1;">
+                    <label>Specific RAM Model(s)</label>
+                    <div id="multiRam" class="multi-select-container">
+                        <div class="multi-select-display" onclick="toggleDropdown('ramDropdown')">Any</div>
+                        <div id="ramDropdown" class="multi-dropdown">
+                            <div class="quick-filter-bar">
+                                <button class="filter-btn btn-clear" onclick="clearFilter('ramNames')">Clear</button>
+                            </div>
+                            <div class="dropdown-search-container">
+                                <input type="text" class="dropdown-search" placeholder="Filter RAM..." oninput="filterDropdownList(this)">
+                            </div>
+                            <div class="dropdown-list-container" id="ramListContainer"></div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="input-group">
-                <label>Stick Count</label>
-                <select id="ramSticks">
-                    <option value="0" selected>Any</option>
-                    <option value="1">1 Stick</option>
-                    <option value="2">2 Sticks</option>
-                    <option value="4">4 Sticks</option>
-                </select>
+
+            <div class="section-header">3. Additional Components</div>
+            <div class="input-grid">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="incMobo" checked> 
+                    <label for="incMobo">Motherboard</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="incCase" checked>
+                    <label for="incCase">Case</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="incCooler">
+                    <label for="incCooler">CPU Cooler</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="incPsu" checked>
+                    <label for="incPsu">PSU</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="incFans"> 
+                    <label for="incFans">Case Fans (x1)</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="incStorage"> 
+                    <label for="incStorage">Include Storage</label>
+                </div>
             </div>
             
-            <!-- CHANGED: Reverted to Multi-Select Dropdown for Stick Size -->
-            <div class="input-group">
-                <label>Ram Stick Size</label>
-                <div id="multiRamSize" class="multi-select-container">
-                    <div class="multi-select-display" onclick="toggleDropdown('ramSizeDropdown')">Any</div>
-                    <div id="ramSizeDropdown" class="multi-dropdown">
-                        <div class="quick-filter-bar">
-                            <button class="filter-btn btn-clear" onclick="clearFilter('ramSizes')">Clear</button>
+            <div class="section-header">4. Component Filters</div>
+            <div class="input-grid">
+                <!-- CPU Socket Multi-Select -->
+                <div class="input-group">
+                    <label>CPU Socket (Shift/Ctrl Click)</label>
+                    <div id="multiSocket" class="multi-select-container">
+                        <div class="multi-select-display" onclick="toggleDropdown('socketDropdown')">Any</div>
+                        <div id="socketDropdown" class="multi-dropdown">
+                            <div class="quick-filter-bar">
+                                <button class="filter-btn btn-clear" onclick="clearFilter('socket')">Clear</button>
+                                <button class="filter-btn btn-amd" onclick="applyQuickFilter('socket', 'AMD')">Add AMD</button>
+                                <button class="filter-btn btn-intel" onclick="applyQuickFilter('socket', 'Intel')">Add Intel</button>
+                            </div>
+                            <div class="dropdown-list-container" id="socketListContainer"></div>
                         </div>
-                        <div class="dropdown-list-container" id="ramSizeListContainer"></div>
+                    </div>
+                </div>
+
+                <!-- Specific CPU Multi-Select -->
+                <div class="input-group">
+                    <label>Specific CPU Model(s)</label>
+                    <div id="multiCpu" class="multi-select-container">
+                        <div class="multi-select-display" onclick="toggleDropdown('cpuDropdown')">Any</div>
+                        <div id="cpuDropdown" class="multi-dropdown">
+                            <div class="quick-filter-bar">
+                                <button class="filter-btn btn-clear" onclick="clearFilter('cpuNames')">Clear</button>
+                                <button class="filter-btn btn-amd" onclick="applyQuickFilter('cpuNames', 'AMD')">Add AMD</button>
+                                <button class="filter-btn btn-intel" onclick="applyQuickFilter('cpuNames', 'Intel')">Add Intel</button>
+                            </div>
+                            <div class="dropdown-search-container">
+                                <input type="text" class="dropdown-search" placeholder="Filter CPUs..." oninput="filterDropdownList(this)">
+                            </div>
+                            <div class="dropdown-list-container" id="cpuListContainer"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Specific GPU Multi-Select -->
+                <div class="input-group">
+                    <label>Specific GPU Model(s)</label>
+                    <div id="multiGpu" class="multi-select-container">
+                        <div class="multi-select-display" onclick="toggleDropdown('gpuDropdown')">Any</div>
+                        <div id="gpuDropdown" class="multi-dropdown">
+                            <div class="quick-filter-bar">
+                                <button class="filter-btn btn-clear" onclick="clearFilter('gpuNames')">Clear</button>
+                                <button class="filter-btn btn-nvidia" onclick="applyQuickFilter('gpuNames', 'NVIDIA')">Add NVIDIA</button>
+                                <button class="filter-btn btn-amd" onclick="applyQuickFilter('gpuNames', 'AMD')">Add AMD</button>
+                                <button class="filter-btn btn-intel" onclick="applyQuickFilter('gpuNames', 'Intel')">Add Intel</button>
+                            </div>
+                            <div class="dropdown-search-container">
+                                <input type="text" class="dropdown-search" placeholder="Filter GPUs..." oninput="filterDropdownList(this)">
+                            </div>
+                            <div class="dropdown-list-container" id="gpuListContainer"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VRAM Multi-Select -->
+                <div class="input-group">
+                    <label>Target VRAM</label>
+                    <div id="multiVram" class="multi-select-container">
+                        <div class="multi-select-display" onclick="toggleDropdown('vramDropdown')">Any</div>
+                        <div id="vramDropdown" class="multi-dropdown">
+                            <div class="quick-filter-bar">
+                                <button class="filter-btn btn-clear" onclick="clearFilter('vram')">Clear Selection</button>
+                            </div>
+                            <div class="dropdown-list-container" id="vramListContainer"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GPU Length Multi-Select -->
+                <div class="input-group">
+                    <label>GPU Length</label>
+                    <div id="multiLength" class="multi-select-container">
+                        <div class="multi-select-display" onclick="toggleDropdown('lengthDropdown')">Any</div>
+                        <div id="lengthDropdown" class="multi-dropdown">
+                            <div class="quick-filter-bar">
+                                <button class="filter-btn btn-clear" onclick="clearFilter('length')">Clear Selection</button>
+                            </div>
+                            <div class="dropdown-list-container" id="lengthListContainer"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Specific Motherboard Multi-Select -->
+                <div class="input-group">
+                    <label>Specific Motherboard(s)</label>
+                    <div id="multiMobo" class="multi-select-container">
+                        <div class="multi-select-display" onclick="toggleDropdown('moboDropdown')">Any</div>
+                        <div id="moboDropdown" class="multi-dropdown">
+                            <div class="quick-filter-bar">
+                                <button class="filter-btn btn-clear" onclick="clearFilter('moboNames')">Clear</button>
+                            </div>
+                            <div class="dropdown-search-container">
+                                <input type="text" class="dropdown-search" placeholder="Filter Motherboards..." oninput="filterDropdownList(this)">
+                            </div>
+                            <div class="dropdown-list-container" id="moboListContainer"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Specific Case Multi-Select -->
+                <div class="input-group">
+                    <label>Specific Case(s)</label>
+                    <div id="multiCase" class="multi-select-container">
+                        <div class="multi-select-display" onclick="toggleDropdown('caseDropdown')">Any</div>
+                        <div id="caseDropdown" class="multi-dropdown">
+                            <div class="quick-filter-bar">
+                                <button class="filter-btn btn-clear" onclick="clearFilter('caseNames')">Clear</button>
+                            </div>
+                            <div class="dropdown-search-container">
+                                <input type="text" class="dropdown-search" placeholder="Filter Cases..." oninput="filterDropdownList(this)">
+                            </div>
+                            <div class="dropdown-list-container" id="caseListContainer"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Specific SSD Multi-Select -->
+                <div class="input-group">
+                    <label>Specific SSD (Quantity)</label>
+                    <div id="multiSSD" class="multi-select-container">
+                        <div class="multi-select-display" onclick="toggleDropdown('ssdDropdown')">Any</div>
+                        <div id="ssdDropdown" class="multi-dropdown">
+                            <div class="quick-filter-bar" id="ssdQuickFilter">
+                                <button class="filter-btn btn-clear" onclick="clearFilter('ssdNames')">Clear / Show All</button>
+                            </div>
+                            <div class="dropdown-search-container">
+                                <input type="text" class="dropdown-search" placeholder="Filter SSDs..." oninput="filterDropdownList(this)">
+                            </div>
+                            <div class="dropdown-list-container" id="ssdListContainer"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Specific HDD Multi-Select -->
+                <div class="input-group">
+                    <label>Specific HDD (Quantity)</label>
+                    <div id="multiHDD" class="multi-select-container">
+                        <div class="multi-select-display" onclick="toggleDropdown('hddDropdown')">Any</div>
+                        <div id="hddDropdown" class="multi-dropdown">
+                            <div class="quick-filter-bar" id="hddQuickFilter">
+                                <button class="filter-btn btn-clear" onclick="clearFilter('hddNames')">Clear / Show All</button>
+                            </div>
+                            <div class="dropdown-search-container">
+                                <input type="text" class="dropdown-search" placeholder="Filter HDDs..." oninput="filterDropdownList(this)">
+                            </div>
+                            <div class="dropdown-list-container" id="hddListContainer"></div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- NEW: Target RAM Capacity Input -->
-            <div class="input-group">
-                <label>Target Total Capacity</label>
-                <input type="number" id="targetTotalRam" placeholder="e.g. 128">
-            </div>
-
-            <!-- Filter by Manufacturer -->
-            <div class="input-group">
-                <label>RAM Manufacturer</label>
-                <div id="multiRamMfgr" class="multi-select-container">
-                    <div class="multi-select-display" onclick="toggleDropdown('ramMfgrDropdown')">Any</div>
-                    <div id="ramMfgrDropdown" class="multi-dropdown">
-                        <div class="quick-filter-bar">
-                            <button class="filter-btn btn-clear" onclick="clearFilter('ramMfgrs')">Clear</button>
-                        </div>
-                        <div class="dropdown-list-container" id="ramMfgrListContainer"></div>
-                    </div>
+            <div class="section-header">5. Power Constraints</div>
+            <div class="input-grid">
+                <div class="input-group">
+                    <label>Max Total Watts</label>
+                    <input type="number" id="maxTotalWatts" placeholder="No Limit">
+                </div>
+                <div class="input-group">
+                    <label>Max CPU Watts</label>
+                    <input type="number" id="maxCpuWatts" placeholder="No Limit">
+                </div>
+                <div class="input-group">
+                    <label>Max GPU Watts</label>
+                    <input type="number" id="maxGpuWatts" placeholder="No Limit">
+                </div>
+                <div class="input-group">
+                    <label>Extra Watts Buffer (OC Suggestion: ~50)</label>
+                    <input type="number" id="extraWatts" value="0">
                 </div>
             </div>
+            
+            <button class="btn-generate" onclick="generateBuilds()">GENERATE BUILDS</button>
+        </div>
 
-            <!-- Filter by Frequency -->
-            <div class="input-group">
-                <label>RAM Frequency</label>
-                <div id="multiRamFreq" class="multi-select-container">
-                    <div class="multi-select-display" onclick="toggleDropdown('ramFreqDropdown')">Any</div>
-                    <div id="ramFreqDropdown" class="multi-dropdown">
-                        <div class="quick-filter-bar">
-                            <button class="filter-btn btn-clear" onclick="clearFilter('ramFreqs')">Clear</button>
-                        </div>
-                        <div class="dropdown-list-container" id="ramFreqListContainer"></div>
-                    </div>
-                </div>
+        <!-- Results Meta Bar -->
+        <div class="results-meta">
+            <div style="display: flex; align-items: center;">
+                <div class="result-count" id="resCount">Ready</div>
+                <div class="score-range-text" id="scoreRangeDisplay"></div>
             </div>
+            <div class="sort-controls">
+                <div class="checkbox-container" style="margin-right: 15px;">
+                    <input type="checkbox" id="useOC" onchange="generateBuilds()">
+                    <label for="useOC">Use CPU overclocked values</label>
+                </div>
 
-            <div class="input-group" style="grid-column: 1 / -1;">
-                <label>Specific RAM Model(s)</label>
-                <div id="multiRam" class="multi-select-container">
-                    <div class="multi-select-display" onclick="toggleDropdown('ramDropdown')">Any</div>
-                    <div id="ramDropdown" class="multi-dropdown">
-                        <div class="quick-filter-bar">
-                            <button class="filter-btn btn-clear" onclick="clearFilter('ramNames')">Clear</button>
-                        </div>
-                        <div class="dropdown-search-container">
-                            <input type="text" class="dropdown-search" placeholder="Filter RAM..." oninput="filterDropdownList(this)">
-                        </div>
-                        <div class="dropdown-list-container" id="ramListContainer"></div>
-                    </div>
+                <label>Sort By:</label>
+                <select id="mainSort" class="sort-select" onchange="renderPage(1)">
+                    <option value="diff">Closest to Target Score</option>
+                    <option value="gpu_score">Highest Individual GPU Score</option>
+                    <option value="cpu_score">Highest Individual CPU Score</option>
+                    <option value="score_desc">Highest Total Score</option>
+                    <option value="score_asc">Lowest Total Score</option>
+                    <option value="price_asc">Lowest Price</option>
+                    <option value="price_desc">Highest Price</option>
+                    <option value="value_desc">Most Overperforming (Best Value)</option>
+                    <option value="value_asc">Most Underperforming (Worst Value)</option>
+                </select>
+
+                <div class="min-score-container">
+                    <label class="min-score-label">Min 3D Score (press enter to apply):</label>
+                    <input type="text" id="minScoreInput" placeholder="0" onchange="generateBuilds()">
                 </div>
             </div>
         </div>
 
-        <div class="section-header">3. Additional Components</div>
-        <div class="input-grid">
-            <div class="checkbox-container">
-                <input type="checkbox" id="incMobo" checked> 
-                <label for="incMobo">Motherboard</label>
-            </div>
-            <div class="checkbox-container">
-                <input type="checkbox" id="incCase" checked>
-                <label for="incCase">Case</label>
-            </div>
-            <div class="checkbox-container">
-                <input type="checkbox" id="incCooler">
-                <label for="incCooler">CPU Cooler</label>
-            </div>
-            <div class="checkbox-container">
-                <input type="checkbox" id="incPsu" checked>
-                <label for="incPsu">PSU</label>
-            </div>
-            <div class="checkbox-container">
-                <input type="checkbox" id="incFans"> 
-                <label for="incFans">Case Fans (x1)</label>
-            </div>
-            <div class="checkbox-container">
-                <input type="checkbox" id="incStorage"> 
-                <label for="incStorage">Include Storage</label>
-            </div>
-        </div>
-        
-        <div class="section-header">4. Component Filters</div>
-        <div class="input-grid">
-            <!-- CPU Socket Multi-Select -->
-            <div class="input-group">
-                <label>CPU Socket (Shift/Ctrl Click)</label>
-                <div id="multiSocket" class="multi-select-container">
-                    <div class="multi-select-display" onclick="toggleDropdown('socketDropdown')">Any</div>
-                    <div id="socketDropdown" class="multi-dropdown">
-                        <div class="quick-filter-bar">
-                            <button class="filter-btn btn-clear" onclick="clearFilter('socket')">Clear</button>
-                            <button class="filter-btn btn-amd" onclick="applyQuickFilter('socket', 'AMD')">Add AMD</button>
-                            <button class="filter-btn btn-intel" onclick="applyQuickFilter('socket', 'Intel')">Add Intel</button>
-                        </div>
-                        <div class="dropdown-list-container" id="socketListContainer"></div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Specific CPU Multi-Select -->
-            <div class="input-group">
-                <label>Specific CPU Model(s)</label>
-                <div id="multiCpu" class="multi-select-container">
-                    <div class="multi-select-display" onclick="toggleDropdown('cpuDropdown')">Any</div>
-                    <div id="cpuDropdown" class="multi-dropdown">
-                        <div class="quick-filter-bar">
-                            <button class="filter-btn btn-clear" onclick="clearFilter('cpuNames')">Clear</button>
-                            <button class="filter-btn btn-amd" onclick="applyQuickFilter('cpuNames', 'AMD')">Add AMD</button>
-                            <button class="filter-btn btn-intel" onclick="applyQuickFilter('cpuNames', 'Intel')">Add Intel</button>
-                        </div>
-                        <div class="dropdown-search-container">
-                            <input type="text" class="dropdown-search" placeholder="Filter CPUs..." oninput="filterDropdownList(this)">
-                        </div>
-                        <div class="dropdown-list-container" id="cpuListContainer"></div>
-                    </div>
-                </div>
-            </div>
+        <div id="resultsList"></div>
 
-            <!-- Specific GPU Multi-Select -->
-            <div class="input-group">
-                <label>Specific GPU Model(s)</label>
-                <div id="multiGpu" class="multi-select-container">
-                    <div class="multi-select-display" onclick="toggleDropdown('gpuDropdown')">Any</div>
-                    <div id="gpuDropdown" class="multi-dropdown">
-                        <div class="quick-filter-bar">
-                            <button class="filter-btn btn-clear" onclick="clearFilter('gpuNames')">Clear</button>
-                            <button class="filter-btn btn-nvidia" onclick="applyQuickFilter('gpuNames', 'NVIDIA')">Add NVIDIA</button>
-                            <button class="filter-btn btn-amd" onclick="applyQuickFilter('gpuNames', 'AMD')">Add AMD</button>
-                            <button class="filter-btn btn-intel" onclick="applyQuickFilter('gpuNames', 'Intel')">Add Intel</button>
-                        </div>
-                        <div class="dropdown-search-container">
-                            <input type="text" class="dropdown-search" placeholder="Filter GPUs..." oninput="filterDropdownList(this)">
-                        </div>
-                        <div class="dropdown-list-container" id="gpuListContainer"></div>
-                    </div>
-                </div>
+        <div class="pagination" id="pagination">
+            <button class="page-btn" id="btnPrev" onclick="changePage(-1)">Previous</button>
+            <div class="page-info-container" style="flex:1; display:flex; justify-content:center;">
+                <span class="page-info" id="pageInfo" onclick="makePageEditable()" title="Click to jump to page">Page 1 of 1</span>
             </div>
-
-            <!-- VRAM Multi-Select -->
-            <div class="input-group">
-                <label>Target VRAM</label>
-                <div id="multiVram" class="multi-select-container">
-                    <div class="multi-select-display" onclick="toggleDropdown('vramDropdown')">Any</div>
-                    <div id="vramDropdown" class="multi-dropdown">
-                        <div class="quick-filter-bar">
-                            <button class="filter-btn btn-clear" onclick="clearFilter('vram')">Clear Selection</button>
-                        </div>
-                        <div class="dropdown-list-container" id="vramListContainer"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- GPU Length Multi-Select -->
-            <div class="input-group">
-                <label>GPU Length</label>
-                <div id="multiLength" class="multi-select-container">
-                    <div class="multi-select-display" onclick="toggleDropdown('lengthDropdown')">Any</div>
-                    <div id="lengthDropdown" class="multi-dropdown">
-                        <div class="quick-filter-bar">
-                            <button class="filter-btn btn-clear" onclick="clearFilter('length')">Clear Selection</button>
-                        </div>
-                        <div class="dropdown-list-container" id="lengthListContainer"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Specific Motherboard Multi-Select -->
-            <div class="input-group">
-                <label>Specific Motherboard(s)</label>
-                <div id="multiMobo" class="multi-select-container">
-                    <div class="multi-select-display" onclick="toggleDropdown('moboDropdown')">Any</div>
-                    <div id="moboDropdown" class="multi-dropdown">
-                        <div class="quick-filter-bar">
-                            <button class="filter-btn btn-clear" onclick="clearFilter('moboNames')">Clear</button>
-                        </div>
-                        <div class="dropdown-search-container">
-                            <input type="text" class="dropdown-search" placeholder="Filter Motherboards..." oninput="filterDropdownList(this)">
-                        </div>
-                        <div class="dropdown-list-container" id="moboListContainer"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Specific Case Multi-Select -->
-            <div class="input-group">
-                <label>Specific Case(s)</label>
-                <div id="multiCase" class="multi-select-container">
-                    <div class="multi-select-display" onclick="toggleDropdown('caseDropdown')">Any</div>
-                    <div id="caseDropdown" class="multi-dropdown">
-                        <div class="quick-filter-bar">
-                            <button class="filter-btn btn-clear" onclick="clearFilter('caseNames')">Clear</button>
-                        </div>
-                        <div class="dropdown-search-container">
-                            <input type="text" class="dropdown-search" placeholder="Filter Cases..." oninput="filterDropdownList(this)">
-                        </div>
-                        <div class="dropdown-list-container" id="caseListContainer"></div>
-                    </div>
-                </div>
-            </div>
-
-             <!-- Specific SSD Multi-Select -->
-             <div class="input-group">
-                <label>Specific SSD (Quantity)</label>
-                <div id="multiSSD" class="multi-select-container">
-                    <div class="multi-select-display" onclick="toggleDropdown('ssdDropdown')">Any</div>
-                    <div id="ssdDropdown" class="multi-dropdown">
-                        <div class="quick-filter-bar" id="ssdQuickFilter">
-                            <button class="filter-btn btn-clear" onclick="clearFilter('ssdNames')">Clear / Show All</button>
-                        </div>
-                        <div class="dropdown-search-container">
-                            <input type="text" class="dropdown-search" placeholder="Filter SSDs..." oninput="filterDropdownList(this)">
-                        </div>
-                        <div class="dropdown-list-container" id="ssdListContainer"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Specific HDD Multi-Select -->
-            <div class="input-group">
-                <label>Specific HDD (Quantity)</label>
-                <div id="multiHDD" class="multi-select-container">
-                    <div class="multi-select-display" onclick="toggleDropdown('hddDropdown')">Any</div>
-                    <div id="hddDropdown" class="multi-dropdown">
-                        <div class="quick-filter-bar" id="hddQuickFilter">
-                            <button class="filter-btn btn-clear" onclick="clearFilter('hddNames')">Clear / Show All</button>
-                        </div>
-                        <div class="dropdown-search-container">
-                            <input type="text" class="dropdown-search" placeholder="Filter HDDs..." oninput="filterDropdownList(this)">
-                        </div>
-                        <div class="dropdown-list-container" id="hddListContainer"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="section-header">5. Power Constraints</div>
-        <div class="input-grid">
-            <div class="input-group">
-                <label>Max Total Watts</label>
-                <input type="number" id="maxTotalWatts" placeholder="No Limit">
-            </div>
-            <div class="input-group">
-                <label>Max CPU Watts</label>
-                <input type="number" id="maxCpuWatts" placeholder="No Limit">
-            </div>
-            <div class="input-group">
-                <label>Max GPU Watts</label>
-                <input type="number" id="maxGpuWatts" placeholder="No Limit">
-            </div>
-            <div class="input-group">
-                <label>Extra Watts Buffer (OC Suggestion: ~50)</label>
-                <input type="number" id="extraWatts" value="0">
-            </div>
-        </div>
-        
-        <button class="btn-generate" onclick="generateBuilds()">GENERATE BUILDS</button>
-    </div>
-
-    <!-- Results Meta Bar -->
-    <div class="results-meta">
-        <div style="display: flex; align-items: center;">
-            <div class="result-count" id="resCount">Ready</div>
-            <!-- NEW: Score Range Display Text Positioned Here -->
-            <div class="score-range-text" id="scoreRangeDisplay"></div>
-        </div>
-        <div class="sort-controls">
-            <!-- IMPLEMENTATION: OVERCLOCK TOGGLE -->
-            <div class="checkbox-container" style="margin-right: 15px;">
-                <input type="checkbox" id="useOC" onchange="generateBuilds()">
-                <label for="useOC">Use CPU overclocked values</label>
-            </div>
-
-            <label>Sort By:</label>
-            <select id="mainSort" class="sort-select" onchange="renderPage(1)">
-                <option value="diff">Closest to Target Score</option>
-                <option value="gpu_score">Highest Individual GPU Score</option>
-                <option value="cpu_score">Highest Individual CPU Score</option>
-                <option value="score_desc">Highest Total Score</option>
-                <option value="score_asc">Lowest Total Score</option>
-                <option value="price_asc">Lowest Price</option>
-                <option value="price_desc">Highest Price</option>
-                <option value="value_desc">Most Overperforming (Best Value)</option>
-                <option value="value_asc">Most Underperforming (Worst Value)</option>
-            </select>
-
-            <div class="min-score-container">
-                <label class="min-score-label">Min 3D Score (press enter to apply):</label>
-                <input type="text" id="minScoreInput" placeholder="0" onchange="generateBuilds()">
-            </div>
+            <button class="page-btn" id="btnNext" onclick="changePage(1)">Next</button>
         </div>
     </div>
 
-
-    <div id="resultsList"></div>
-
-    <div class="pagination" id="pagination">
-        <button class="page-btn" id="btnPrev" onclick="changePage(-1)">Previous</button>
-        <div class="page-info-container" style="flex:1; display:flex; justify-content:center;">
-            <span class="page-info" id="pageInfo" onclick="makePageEditable()" title="Click to jump to page">Page 1 of 1</span>
+    <!-- DATA VIEWER VIEW -->
+    <div id="dataView" class="none">
+        <div class="viewer-tabs">
+            <button class="v-tab-btn active" onclick="switchDataTab('gpu')">GPUs</button>
+            <button class="v-tab-btn" onclick="switchDataTab('cpu')">CPUs</button>
         </div>
-        <button class="page-btn" id="btnNext" onclick="changePage(1)">Next</button>
+        <input type="text" id="dataSearchBox" class="dropdown-search" style="margin-bottom:20px; padding:15px; font-size:1.1em;" placeholder="Type to filter components list..." oninput="filterDataList()">
+        <div id="dataViewListContainer"></div>
     </div>
 </div>
 
@@ -1404,20 +1506,19 @@
         socket: new Set(),
         cpuNames: new Set(),
         gpuNames: new Set(),
-        gpuCount: new Set(), // New: GPU Count Filter
+        gpuCount: new Set(), 
         moboNames: new Set(),
         caseNames: new Set(),
         ramNames: new Set(),
-        ramSizes: new Set(), // Reverted to Multi-Select (Stick Sizes)
-        ramMfgrs: new Set(), // Filter by Manufacturer
-        ramFreqs: new Set(), // New: Filter by Frequency
-        // Changed to Map to store Counts for storage
-        ssdNames: new Map(), // name -> count
-        hddNames: new Map()  // name -> count
+        ramSizes: new Set(), 
+        ramMfgrs: new Set(), 
+        ramFreqs: new Set(), 
+        ssdNames: new Map(), 
+        hddNames: new Map() 
     };
 
     let lastClickedOption = { category: null, index: -1 };
-    let warningDismissed = false; // Flag to track dismissal
+    let warningDismissed = false; 
 
     const filterKeywords = {
         cpuNames: {
@@ -1440,6 +1541,8 @@
     let currentPage = 1;
     let itemsPerPage = 100;
     let currentPopupData = null;
+
+    let currentDataTab = 'gpu'; // For Data Viewer
 
     // ==================== UTILITY FUNCTIONS ====================
     const formatCurrency = num => '$' + num.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -1468,22 +1571,21 @@
         }
     });
 
-function setMode(m) {
-    currentMode = m;
-    document.getElementById('btnTS').classList.toggle('active', m === 'TS');
-    document.getElementById('btnTSX').classList.toggle('active', m === 'TSX');
-    
-    // TSX Override: Force disable CPU Overclock
-    if (m === 'TSX') {
-        const ocCheckbox = document.getElementById('useOC');
-        ocCheckbox.checked = false;
-        ocCheckbox.disabled = true;
-    } else {
-        document.getElementById('useOC').disabled = false;
+    function setMode(m) {
+        currentMode = m;
+        document.getElementById('btnTS').classList.toggle('active', m === 'TS');
+        document.getElementById('btnTSX').classList.toggle('active', m === 'TSX');
+        
+        if (m === 'TSX') {
+            const ocCheckbox = document.getElementById('useOC');
+            ocCheckbox.checked = false;
+            ocCheckbox.disabled = true;
+        } else {
+            document.getElementById('useOC').disabled = false;
+        }
+        
+        if(Loaded.cpu && Loaded.gpu) generateBuilds();
     }
-    
-    if(Loaded.cpu && Loaded.gpu) generateBuilds();
-}
 
     function dismissWarning() {
         document.getElementById('perfWarning').classList.add('hidden');
@@ -1518,7 +1620,6 @@ function setMode(m) {
                 const response = await fetch(`datas/${t.file}`);
                 if (!response.ok) throw new Error(`Status ${response.status}`);
                 const text = await response.text();
-                
                 parseHTML(t.file, text);
 
             } catch (err) {
@@ -1526,14 +1627,11 @@ function setMode(m) {
             }
         }
 
-// All done
         loadingText.innerText = "Processing Data...";
         setTimeout(() => {
              document.getElementById('loadingOverlay').style.opacity = '0';
              setTimeout(() => {
                  document.getElementById('loadingOverlay').style.display = 'none';
-                 
-                 // Initialize OC checkbox state based on current mode
                  if (currentMode === 'TSX') {
                      const ocCheckbox = document.getElementById('useOC');
                      ocCheckbox.checked = false;
@@ -1542,8 +1640,6 @@ function setMode(m) {
              }, 500);
         }, 500);
     }
-
-
 
     // ==================== FILE PARSING ====================
     function parseHTML(fname, html) {
@@ -1557,7 +1653,6 @@ function setMode(m) {
         headers.forEach((h, i) => idx[h] = i);
         const get = (cells, key) => (idx[key] !== undefined && cells[idx[key]]) ? cells[idx[key]].textContent.trim() : '';
 
-        // Determine File Type based on name
         let type = '';
         const n = fname.toLowerCase();
         
@@ -1585,6 +1680,7 @@ function setMode(m) {
             const base = {
                 name: get(cells, 'Part Name'),
                 price: price,
+                sellPrice: get(cells, 'Sell Price') || "0", // NEW: Captured for Data Viewer
                 level: parseInt(get(cells, 'Level')) || 0,
                 mfgr: get(cells, 'Manufacturer')
             };
@@ -1594,26 +1690,29 @@ function setMode(m) {
                 base.scoreTSX = parseInt(get(cells, 'Basic CPU Score (TSX)')) || 0;
                 if (!base.scoreTS) base.scoreTS = base.scoreTSX;
                 base.socket = get(cells, 'CPU Socket');
-                base.series = get(cells, 'CPU Series');
                 base.watts = parseInt(get(cells, 'Wattage')) || 0;
                 
-                // IMPLEMENTATION: Parse Data for Live Calculation
+                // Calc Params
                 base.coreClockMultTS = parseFloat(get(cells, 'Core Clock Multiplier (TS)')) || 0;
                 base.multTS = parseFloat(get(cells, 'Mem Clock Multiplier (TS)')) || 0;
                 base.memChannelMultTS = parseFloat(get(cells, 'Mem Channels Multiplier (TS)')) || 0;
                 base.finalAdjTS = parseFloat(get(cells, 'Final Adjustment (TS)')) || 0;
-
                 base.coreClockMultTSX = parseFloat(get(cells, 'Core Clock Multiplier (TSX)')) || 0;
                 base.multTSX = parseFloat(get(cells, 'Mem Clock Multiplier (TSX)')) || 0;   
                 base.memChannelMultTSX = parseFloat(get(cells, 'Mem Channels Multiplier (TSX)')) || 0;
                 base.finalAdjTSX = parseFloat(get(cells, 'Final Adjustment (TSX)')) || 0;
 
                 base.maxMemChannels = parseInt(get(cells, 'Max Memory Channels')) || 2;
+                base.maxMemChannelsRaw = get(cells, 'Max Memory Channels'); // Store text for viewer
                 base.defaultMem = parseInt(get(cells, 'Default Memory Speed')) || 2133;
                 base.memTypes = get(cells, 'Supported Memory Types');
                 base.cores = get(cells, 'Cores');
-                base.maxFreq = get(cells, 'Frequency'); 
+                
+                // Frequency Parsing
+                base.maxFreq = get(cells, 'Frequency'); // Usually 'Frequency' col is Max or Mid
+                base.freqMid = get(cells, 'Frequency'); // Capture specifically for viewer
                 base.baseFreq = get(cells, 'Base Frequency');
+                
                 base.voltage = get(cells, 'Voltage');
                 base.maxVoltage = get(cells, 'Max Voltage');
                 base.canOC = get(cells, 'Can Overclock');
@@ -1624,6 +1723,13 @@ function setMode(m) {
                 base.score2 = parseInt(get(cells, 'Double GPU Graphics Score')) || 0;
                 base.score3 = parseInt(get(cells, 'Triple GPU Graphics Score')) || 0;
                 base.score4 = parseInt(get(cells, 'Quad GPU Graphics Score')) || 0;
+                
+                // Store raw string scores for Viewer (handling empty cells nicely)
+                base.rawScore = get(cells, 'Single GPU Graphics Score');
+                base.rawScore2 = get(cells, 'Double GPU Graphics Score');
+                base.rawScore3 = get(cells, 'Triple GPU Graphics Score');
+                base.rawScore4 = get(cells, 'Quad GPU Graphics Score');
+
                 base.watts = parseInt(get(cells, 'Wattage')) || 0;
                 base.vram = parseInt(get(cells, 'VRAM (GB)')) || 0;
                 base.length = parseInt(get(cells, 'Length')) || 0;
@@ -1636,6 +1742,9 @@ function setMode(m) {
                 base.maxCore = get(cells, 'GPU max clock');
                 base.maxMem = get(cells, 'GPU max mem clock');
                 base.chipset = get(cells, 'Chipset');
+                
+                // New Fields for Data Viewer
+                base.slotSize = get(cells, 'Slot Size') || get(cells, 'Size') || get(cells, 'Multi-GPU Slot Size') || "N/A";
 
             } else if (type === 'ram') {
                 base.freq = parseInt(get(cells, 'Frequency')) || 0;
@@ -1645,9 +1754,8 @@ function setMode(m) {
                 base.voltage = get(cells, 'Voltage');
                 base.maxVoltage = get(cells, 'Max Voltage');
                 base.maxSpeed = parseInt(get(cells, 'Max Speed')) || 0;
-                // Specific extraction for RAM Manufacturer and Type pairing logic
                 base.mfgr = get(cells, 'Manufacturer');
-                if(!base.mfgr) base.mfgr = get(cells, 'Brand'); // Fallback
+                if(!base.mfgr) base.mfgr = get(cells, 'Brand'); 
             } else if (type === 'mobo') {
                 base.socket = get(cells, 'CPU Socket');
                 base.ramType = get(cells, 'Ram Type');
@@ -1680,14 +1788,11 @@ function setMode(m) {
             } else if (type === 'storage') {
                 let sizeVal = parseFloat(get(cells, 'Size (GB)')) || 0;
                 base.sizeGB = sizeVal;
-                
                 if (sizeVal >= 1000) base.sizeStr = (sizeVal / 1000) + 'TB';
                 else base.sizeStr = sizeVal + 'GB';
-
                 let speedRaw = get(cells, 'Speed'); 
                 if (!speedRaw) speedRaw = get(cells, 'Transfer Speed');
                 base.speed = parseInt((speedRaw || "0").replace(/[^0-9]/g, '')) || 0;
-                
                 base.type = get(cells, 'Type');
                 base.mfgr = get(cells, 'Manufacturer');
             }
@@ -1701,7 +1806,7 @@ function setMode(m) {
         return addedCount; 
     }
 
-    // Helper for RAM Pairing Logic: Manufacturers must match, Ram Type must match
+    // Helper for RAM Pairing Logic
     function areRamsCompatible(ramA, ramB) {
         if (!ramA || !ramB) return false;
         if (ramA.type !== ramB.type) return false;
@@ -1713,20 +1818,100 @@ function setMode(m) {
         if (Loaded.cpu && Loaded.gpu && Loaded.mobo && Loaded.ram && Loaded.cases && Loaded.storage) {
             document.querySelector('.controls-wrapper').classList.add('active');
             refreshDropdowns();
+            renderDataList(); // Pre-render Data Viewer
         }
     }
 
-    // Determines Maximum Supported GPU Count based on specific Whitelist
+    function toggleView() {
+    const calcView = document.getElementById('calculatorView');
+    const dataView = document.getElementById('dataView');
+    const btn = document.getElementById('mainViewToggle');
+
+    if (dataView.style.display === 'none' || !dataView.style.display) {
+        // SWITCHING TO DATA VIEW
+        calcView.style.display = 'none';
+        dataView.style.display = 'block';
+        
+        // Set button text to point back to Calculator
+        btn.innerHTML = `<span style="font-size:1.4em; display:block; margin-bottom:5px;">Return to Calculator</span><span style="font-size:1.1em; font-weight:normal; color:#ccc;">Click to go back to the build calculator</span>`;
+        
+        renderDataList();
+    } else {
+        // SWITCHING TO CALCULATOR VIEW
+        calcView.style.display = 'block';
+        dataView.style.display = 'none';
+        
+        // Set button text to point to Data Viewer
+        btn.innerHTML = `
+            <span style="font-size:1.4em; display:block; margin-bottom:5px;">Data Viewer</span>
+            <span style="font-size:1.1em; font-weight:normal; color:#ccc;">click this box to swap to the data info page where u can know right OC values, more info about parts, and countless more stuff</span>
+        `;
+    }
+}
+
+    function switchDataTab(tab) {
+        currentDataTab = tab;
+        const btns = document.querySelectorAll('.v-tab-btn');
+        btns.forEach(b => b.classList.remove('active'));
+        // 0 is gpu, 1 is cpu based on HTML order
+        if(tab === 'gpu') btns[0].classList.add('active');
+        else btns[1].classList.add('active');
+        
+        renderDataList();
+    }
+
+    function filterDataList() {
+        const q = document.getElementById('dataSearchBox').value.toLowerCase();
+        const rows = document.querySelectorAll('.data-list-row');
+        rows.forEach(r => {
+            if (r.innerText.toLowerCase().includes(q)) r.style.display = 'block';
+            else r.style.display = 'none';
+        });
+    }
+
+    function renderDataList() {
+        const container = document.getElementById('dataViewListContainer');
+        container.innerHTML = '';
+        
+        let items = [];
+        if (currentDataTab === 'gpu') items = Array.from(DB.gpu.values());
+        else items = Array.from(DB.cpu.values());
+
+        // Sort by Level Descending, then Name
+        items.sort((a,b) => b.level - a.level || a.name.localeCompare(b.name));
+
+        items.forEach(item => {
+            const div = document.createElement('div');
+            div.className = `data-list-row ${getBrandClass(item)}`;
+            
+            let str = "";
+            
+            if (currentDataTab === 'gpu') {
+                // GPU FORMAT
+                const cooling = item.isWater ? "Water" : "Air";
+                str = `Single GPU Score: ${item.rawScore || ""} | Double GPU Score ${item.rawScore2 || ""} | Triple GPU Score ${item.rawScore3 || ""} | Quad GPU Score ${item.rawScore4 || ""} | VRAM ${item.vram} | Length ${item.length} | Watt ${item.watts} | ${cooling} | Base Core/Max Core: ${item.baseCore || "?"}/${item.maxCore || "?"} MHz | Base Mem/Max Mem: ${item.baseMem || "?"}/${item.maxMem || "?"} MHz | Level ${item.level} | Price ${item.price} | Sell Price ${item.sellPrice} | Slot size: ${item.slotSize} |`;
+            } else {
+                // CPU FORMAT - Added "C" after item.cores
+                const freqStr = `${item.baseFreq || "?"} / ${item.freqMid || "?"} / ${item.maxFreq || "?"}`;
+                str = `Basic Cpu Score: ${item.scoreTS} | Basic CPU Score (TSX): ${item.scoreTSX} | OC Score: ${item.ocScore} | Socket ${item.socket} | ${item.cores}C | BaseMidMaxFreq: ${freqStr} MHz | VoltageMinMax: ${item.voltage || "?"}/${item.maxVoltage || "?"} V | Can Delid ${item.canDelid} | Sell Price : ${item.sellPrice} | Price ${item.price} | Level ${item.level} | Max Memory Channels: ${item.maxMemChannelsRaw || "?"} | Supported Memory Types ${item.memTypes}`;
+            }
+
+            div.innerHTML = `<span class="item-name-list">${item.name}</span><span class="raw-string">${str}</span>`;
+            container.appendChild(div);
+        });
+        
+        // Re-apply filter if text exists
+        filterDataList();
+    }
+
+
+    // ==================== LOGIC: GPU COUNT & COMPATIBILITY ====================
     function getMultiGPUCap(name, length) {
         const n = name.toLowerCase();
         const len = length || 0;
-
-        // Quad Support (4)
         if (n.includes('r9 280')) return 4;
         if (n.includes('r9 290')) return 4;
         if (n.includes('gtx 970') && !n.includes('msi gtx 970 gaming 4g')) return 4;
-
-        // Triple Support (3)
         if (n.includes('rx vega 56')) return 3;
         if (n.includes('radeon vii')) return 3;
         if (n.includes('rx 470') || n.includes('rx 560') || n.includes('rx 570') || n.includes('rx 580') || n.includes('rx 590')) return 3;
@@ -1735,32 +1920,23 @@ function setMode(m) {
         if (n.includes('rx 5500')) return 3;
         if (n.includes('rtx 2060') && len < 271) return 3;
         if (n.includes('gtx 1080 ti') && len < 290) return 3;
-
-        // Double Support (2)
         if (n.includes('rx 6800 xt')) return 2;
-        if (n.includes('gtx 1080 ti')) return 2; // len >= 290
+        if (n.includes('gtx 1080 ti')) return 2; 
         if (n.includes('gtx 1070 ti')) return 2;
         if (n.includes('rx 5700')) return 2;
-        if (n.includes('rtx 2060')) return 2; // len >= 271
+        if (n.includes('rtx 2060')) return 2; 
         if (n.includes('rtx 2070')) return 2;
         if (n.includes('rtx 3060') || n.includes('rtx 3080') || n.includes('rtx 3090')) return 2;
-
-        // Default: Single GPU Only (1)
         return 1;
     }
 
-    // ==================== REAL-TIME LEVEL FILTERING ====================
     function refreshDropdowns() {
         if (!Loaded.cpu) return;
 
         const currentLvl = parseInt(document.getElementById('level').value) || 30;
-        
-        // GPU Count logic check
-        // We will just check if multiple counts are selected or if a count > 1 is selected
         let gpuCnt = 1; 
         if(selectedOptions.gpuCount.has(2) || selectedOptions.gpuCount.has(3) || selectedOptions.gpuCount.has(4)) gpuCnt = 2;
 
-        // Filter Logic for Multi-GPU Requirements
         let moboFilterMinPCI = 0;
         let caseFilterMinGPU = 0;
 
@@ -1777,15 +1953,9 @@ function setMode(m) {
         const ssdList = allStorage.filter(s => s.type === 'SSD' || s.type === 'M.2');
         const hddList = allStorage.filter(s => s.type === 'HDD');
         
-        const mobos = Array.from(DB.mobo.values()).filter(m => 
-            m.level <= currentLvl && m.pciSlots >= moboFilterMinPCI
-        );
-        
-        const cases = Array.from(DB.cases.values()).filter(c => 
-            c.level <= currentLvl && c.gpuSlots >= caseFilterMinGPU
-        );
+        const mobos = Array.from(DB.mobo.values()).filter(m => m.level <= currentLvl && m.pciSlots >= moboFilterMinPCI);
+        const cases = Array.from(DB.cases.values()).filter(c => c.level <= currentLvl && c.gpuSlots >= caseFilterMinGPU);
 
-        // Populate Dropdowns
         populateMultiSelect('gpuCount', [1, 2, 3, 4], 'gpuCountListContainer');
         populateMultiSelect('socket', [...new Set(cpus.map(c => c.socket).filter(s => s))].sort(), 'socketListContainer');
         populateMultiSelect('cpuNames', cpus.map(c => c.name).sort(), 'cpuListContainer');
@@ -1796,18 +1966,13 @@ function setMode(m) {
         populateMultiSelect('caseNames', cases.map(c => c.name).sort(), 'caseListContainer');
         populateMultiSelect('ramNames', rams.map(r => r.name).sort(), 'ramListContainer');
         
-        // Populating SSD and HDD dropdowns
         populateMultiSelect('ssdNames', ssdList.map(s => s.name).sort(), 'ssdListContainer');
         populateMultiSelect('hddNames', hddList.map(s => s.name).sort(), 'hddListContainer');
         
-        // Populate RAM Manufacturers
         populateMultiSelect('ramMfgrs', [...new Set(rams.map(r => r.mfgr).filter(m => m))].sort(), 'ramMfgrListContainer');
-        // Populate RAM Frequencies
         populateMultiSelect('ramFreqs', [...new Set(rams.map(r => r.freq).filter(f => f))].sort((a,b) => a-b), 'ramFreqListContainer');
-        // NEW: Populate RAM Stick Sizes
         populateMultiSelect('ramSizes', [...new Set(rams.map(r => r.size).filter(s => s))].sort((a,b) => a-b), 'ramSizeListContainer');
 
-        // Populate Size Buttons for Storage
         populateStorageSizeButtons('ssd', ssdList);
         populateStorageSizeButtons('hdd', hddList);
 
@@ -1827,13 +1992,10 @@ function setMode(m) {
 
     function populateStorageSizeButtons(type, list) {
         const container = document.getElementById(type + 'QuickFilter');
-        // Remove old buttons (keep the Clear button)
         const oldBtns = container.querySelectorAll('.btn-size-filter');
         oldBtns.forEach(b => b.remove());
 
         const uniqueSizes = [...new Set(list.map(s => s.sizeStr))];
-        
-        // Sort sizes logic: MB < GB < TB
         uniqueSizes.sort((a,b) => {
             const getVal = (str) => {
                 let n = parseFloat(str);
@@ -1857,14 +2019,9 @@ function setMode(m) {
         const containerId = type + 'ListContainer';
         const container = document.getElementById(containerId);
         const options = container.querySelectorAll('.multi-option');
-        
-        // Hide items that don't match the selected size
         options.forEach(opt => {
-            if (opt.dataset.sizeStr === sizeStr) {
-                opt.style.display = 'flex';
-            } else {
-                opt.style.display = 'none';
-            }
+            if (opt.dataset.sizeStr === sizeStr) opt.style.display = 'flex';
+            else opt.style.display = 'none';
         });
     }
 
@@ -1892,8 +2049,6 @@ function setMode(m) {
         options.forEach((opt, index) => {
             const div = document.createElement('div');
             div.className = 'multi-option';
-            
-            // Check selection state
             let isSelected = false;
             let count = 0;
 
@@ -1902,7 +2057,6 @@ function setMode(m) {
                     isSelected = true;
                     count = selectedOptions[category].get(opt);
                 }
-                // Attach sizeStr for filtering
                 const s = DB.storage.get(opt);
                 if(s) div.dataset.sizeStr = s.sizeStr;
             } else {
@@ -1918,7 +2072,6 @@ function setMode(m) {
             if (category === 'ramNames') {
                 const r = DB.ram.get(opt);
                 if (r) {
-                    // Include MANUFACTURER explicitly in the dropdown text
                     label = `<span style="font-size:1.2em"><b>${r.mfgr || 'Generic'}</b> - ${r.name} | Size Each: ${r.size}GB | Total: ${r.totalSize}GB | ${r.type} | ${r.freq}/${r.maxSpeed} MHz | ${r.voltage}/${r.maxVoltage} V | Lvl: ${r.level}</span>`;
                 }
             } else if (category === 'moboNames') {
@@ -1929,14 +2082,12 @@ function setMode(m) {
                 if (c) label = `<span style="font-size:0.9em">${c.name} | GPU Slots: ${c.gpuSlots}</span>`;
             } else if (isStorage) {
                 const s = DB.storage.get(opt);
-                if (s) {
-                    label = `<span style="font-size:0.9em">${s.name} | ${s.sizeStr} | ${s.speed} MB/s</span>`;
-                }
+                if (s) label = `<span style="font-size:0.9em">${s.name} | ${s.sizeStr} | ${s.speed} MB/s</span>`;
             } else {
                 if (category === 'vram') label += ' GB';
                 if (category === 'length') label += ' mm';
                 if (category === 'ramFreqs') label += ' MHz';
-                if (category === 'ramSizes') label += ' GB'; // New label for stick size
+                if (category === 'ramSizes') label += ' GB'; 
                 if (category === 'gpuCount') {
                      if(opt == 1) label = "Single GPU";
                      if(opt == 2) label = "Dual GPU";
@@ -1945,9 +2096,7 @@ function setMode(m) {
                 }
             }
 
-            // HTML Construction
             if (isStorage) {
-                // QUANTITY CONTROLS FOR STORAGE
                 const safeName = opt.replace(/'/g, "\\'");
                 div.innerHTML = `
                     <div class="option-left" onclick="toggleStorageSelection('${category}', '${safeName}', 1)">
@@ -1961,7 +2110,6 @@ function setMode(m) {
                     </div>
                 `;
             } else {
-                // STANDARD BOOLEAN SELECTION
                 div.innerHTML = `<div class="cb-custom"></div><span>${label}</span>`;
                 div.onclick = (e) => toggleOption(category, opt, div, e);
             }
@@ -1972,7 +2120,6 @@ function setMode(m) {
         updateDisplayLabel(category);
     }
 
-    // New Storage Toggle (Sets to 1 if not present, else removes)
     window.toggleStorageSelection = function(category, value, defaultQty) {
         if (selectedOptions[category].has(value)) {
             selectedOptions[category].delete(value);
@@ -1983,16 +2130,11 @@ function setMode(m) {
         updateDisplayLabel(category);
     }
 
-    // New Storage Quantity Modifier
     window.modifyStorageQty = function(category, value, delta) {
         let current = selectedOptions[category].get(value) || 0;
         let next = current + delta;
-        
-        if (next <= 0) {
-            selectedOptions[category].delete(value);
-        } else {
-            selectedOptions[category].set(value, next);
-        }
+        if (next <= 0) selectedOptions[category].delete(value);
+        else selectedOptions[category].set(value, next);
         refreshStorageDropdown(category);
         updateDisplayLabel(category);
     }
@@ -2003,14 +2145,9 @@ function setMode(m) {
             Array.from(DB.storage.values()).filter(s => (s.type === 'SSD' || s.type === 'M.2')) :
             Array.from(DB.storage.values()).filter(s => s.type === 'HDD');
         
-        // Save scroll position
         const container = document.getElementById(containerId);
         const scrollTop = container.scrollTop;
-
-        // Re-render
         populateMultiSelect(category, list.map(s=>s.name).sort(), containerId);
-        
-        // Restore scroll
         container.scrollTop = scrollTop;
     }
 
@@ -2018,14 +2155,12 @@ function setMode(m) {
         if (event.shiftKey && lastClickedOption.category === category && lastClickedOption.index !== -1) {
             const container = element.parentElement;
             const options = Array.from(container.children).filter(c => c.style.display !== 'none');
-            
             const currentIndex = options.indexOf(element);
             const lastIndex = options.findIndex(opt => parseInt(opt.dataset.index) === lastClickedOption.index);
 
             if (currentIndex !== -1 && lastIndex !== -1) {
                 const start = Math.min(currentIndex, lastIndex);
                 const end = Math.max(currentIndex, lastIndex);
-                
                 for (let i = start; i <= end; i++) {
                     const opt = options[i];
                     const val = opt.dataset.value;
@@ -2044,12 +2179,7 @@ function setMode(m) {
                 element.classList.add('selected');
             }
         }
-
-        lastClickedOption = { 
-            category: category, 
-            index: parseInt(element.dataset.index) 
-        };
-
+        lastClickedOption = { category: category, index: parseInt(element.dataset.index) };
         updateDisplayLabel(category);
     }
 
@@ -2088,15 +2218,12 @@ function setMode(m) {
         else if(category === 'hddNames') containerId = 'hddListContainer';
 
         const container = document.getElementById(containerId);
-        // If storage, we need to re-render to reset counts UI and reset Visibility (filtering)
         if (category === 'ssdNames' || category === 'hddNames') {
              refreshStorageDropdown(category);
-             // Ensure all are visible after clear
              if(container) container.querySelectorAll('.multi-option').forEach(opt => opt.style.display = 'flex');
         } else {
              if(container) container.querySelectorAll('.multi-option').forEach(opt => opt.classList.remove('selected'));
         }
-        
         updateDisplayLabel(category);
     }
 
@@ -2122,7 +2249,6 @@ function setMode(m) {
         const display = document.getElementById(displayId).querySelector('.multi-select-display');
         const size = selectedOptions[category].size;
 
-        // Custom logic for Storage display (Sum of counts)
         if (category === 'ssdNames' || category === 'hddNames') {
             let totalCount = 0;
             selectedOptions[category].forEach(qty => totalCount += qty);
@@ -2166,12 +2292,10 @@ function setMode(m) {
         const container = input.closest('.multi-dropdown').querySelector('.dropdown-list-container');
         if (!container) return;
         container.querySelectorAll('.multi-option').forEach(item => {
-            // Text content includes buttons, so filtering still works mostly on the name span
             item.style.display = item.textContent.toLowerCase().includes(filter) ? 'flex' : 'none';
         });
     }
 
-    // ==================== BRAND COLOR HELPER ====================
     function getBrandClass(item) {
         if (!item) return '';
         if (item.mfgr === 'Intel') {
@@ -2187,42 +2311,29 @@ function setMode(m) {
         return '';
     }
 
-    // ==================== 3DMARK CALCULATION ====================
+    // ==================== CALCULATION LOGIC ====================
     
-    // IMPLEMENTATION: Live CPU Score Calculator
     function calculateCpuScore(cpu, ram, stickCount, mode, useOC) {
-        // 1. Determine Freq
         let rawFreq = useOC ? cpu.maxFreq : cpu.baseFreq;
         let freq = parseFloat(rawFreq) || 0;
-
-        // 2. Select Multipliers
         const isTS = (mode === 'TS');
         const coreMult = isTS ? cpu.coreClockMultTS : cpu.coreClockMultTSX;
         const memChanMult = isTS ? cpu.memChannelMultTS : cpu.memChannelMultTSX;
         const memClockMult = isTS ? cpu.multTS : cpu.multTSX;
         const adjustment = isTS ? cpu.finalAdjTS : cpu.finalAdjTSX;
-
-        // 3. RAM Logic
         let activeChannels, actualMemSpeed;
         if (ram) {
-            // Enabled: MIN(Sticks, MaxSupported)
             activeChannels = Math.min(stickCount, cpu.maxMemChannels);
             actualMemSpeed = ram.freq;
         } else {
-            // Disabled: Use CPU Defaults
             activeChannels = cpu.maxMemChannels;
             actualMemSpeed = cpu.defaultMem;
         }
-
-        // 4. Formula
-        // Score = FLOOR ( ( (CoreMult * Freq) + (ChanMult * ActiveChans) + (MemClockMult * Speed) + Adj ) * 298 )
         const coreScore = coreMult * freq;
         const chanScore = memChanMult * activeChannels;
         const speedScore = memClockMult * actualMemSpeed;
-        
         const sum = coreScore + chanScore + speedScore + adjustment;
         const final = Math.floor(sum * 298);
-
         return final > 0 ? final : 0;
     }
 
@@ -2233,20 +2344,14 @@ function setMode(m) {
 
     function generateBuilds() {
         if (!Loaded.cpu || !Loaded.gpu) return alert("Wait for CPU and GPU files to load from datas/ folder!");
-
-        // PERFORMANCE WARNING CHECK
-        // Logic: Show if no filters AND has not been dismissed
-        // Includes checks for Stick Size and Target Capacity inputs
+        
         const targetRamVal = parseIntVal('targetTotalRam');
         const ramSpecific = selectedOptions.ramNames.size > 0 || selectedOptions.ramMfgrs.size > 0 || selectedOptions.ramFreqs.size > 0 || selectedOptions.ramSizes.size > 0 || targetRamVal > 0;
         const generalSpecific = selectedOptions.cpuNames.size > 0 || selectedOptions.gpuNames.size > 0;
         const warningBox = document.getElementById('perfWarning');
         
-        if (!ramSpecific && !generalSpecific && !warningDismissed) {
-            warningBox.classList.remove('hidden');
-        } else {
-            warningBox.classList.add('hidden');
-        }
+        if (!ramSpecific && !generalSpecific && !warningDismissed) warningBox.classList.remove('hidden');
+        else warningBox.classList.add('hidden');
 
         const allCpus = Array.from(DB.cpu.values());
         const allGpus = Array.from(DB.gpu.values());
@@ -2256,7 +2361,6 @@ function setMode(m) {
         const allCoolers = Array.from(DB.cooler.values());
         const allPsu = Array.from(DB.psu.values());
         const allFans = Array.from(DB.fan.values());
-        
         const allStorage = Array.from(DB.storage.values());
 
         const budget = parseVal('budget');
@@ -2264,16 +2368,14 @@ function setMode(m) {
         const minScore = parseVal('minScoreInput');
         const lvl = parseInt(document.getElementById('level').value);
         
-        // NEW: Get GPU Counts from Multi-Select
         let selectedGpuCounts = Array.from(selectedOptions.gpuCount);
         if (selectedGpuCounts.length === 0) selectedGpuCounts = [1, 2, 3, 4];
-        // Sort descending to show quad gpu builds first maybe? Or ascending. Let's do ascending for simplicity
         selectedGpuCounts.sort((a,b)=>a-b);
 
         const maxPoolSize = parseIntVal('resLimit'); 
         const sort = document.getElementById('mainSort').value;
-        const useOC = document.getElementById('useOC').checked; // Check Toggle State
-        const useRamPerfMode = document.getElementById('ramPerfMode').checked; // NEW Checkbox
+        const useOC = document.getElementById('useOC').checked; 
+        const useRamPerfMode = document.getElementById('ramPerfMode').checked; 
 
         const limitTotalW = parseInt(document.getElementById('maxTotalWatts').value);
         const limitCpuW = parseInt(document.getElementById('maxCpuWatts').value);
@@ -2295,31 +2397,21 @@ function setMode(m) {
         if (useCase) allCases.sort((a,b) => a.price - b.price);
         if (usePsu) allPsu.sort((a,b) => a.price - b.price);
         
-        // Smart Sorting Logic
         const getSmartSort = (metric) => (a, b) => {
-            // High Score -> High Perf
             if (sort === 'score_desc') return b[metric] - a[metric] || b.price - a.price;
-            // Low Score -> Low Perf
             if (sort === 'score_asc') return a[metric] - b[metric] || a.price - b.price;
-            // High Price -> High Price
             if (sort === 'price_desc') return b.price - a.price;
-            // Low Price / Diff -> Low Price
             if (sort === 'price_asc' || sort === 'diff') return a.price - b.price;
-            
-            // Value = Perf / Price
             const valA = a[metric] / (a.price || 1);
             const valB = b[metric] / (b.price || 1);
-            
-            if (sort === 'value_desc') return valB - valA; // Best Value
-            if (sort === 'value_asc') return valA - valB; // Worst Value
-            
-            return a.price - b.price; // Default
+            if (sort === 'value_desc') return valB - valA; 
+            if (sort === 'value_asc') return valA - valB; 
+            return a.price - b.price; 
         };
         
         if (useCooler) allCoolers.sort(getSmartSort('flow'));
         if (useFan) allFans.sort(getSmartSort('flow'));
 
-        // ================= PRE-CALCULATE STORAGE =================
         let finalStorageList = [];
         let totalStorageCost = 0;
         let requiredSSDSlots = 0;
@@ -2355,7 +2447,6 @@ function setMode(m) {
                 requiredSSDSlots++;
             }
         }
-        // =========================================================
 
         const validCpu = allCpus.filter(c => {
             if (c.level > lvl) return false;
@@ -2365,7 +2456,6 @@ function setMode(m) {
             return true;
         });
 
-        // Pre-filter GPU list for general validity
         const validGpuBase = allGpus.filter(g => {
             if (g.level > lvl) return false;
             if (limitGpuW && (g.watts || 0) > limitGpuW) return false;
@@ -2381,7 +2471,6 @@ function setMode(m) {
             return scoreB - scoreA;
         });
 
-        // Sort GPU Base for single GPU performance initially
         validGpuBase.sort((a,b) => b.score - a.score);
 
         builds = [];
@@ -2391,21 +2480,18 @@ function setMode(m) {
 
             let ramTiers = [];
             if (useRam) {
-                // 1. Base Compatibility Filter
                 let compatibleRam = allRams.filter(r => 
                     r.level <= lvl && 
                     cpu.memTypes.includes(r.type) && 
                     (selectedOptions.ramNames.size === 0 || selectedOptions.ramNames.has(r.name)) &&
                     (selectedOptions.ramMfgrs.size === 0 || selectedOptions.ramMfgrs.has(r.mfgr)) &&
-                    (selectedOptions.ramFreqs.size === 0 || selectedOptions.ramFreqs.has(r.freq)) && // Frequency Check
-                    (selectedOptions.ramSizes.size === 0 || selectedOptions.ramSizes.has(r.size)) // Stick Size Check (Multi Select)
+                    (selectedOptions.ramFreqs.size === 0 || selectedOptions.ramFreqs.has(r.freq)) && 
+                    (selectedOptions.ramSizes.size === 0 || selectedOptions.ramSizes.has(r.size)) 
                 );
                 
-                // 2. RAM Performance Mode Logic
                 if (useRamPerfMode) {
                     const bestValueBySpec = new Map();
                     for (const r of compatibleRam) {
-                        // Key includes Type, Size, and Frequency. This finds the single cheapest stick for every unique spec combo.
                         const key = `${r.type}-${r.size}-${r.freq}`; 
                         if (!bestValueBySpec.has(key) || r.price < bestValueBySpec.get(key).price) {
                             bestValueBySpec.set(key, r);
@@ -2413,7 +2499,6 @@ function setMode(m) {
                     }
                     ramTiers = Array.from(bestValueBySpec.values());
                 } else {
-                    // Default Logic (Group by Price/Brand mostly)
                      const bestValueBySpec = new Map();
                     for (const r of compatibleRam) {
                         const mfgr = r.mfgr || "Generic";
@@ -2425,7 +2510,6 @@ function setMode(m) {
                     ramTiers = Array.from(bestValueBySpec.values());
                 }
                 
-                // 3. Sort RAMs
                 ramTiers.sort((a,b) => {
                     if (a.type !== b.type) return a.type.localeCompare(b.type); 
                     if (a.freq !== b.freq) return a.freq - b.freq;
@@ -2442,8 +2526,6 @@ function setMode(m) {
 
                 for(const sticks of stickCounts) {
                     if (builds.length >= maxPoolSize) break;
-
-                    // CHECK TARGET TOTAL CAPACITY (New Input Box)
                     if (targetRamVal > 0) {
                         if (ram && (ram.size * sticks) !== targetRamVal) continue;
                     }
@@ -2451,30 +2533,17 @@ function setMode(m) {
                     let ramCost = 0;
                     if (ram) ramCost = ram.price * sticks;
     
-                    // IMPLEMENTATION: Use LIVE score logic (but TSX uses static scores)
-let liveCpuScore;
+                    let liveCpuScore;
+                    if (currentMode === 'TSX') liveCpuScore = cpu.scoreTSX;
+                    else liveCpuScore = calculateCpuScore(cpu, ram, sticks, currentMode, useOC);
 
-if (currentMode === 'TSX') {
-    // TSX Mode: Always use static base score, ignore RAM/OC
-    liveCpuScore = cpu.scoreTSX;
-} else {
-    // TS Mode: Use live calculation
-    liveCpuScore = calculateCpuScore(cpu, ram, sticks, currentMode, useOC);
-}
-
-if (liveCpuScore === 0) continue; // Skip invalid configs
+                    if (liveCpuScore === 0) continue; 
 
                     let mobo = null;
                     if (useMobo) {
-                        const type = ram ? ram.type : (cpu.memTypes.includes('DDR4') ? 'DDR4' : 'DDR5');
-                        
-                        // Mobo filter needs to know GPU count roughly to filter PCI slots.
-                        // We take the MAX selected GPU count to ensure mobo is compatible with worst case,
-                        // OR we iterate mobos inside GPU loop. Iterating inside is safer but slower.
-                        // Let's optimize: Filter Mobos here assuming max requirement, then verify inside.
+                        const type = ram ? ram.type : (cpu.memTypes.includes("DDR5") ? "DDR5" : "DDR4");
                         const maxSelectedGpu = Math.max(...selectedGpuCounts);
                         const minPci = maxSelectedGpu > 1 ? 5 : 0;
-
                         const found = allMobos.find(m =>
                             m.level <= lvl &&
                             m.socket === cpu.socket &&
@@ -2483,27 +2552,20 @@ if (liveCpuScore === 0) continue; // Skip invalid configs
                         );
                         if (!found) continue; 
                         mobo = found; 
-                        
                         if (sticks === 4 && mobo.size === 'Mini-ITX') continue;
                     }
 
-                    // LOOP THROUGH SELECTED GPU COUNTS
                     for (const gpuCnt of selectedGpuCounts) {
                         if (builds.length >= maxPoolSize) break;
-                        
-                        // Check mobo slots again for this specific count
                         if (mobo && gpuCnt > 1 && mobo.pciSlots < 5) continue;
 
                         for (const gpu of validGpuBase) {
                             if (gpuCnt === 2 && !gpu.score2) continue;
                             if (gpuCnt === 3 && !gpu.score3) continue;
                             if (gpuCnt === 4 && !gpu.score4) continue;
-
                             if (gpuCnt > 1) {
-                                // Multi-GPU Cap Check
                                 const maxCap = getMultiGPUCap(gpu.name, gpu.length);
                                 if (maxCap < gpuCnt) continue;
-
                                 if (mobo) {
                                     if (gpu.sliType === 'SLI' && !mobo.supportSLI) continue;
                                     if (gpu.sliType === 'Crossfire' && !mobo.supportCF) continue;
@@ -2522,14 +2584,9 @@ if (liveCpuScore === 0) continue; // Skip invalid configs
                                     if (c.maxGpuLen < gpu.length) return false;
                                     if (mobo && !c.moboSizes.includes(mobo.size)) return false;
                                     if (selectedOptions.caseNames.size > 0 && !selectedOptions.caseNames.has(c.name)) return false;
-                                    
-                                    if (gpuCnt > 1) {
-                                        if (c.gpuSlots < 3) return false;
-                                    }
-
+                                    if (gpuCnt > 1 && c.gpuSlots < 3) return false;
                                     if (requiredSSDSlots > c.ssdSlots) return false;
                                     if (requiredHDDSlots > c.hddSlots) return false;
-
                                     return true;
                                 });
                                 if (!found) continue;
@@ -2544,7 +2601,6 @@ if (liveCpuScore === 0) continue; // Skip invalid configs
 
                             let psu = null;
                             const totalWatts = cpu.watts + (gpu.watts * gpuCnt) + extraW;
-                            
                             if (usePsu) {
                                 const found = allPsu.find(p => {
                                     if (p.level > lvl) return false;
@@ -2575,14 +2631,13 @@ if (liveCpuScore === 0) continue; // Skip invalid configs
 
                             if (total > budget) continue;
 
-                            // Use LIVE CPU SCORE in final calc
                             const final3D = calculate3DMark(liveCpuScore, gpuScore);
                             if (minScore > 0 && final3D < minScore) continue;
 
                             builds.push({
                                 score: final3D,
-                                liveCpuScore: liveCpuScore, // Store calculated score for Sorting
-                                gpuScore: gpuScore, // Store specific GPU Score for Sorting
+                                liveCpuScore: liveCpuScore, 
+                                gpuScore: gpuScore, 
                                 diff: final3D - target,
                                 price: total,
                                 watts: totalWatts,
@@ -2598,16 +2653,12 @@ if (liveCpuScore === 0) continue; // Skip invalid configs
             } 
         }
 
-        // Initially sort based on selection (Optimization: do not just rely on renderPage for the first heavy lift)
         sortBuildsArray(builds, sort);
 
-        // NEW: Update Lowest/Highest Score Text
         const scoreRangeDisplay = document.getElementById('scoreRangeDisplay');
         if (builds.length > 0) {
-            // Find Min and Max Score in the generated list
             let minS = builds[0].score;
             let maxS = builds[0].score;
-            // Iterate fast through current pool
             for(let i=1; i<builds.length; i++){
                 if(builds[i].score < minS) minS = builds[i].score;
                 if(builds[i].score > maxS) maxS = builds[i].score;
@@ -2626,18 +2677,14 @@ if (liveCpuScore === 0) continue; // Skip invalid configs
         renderPage(1);
     }
     
-    // Extracted Sort Logic so renderPage can call it instantly without regeneration
     function sortBuildsArray(array, sortType) {
         array.sort((a,b) => {
             if (sortType === 'score_desc') return b.score - a.score;
             if (sortType === 'score_asc') return a.score - b.score;
             if (sortType === 'price_asc') return a.price - b.price;
             if (sortType === 'price_desc') return b.price - a.price;
-            
-            // New Individual Sorts
             if (sortType === 'gpu_score') return b.gpuScore - a.gpuScore;
             if (sortType === 'cpu_score') return b.liveCpuScore - a.liveCpuScore;
-
             if (sortType === 'value_desc') return (b.score / b.price) - (a.score / a.price);
             if (sortType === 'value_asc') return (a.score / a.price) - (b.score / b.price);
             return Math.abs(a.diff) - Math.abs(b.diff); 
@@ -2653,7 +2700,6 @@ if (liveCpuScore === 0) continue; // Skip invalid configs
         const sort = document.getElementById('mainSort').value;
         const useOC = document.getElementById('useOC').checked;
         
-        // "Flawless" sorting: Just resort the existing array in memory
         sortBuildsArray(builds, sort);
 
         currentPage = page;
@@ -2681,35 +2727,31 @@ if (liveCpuScore === 0) continue; // Skip invalid configs
                 Base Mem/Max Mem: ${b.gpu.baseMem || '?'}/${b.gpu.maxMem || '?'} MHz
             `;
             
-            // Display Live Score with new formatting logic based on OC Toggle
-const displayCpuScore = b.liveCpuScore;
-const baseScoreVal = currentMode === 'TS' ? b.cpu.scoreTS : b.cpu.scoreTSX;
+            const displayCpuScore = b.liveCpuScore;
+            const baseScoreVal = currentMode === 'TS' ? b.cpu.scoreTS : b.cpu.scoreTSX;
 
-let cpuSpecs = "";
+            let cpuSpecs = "";
 
-if (currentMode === 'TSX') {
-    // TSX Mode: Only show Base Score (TSX), no OC references
-    cpuSpecs = `
-        Base Score (TSX): ${formatNumber(displayCpuScore)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
-        ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
-        ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
-    `;
-} else if (useOC) {
-    // TS Mode with OC Enabled: Show OC Score first
-    cpuSpecs = `
-        OC Score: ${formatNumber(displayCpuScore)} | Base Score: ${formatNumber(baseScoreVal)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
-        ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
-        ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
-    `;
-} else {
-    // TS Mode, Base: Show Base Score first with OC Potential
-    const ocText = b.cpu.canOC === 'Yes' ? `OC Potential: ${b.cpu.ocScore}` : 'Locked';
-    cpuSpecs = `
-        Base Score: ${formatNumber(displayCpuScore)} | ${ocText} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
-        ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
-        ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
-    `;
-}
+            if (currentMode === 'TSX') {
+                cpuSpecs = `
+                    Base Score (TSX): ${formatNumber(displayCpuScore)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
+                    ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
+                    ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
+                `;
+            } else if (useOC) {
+                cpuSpecs = `
+                    OC Score: ${formatNumber(displayCpuScore)} | Base Score: ${formatNumber(baseScoreVal)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
+                    ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
+                    ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
+                `;
+            } else {
+                const ocText = b.cpu.canOC === 'Yes' ? `OC Potential: ${b.cpu.ocScore}` : 'Locked';
+                cpuSpecs = `
+                    Base Score: ${formatNumber(displayCpuScore)} | ${ocText} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
+                    ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
+                    ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
+                `;
+            }
 
             let ramHTML = '';
             if (b.ram) {
@@ -2750,11 +2792,8 @@ if (currentMode === 'TSX') {
 
             let interactiveHTML = '';
             
-            // Storage Display Logic
             if (b.storages && b.storages.length > 0) {
                 let totalStoragePrice = b.storages.reduce((acc, s) => acc + s.price, 0);
-                
-                // Summarize storage string (Group by Name)
                 const storageCounts = {};
                 b.storages.forEach(s => {
                     if (!storageCounts[s.name]) storageCounts[s.name] = { count: 0, part: s };
@@ -2893,7 +2932,7 @@ if (currentMode === 'TSX') {
         if (type === 'fan') original = build.fan;
         else if (type === 'cases') original = build.case;
         else if (type === 'cooler') original = build.cooler;
-        else if (type === 'storage') original = null; // Storage uses array logic
+        else if (type === 'storage') original = null; 
 
         currentPopupData = {
             type,
@@ -2960,8 +2999,6 @@ if (currentMode === 'TSX') {
         subset.forEach((p, idx) => {
             let origPrice = originalPart ? originalPart.price : 0;
             let newPrice = p.price;
-            
-            // Special Logic for Storage Rows
             let actionBtn = "";
             let diffStr = "";
             let diffClass = "";
@@ -2970,15 +3007,11 @@ if (currentMode === 'TSX') {
                 const currentDrives = build.storages || [];
                 const isSelected = currentDrives.some(d => d.name === p.name);
                 const isSSD = (p.type === 'SSD' || p.type === 'M.2');
-                
-                // Constraints (Slot Limit only)
                 const currentSameType = currentDrives.filter(d => (d.type === 'SSD' || d.type === 'M.2') === isSSD);
                 const slotCount = isSSD ? build.case.ssdSlots : build.case.hddSlots;
                 const slotsFull = currentSameType.length >= slotCount;
 
-                // For storage popup, we show ADD/REMOVE buttons
                 if (isSelected) {
-                    // Count how many of this drive we have
                     const count = currentDrives.filter(d => d.name === p.name).length;
                     actionBtn = `
                         <button class="btn-select-part selected" onclick="toggleStorage('${p.name.replace(/'/g, "\\'")}', -1)">REMOVE (Has ${count})</button>
@@ -2989,7 +3022,6 @@ if (currentMode === 'TSX') {
                 } else {
                     actionBtn = `<button class="btn-select-part" onclick="toggleStorage('${p.name.replace(/'/g, "\\'")}', 1)">ADD</button>`;
                 }
-                
                 diffStr = formatCurrency(p.price);
 
             } else {
@@ -3007,7 +3039,6 @@ if (currentMode === 'TSX') {
             if (type === 'storage') details = `${p.sizeStr} | ${p.type} | Level ${p.level} | ${p.speed} MB/s`;
 
             const tr = document.createElement('tr');
-            
             tr.innerHTML = `
                 <td>${actionBtn}</td>
                 <td style="font-weight:bold; color:#fff;">${p.name}</td>
@@ -3015,7 +3046,6 @@ if (currentMode === 'TSX') {
                 <td class="price-red-cell">${formatCurrency(newPrice)}</td>
                 <td class="${diffClass}">${diffStr}</td>
             `;
-            
             tbody.appendChild(tr);
         });
     }
@@ -3026,25 +3056,21 @@ if (currentMode === 'TSX') {
         const build = builds[currentPopupData.buildIdx];
 
         if (delta > 0) {
-            // Add
             build.storages.push(newPart);
             build.price += newPart.price;
         } else {
-            // Remove
             const existsIdx = build.storages.findIndex(d => d.name === partName);
             if (existsIdx > -1) {
                 build.storages.splice(existsIdx, 1);
                 build.price -= newPart.price;
             }
         }
-
         refreshPopup();
         renderPage(currentPage);
     }
 
     window.selectReplacementPart = function(partName) {
         if (!currentPopupData) return;
-        
         const newPart = DB[currentPopupData.type].get(partName);
         if(!newPart) return;
 
@@ -3058,7 +3084,6 @@ if (currentMode === 'TSX') {
         else if (type === 'fan') build.fan = newPart;
 
         build.price += priceDiff;
-
         closePopup();
         renderPage(currentPage); 
     }
@@ -3073,18 +3098,13 @@ if (currentMode === 'TSX') {
             if (build.cooler && build.cooler.type.includes('Air') &&
                 part.maxCpuHeight < build.cooler.height) return false;
             if (build.psu && part.maxPsuLen > 0 && build.psu.length > part.maxPsuLen) return false;
-            
-            // Check Multi GPU Slot Fit
             if (build.gpuCnt > 1 && part.gpuSlots < 3) return false;
-
-            // Check Storage Fit if we are validating a case against existing storage
             if (build.storages) {
                 const ssds = build.storages.filter(s => s.type==='SSD' || s.type==='M.2').length;
                 const hdds = build.storages.filter(s => s.type==='HDD').length;
                 if (ssds > part.ssdSlots) return false;
                 if (hdds > part.hddSlots) return false;
             }
-
             return true;
         }
 
@@ -3103,11 +3123,6 @@ if (currentMode === 'TSX') {
             const s140 = build.case.radSizes.includes('140');
             if (part.size === 120 && !s120) return false;
             if (part.size === 140 && !s140) return false;
-            return true;
-        }
-
-        if (type === 'storage') {
-            // Simplified compatibility check (Slots & Mfg check happen in button logic)
             return true;
         }
 
