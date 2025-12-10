@@ -1609,7 +1609,7 @@
         storage: new Map()
     };
 
-const OPTIMIZE_LISTS = false; 
+const OPTIMIZE_LISTS = true; 
 const OPTIMIZE_BUILD_RESULTS = true; // If TRUE: Limits results (e.g. Top 3 RAMs only). Default: ON.
 const OPTIMIZE_CASE_SELECTION = true;  // If TRUE: Auto-selects the #1 Cheapest valid Case only.
 
@@ -1702,7 +1702,11 @@ const OPTIMIZE_CASE_SELECTION = true;  // If TRUE: Auto-selects the #1 Cheapest 
     const parseVal = id => parseFloat(document.getElementById(id).value.replace(/,/g, '')) || 0;
     const parseIntVal = id => parseInt(document.getElementById(id).value.replace(/,/g, '')) || 0;
 
+// Find this section:
     ['budget', 'targetScore', 'minScoreInput', 'resLimit'].forEach(id => {
+    
+    // REPLACE it with this (adding 'minTargetScore'):
+    ['budget', 'minTargetScore', 'targetScore', 'minScoreInput', 'resLimit'].forEach(id => {
         const el = document.getElementById(id);
         if(el) {
             el.addEventListener('input', e => {
@@ -2982,7 +2986,7 @@ function calculateCpuScore(cpu, ramOrFreq, stickCount, mode, useOC, useXMP, mobo
 
         // --- 5. GPU LIST (RAW VS OPTIMIZED) ---
         let allGpus = [];
-        if (OPTIMIZE_BUILD_RESULTS) {
+        if (OPTIMIZE_LISTS) {
             allGpus = getOptimizedGpuList(Array.from(DB.gpu.values()), config.lvl);
         } else {
             // RAW LIST: Filter by constraints, but keep duplicates/variants
