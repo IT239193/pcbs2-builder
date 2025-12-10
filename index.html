@@ -3310,7 +3310,7 @@ function assembleBuilds(rams, mobos, cpu, gpuConf, sticks, score, cpuScore, conf
 
         const start = (page - 1) * itemsPerPage;
         
-        // PULL PAGE FROM SQL
+        // PULL PAGE FROM SQL (Keep SQL logic from v1.txt)
         builds = getBuildsFromSQL(sort, itemsPerPage, start);
         
         const totalPages = Math.ceil(total / itemsPerPage);
@@ -3329,6 +3329,7 @@ function assembleBuilds(rams, mobos, cpu, gpuConf, sticks, score, cpuScore, conf
             const gpuCountStr = b.gpuCnt > 1 ? `${b.gpuCnt}x ` : '';
             const gpuEmoji = b.gpu.isWater ? '💧' : '💨';
             
+            // --- UPDATED: Richer GPU Specs ---
             const gpuSpecs = `
                 Score: ${formatNumber(b.gpuScore)} | ${b.gpu.vram}GB | ${b.gpu.length}mm | ${b.gpu.watts * b.gpuCnt}W | ${gpuEmoji} | 
                 Base Core/Max Core: ${b.gpu.baseCore || '?'}/${b.gpu.maxCore || '?'} MHz | 
@@ -3337,16 +3338,33 @@ function assembleBuilds(rams, mobos, cpu, gpuConf, sticks, score, cpuScore, conf
             
             const displayCpuScore = b.liveCpuScore;
             let cpuSpecs = "";
+
+            // --- UPDATED: Richer CPU Specs (Freq, Voltage, Cores) ---
             if (currentMode === 'TSX') {
-                cpuSpecs = `Base Score (TSX): ${formatNumber(displayCpuScore)} | ${b.cpu.socket} | ${b.cpu.cores}C`;
+                cpuSpecs = `
+                    Base Score (TSX): ${formatNumber(displayCpuScore)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
+                    ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
+                    ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
+                `;
             } else if (useOC) {
-                cpuSpecs = `OC Score: ${formatNumber(displayCpuScore)} | ${b.cpu.socket} | ${b.cpu.cores}C | ${b.cpu.maxFreq}MHz`;
+                // OC ON: Hide Base Score, show OC Score
+                cpuSpecs = `
+                    OC Score: ${formatNumber(displayCpuScore)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
+                    ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
+                    ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
+                `;
             } else {
-                cpuSpecs = `Base Score: ${formatNumber(displayCpuScore)} | ${b.cpu.socket} | ${b.cpu.cores}C`;
+                // OC OFF: Hide OC Potential, show Base Score
+                cpuSpecs = `
+                    Base Score: ${formatNumber(displayCpuScore)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
+                    ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
+                    ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
+                `;
             }
 
             let ramHTML = '';
             if (b.ram) {
+                // --- UPDATED: Detailed RAM Specs ---
                 ramHTML = `
                 <div class="part-row brand-ram text-colored">
                     <div class="part-header">
@@ -3354,12 +3372,13 @@ function assembleBuilds(rams, mobos, cpu, gpuConf, sticks, score, cpuScore, conf
                         <span class="part-price">${formatCurrency(b.ram.price * b.ramSticks)}</span>
                     </div>
                     <div class="part-name">${b.ramSticks}x ${b.ram.name}</div>
-                    <div class="part-specs">${b.ram.freq} MHz | ${b.ram.type} | Total: ${b.ram.size * b.ramSticks}GB</div>
+                    <div class="part-specs">${b.ram.freq} MHz | ${b.ram.type} | Size Each: ${b.ram.size}GB | Total: ${b.ram.size * b.ramSticks}GB</div>
                 </div>`;
             }
 
             let auxHTML = '';
             if (b.mobo) {
+                // --- UPDATED: Detailed Mobo Specs ---
                 auxHTML += `
                 <div class="part-row brand-aux text-colored">
                     <div class="part-header">
@@ -3367,7 +3386,7 @@ function assembleBuilds(rams, mobos, cpu, gpuConf, sticks, score, cpuScore, conf
                         <span class="part-price">${formatCurrency(b.mobo.price)}</span>
                     </div>
                     <div class="part-name">${b.mobo.name}</div>
-                    <div class="part-specs">${b.mobo.socket} | ${b.mobo.size} | PCI: ${b.mobo.pciSlots}</div>
+                    <div class="part-specs">${b.mobo.socket} | ${b.mobo.ramType} | ${b.mobo.size} Form Factor | PCI Slots: ${b.mobo.pciSlots}</div>
                 </div>`;
             }
             if (b.psu) {
@@ -3408,13 +3427,15 @@ function assembleBuilds(rams, mobos, cpu, gpuConf, sticks, score, cpuScore, conf
             }
 
             if (b.case) {
+                // --- UPDATED: Detailed Case Specs ---
                 interactiveHTML += renderInteractive('Case', b.case, buildIdx, 'cases',
-                    `Max GPU: ${b.case.maxGpuLen}mm | Size: ${b.case.size}`
+                    `Max GPU: ${b.case.maxGpuLen}mm | CPU H: ${b.case.maxCpuHeight}mm | Size: ${b.case.size} | GPU Slots: ${b.case.gpuSlots} | SSD: ${b.case.ssdSlots} | HDD: ${b.case.hddSlots}`
                 );
             }
             if (b.cooler) {
+                 // --- UPDATED: Detailed Cooler Specs ---
                 interactiveHTML += renderInteractive('Cooler', b.cooler, buildIdx, 'cooler',
-                    `${b.cooler.type} | Flow: ${b.cooler.flow} CFM`
+                    `${b.cooler.type} | ${b.cooler.type.includes('Air') ? `Height: ${b.cooler.height}mm` : `Size: ${b.cooler.size}mm`} | Flow: ${b.cooler.flow} CFM`
                 );
             }
             if (b.fan) {
