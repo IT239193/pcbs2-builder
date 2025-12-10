@@ -2968,7 +2968,7 @@ function runScanChunk(cpuIndex, config, lists) {
                     });
 
                     // C. ASSEMBLE (Use helper to handle Case/PSU/Cooler expansion)
-                    const ramCap = OPTIMIZE_BUILD_RESULTS ? 3 : validRams.length;
+                    const ramCap = OPTIMIZE_BUILD_RESULTS ? 1 : validRams.length;
                     
                     assembleBuilds(
                         validRams.slice(0, ramCap), 
@@ -2989,70 +2989,103 @@ function runScanChunk(cpuIndex, config, lists) {
 
 
 function assembleBuilds(rams, mobos, cpu, gpuConf, sticks, score, cpuScore, config, lists, stmt) {
-        for (const ram of rams) {
-            for (const mobo of mobos) {
-                
-                const corePrice = cpu.price + gpuConf.price + (ram.price * sticks) + (mobo ? mobo.price : 0);
-                if (corePrice + lists.minAuxCost > config.budget) continue;
+    // 1. Loop through the RAMs passed in (This respects your slice(0,3) from runScanChunk)
+    for (const ram of rams) {
+        
+        let buildSavedForRam = false;
 
-                const totalWatts = cpu.watts + gpuConf.watts + config.extraW;
-                if (config.limitTotalW && totalWatts > config.limitTotalW) continue;
+        // 2. Loop Mobos
+        for (const mobo of mobos) {
 
-                let validCases = [];
-                if (config.useCase) {
+            const corePrice = cpu.price + gpuConf.price + (ram.price * sticks) + (mobo ? mobo.price : 0);
+            if (corePrice + lists.minAuxCost > config.budget) continue;
+
+            const totalWatts = cpu.watts + gpuConf.watts + config.extraW;
+            if (config.limitTotalW && totalWatts > config.limitTotalW) continue;
+
+            // 3. CASE SELECTION (Respects OPTIMIZE_CASE_SELECTION)
+            let validCases = [];
+            
+            if (config.useCase) {
+                if (OPTIMIZE_CASE_SELECTION) {
+                    // FAST: Stop after 1st match
+                    const bestCase = lists.allCases.find(c => {
+                        if (c.maxGpuLen < gpuConf.gpu.length) return false;
+                        if (mobo && !c.moboSizes.includes(mobo.size)) return false;
+                        if (gpuConf.count > 1 && c.gpuSlots < 3) return false;
+                        return true;
+                    });
+                    if (bestCase) validCases = [bestCase];
+                } else {
+                    // SLOW: Find ALL matches
                     validCases = lists.allCases.filter(c => {
                         if (c.maxGpuLen < gpuConf.gpu.length) return false;
                         if (mobo && !c.moboSizes.includes(mobo.size)) return false;
                         if (gpuConf.count > 1 && c.gpuSlots < 3) return false;
                         return true;
                     });
-                    // Check Global Optimization Variable
-                    if (OPTIMIZE_CASE_SELECTION && validCases.length > 0) validCases = [validCases[0]];
-                } else {
-                    validCases = [null];
                 }
-
-                for (const bCase of validCases) {
-                    let currentPrice = corePrice + (bCase ? bCase.price : 0);
-                    
-                    let cooler = null; 
-                    if (config.useCooler) {
-                        cooler = lists.allCoolers.find(c => checkFit('cooler', c, {cpu, case: bCase}));
-                        if(cooler) currentPrice += cooler.price;
-                    }
-
-                    let psu = null;
-                    if (config.usePsu) {
-                        psu = lists.allPsu.find(p => p.watts >= totalWatts && (!bCase || bCase.maxPsuLen === 0 || p.length <= bCase.maxPsuLen));
-                        if(psu) currentPrice += psu.price;
-                    }
-                    
-                    let fan = null;
-                    if (config.useFan && bCase) {
-                        fan = lists.allFans.find(f => checkFit('fan', f, {case: bCase}));
-                        if(fan) currentPrice += fan.price;
-                    }
-
-                    currentPrice += lists.totalStorageCost;
-                    if (currentPrice > config.budget) continue;
-
-                    const storageNameList = JSON.stringify(lists.finalStorageList.map(s => s.name));
-                    
-                    // Insert into DB. 
-                    // Diff is calculated based on the Max Score (the Upper Limit).
-                    stmt.run([
-                        score, cpuScore, gpuConf.score, 
-                        score - config.maxGenScore, // Calculate Diff against Max Score
-                        currentPrice, totalWatts, cpu.name, gpuConf.gpu.name, gpuConf.count,
-                        ram.name, sticks, mobo ? mobo.name : null, bCase ? bCase.name : null,
-                        cooler ? cooler.name : null, psu ? psu.name : null, fan ? fan.name : null,
-                        storageNameList
-                    ]);
-                    buildCount++;
-                }
+            } else {
+                validCases = [null];
             }
+
+            if (config.useCase && validCases.length === 0) continue;
+
+            // 4. FINALIZE BUILD
+            for (const bCase of validCases) {
+                let currentPrice = corePrice + (bCase ? bCase.price : 0);
+
+                // Coolers (Fast .find)
+                let cooler = null;
+                if (config.useCooler) {
+                    cooler = lists.allCoolers.find(c => checkFit('cooler', c, { cpu, case: bCase }));
+                    if (cooler) currentPrice += cooler.price;
+                    else continue; 
+                }
+
+                // PSU (Fast .find)
+                let psu = null;
+                if (config.usePsu) {
+                    psu = lists.allPsu.find(p => p.watts >= totalWatts && (!bCase || bCase.maxPsuLen === 0 || p.length <= bCase.maxPsuLen));
+                    if (psu) currentPrice += psu.price;
+                    else continue; 
+                }
+
+                // Fans (Fast .find)
+                let fan = null;
+                if (config.useFan && bCase) {
+                    fan = lists.allFans.find(f => checkFit('fan', f, { case: bCase }));
+                    if (fan) currentPrice += fan.price;
+                }
+
+                currentPrice += lists.totalStorageCost;
+                if (currentPrice > config.budget) continue;
+
+                const storageNameList = JSON.stringify(lists.finalStorageList.map(s => s.name));
+
+                stmt.run([
+                    score, cpuScore, gpuConf.score,
+                    score - config.maxGenScore,
+                    currentPrice, totalWatts, cpu.name, gpuConf.gpu.name, gpuConf.count,
+                    ram.name, sticks, mobo ? mobo.name : null, bCase ? bCase.name : null,
+                    cooler ? cooler.name : null, psu ? psu.name : null, fan ? fan.name : null,
+                    storageNameList
+                ]);
+                
+                buildCount++;
+                buildSavedForRam = true;
+            }
+
+            // CRITICAL FIX: 
+            // We BREAK here because we found the cheapest Motherboard/Case for THIS specific RAM stick.
+            // We don't need to check expensive Mobos for the same RAM.
+            if (buildSavedForRam && OPTIMIZE_BUILD_RESULTS) break;
         }
+
+        // CRITICAL FIX:
+        // We DO NOT break here. We continue to the next RAM in the "Top 3" list passed by runScanChunk.
     }
+}
 
 
     function finishScan(config) {
