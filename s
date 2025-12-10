@@ -2691,7 +2691,7 @@ function calculateCpuScore(cpu, ramOrFreq, stickCount, mode, useOC, useXMP, mobo
         clearSQLite();
         
         document.getElementById('resCount').innerText = "0% Scanned...";
-        document.getElementById('scanStatus').innerText = "Running SQL Turbo Scan...";
+        document.getElementById('scanStatus').innerText = "Running Scan...";
         
         const btn = document.getElementById('generateBtn');
         btn.disabled = true;
