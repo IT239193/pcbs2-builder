@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1810,6 +1808,41 @@ const OPTIMIZE_CASE_SELECTION = true;  // If TRUE: Auto-selects the #1 Cheapest 
         return { min: result[0].values[0][0], max: result[0].values[0][1] };
     }
 
+/**
+ * INTELLIGENT RAM FILTER
+ * Updates the 'Specific RAM Model' list based on:
+ * 1. Current Career Level
+ * 2. Selected Manufacturers
+ * 3. Selected Frequencies
+ * 4. Selected Sizes
+ */
+function refreshRamOptions() {
+    const currentLvl = parseInt(document.getElementById('level').value) || 30;
+
+    // 1. Start with all RAMs allowed by Level
+    let validRams = Array.from(DB.ram.values()).filter(r => r.level <= currentLvl);
+
+    // 2. Filter by Manufacturer (if any selected)
+    if (selectedOptions.ramMfgrs.size > 0) {
+        validRams = validRams.filter(r => selectedOptions.ramMfgrs.has(r.mfgr));
+    }
+
+    // 3. Filter by Frequency (if any selected)
+    if (selectedOptions.ramFreqs.size > 0) {
+        validRams = validRams.filter(r => selectedOptions.ramFreqs.has(r.freq));
+    }
+
+    // 4. Filter by Size (if any selected)
+    if (selectedOptions.ramSizes.size > 0) {
+        validRams = validRams.filter(r => selectedOptions.ramSizes.has(r.size));
+    }
+
+    // 5. Update the specific list
+    // Note: The populateMultiSelect function automatically checks 'selectedOptions.ramNames'
+    // to keep your existing selections highlighted (green).
+    populateMultiSelect('ramNames', validRams.map(r => r.name).sort(), 'ramListContainer');
+}
+
     function getBuildsFromSQL(sortKey, limit, offset = 0) {
         if(!sqlDB) return [];
         
@@ -2244,7 +2277,7 @@ base.defaultMem = getNum(cells, 'Default Memory Speed') || 2133;
         populateMultiSelect('gpuNames', [...new Set(gpus.map(g => g.name))].sort(), 'gpuListContainer');
         populateMultiSelect('moboNames', mobos.map(m => m.name).sort(), 'moboListContainer');
         populateMultiSelect('caseNames', cases.map(c => c.name).sort(), 'caseListContainer');
-        populateMultiSelect('ramNames', rams.map(r => r.name).sort(), 'ramListContainer');
+            refreshRamOptions(); 
         
         populateMultiSelect('ssdNames', ssdList.map(s => s.name).sort(), 'ssdListContainer');
         populateMultiSelect('hddNames', hddList.map(s => s.name).sort(), 'hddListContainer');
@@ -2430,37 +2463,56 @@ base.defaultMem = getNum(cells, 'Default Memory Speed') || 2133;
         container.scrollTop = scrollTop;
     }
 
-    function toggleOption(category, value, element, event) {
-        if (event.shiftKey && lastClickedOption.category === category && lastClickedOption.index !== -1) {
-            const container = element.parentElement;
-            const options = Array.from(container.children).filter(c => c.style.display !== 'none');
-            const currentIndex = options.indexOf(element);
-            const lastIndex = options.findIndex(opt => parseInt(opt.dataset.index) === lastClickedOption.index);
+    
+function toggleOption(category, value, element, event) {
+    // Handle Shift+Click Range Selection
+    if (event.shiftKey && lastClickedOption.category === category && lastClickedOption.index !== -1) {
+        const container = element.parentElement;
+        // Get only currently visible options
+        const options = Array.from(container.children).filter(c => c.style.display !== 'none');
+        const currentIndex = options.indexOf(element);
+        const lastIndex = options.findIndex(opt => parseInt(opt.dataset.index) === lastClickedOption.index);
 
-            if (currentIndex !== -1 && lastIndex !== -1) {
-                const start = Math.min(currentIndex, lastIndex);
-                const end = Math.max(currentIndex, lastIndex);
-                for (let i = start; i <= end; i++) {
-                    const opt = options[i];
-                    const val = opt.dataset.value;
-                    if(category === 'gpuCount') selectedOptions[category].add(parseInt(val));
-                    else selectedOptions[category].add(val);
-                    opt.classList.add('selected');
-                }
-            }
-        } 
-        else {
-            if (selectedOptions[category].has(value)) {
-                selectedOptions[category].delete(value);
-                element.classList.remove('selected');
-            } else {
-                selectedOptions[category].add(value);
-                element.classList.add('selected');
+        if (currentIndex !== -1 && lastIndex !== -1) {
+            const start = Math.min(currentIndex, lastIndex);
+            const end = Math.max(currentIndex, lastIndex);
+            
+            for (let i = start; i <= end; i++) {
+                const opt = options[i];
+                const val = opt.dataset.value;
+                
+                // Add to selection set
+                if (category === 'gpuCount') selectedOptions[category].add(parseInt(val));
+                else selectedOptions[category].add(val);
+                
+                opt.classList.add('selected');
             }
         }
-        lastClickedOption = { category: category, index: parseInt(element.dataset.index) };
-        updateDisplayLabel(category);
+    } 
+    // Handle Standard Click (Toggle)
+    else {
+        if (selectedOptions[category].has(value)) {
+            selectedOptions[category].delete(value);
+            element.classList.remove('selected');
+        } else {
+            selectedOptions[category].add(value);
+            element.classList.add('selected');
+        }
     }
+
+    // Update state for next click
+    lastClickedOption = { category: category, index: parseInt(element.dataset.index) };
+    
+    // Update the label text (e.g. "3 selected")
+    updateDisplayLabel(category);
+
+    // --- NEW LOGIC: Update Specific RAM List ---
+    // If we just clicked a Manufacturer, Frequency, or Size, refresh the specific model list
+    if (['ramMfgrs', 'ramFreqs', 'ramSizes'].includes(category)) {
+        refreshRamOptions();
+    }
+}
+
 
     function applyQuickFilter(category, type) {
         const keywords = filterKeywords[category][type];
@@ -2479,32 +2531,47 @@ base.defaultMem = getNum(cells, 'Default Memory Speed') || 2133;
     }
 
     function clearFilter(category) {
-        selectedOptions[category].clear();
-        let containerId;
-        if(category === 'cpuNames') containerId = 'cpuListContainer';
-        else if(category === 'gpuNames') containerId = 'gpuListContainer';
-        else if(category === 'socket') containerId = 'socketListContainer';
-        else if(category === 'vram') containerId = 'vramListContainer';
-        else if(category === 'length') containerId = 'lengthListContainer';
-        else if(category === 'moboNames') containerId = 'moboListContainer';
-        else if(category === 'ramNames') containerId = 'ramListContainer';
-        else if(category === 'ramMfgrs') containerId = 'ramMfgrListContainer';
-        else if(category === 'ramFreqs') containerId = 'ramFreqListContainer';
-        else if(category === 'ramSizes') containerId = 'ramSizeListContainer';
-        else if(category === 'gpuCount') containerId = 'gpuCountListContainer';
-        else if(category === 'caseNames') containerId = 'caseListContainer';
-        else if(category === 'ssdNames') containerId = 'ssdListContainer';
-        else if(category === 'hddNames') containerId = 'hddListContainer';
+    // 1. Clear the data set
+    selectedOptions[category].clear();
 
-        const container = document.getElementById(containerId);
-        if (category === 'ssdNames' || category === 'hddNames') {
-             refreshStorageDropdown(category);
-             if(container) container.querySelectorAll('.multi-option').forEach(opt => opt.style.display = 'flex');
-        } else {
-             if(container) container.querySelectorAll('.multi-option').forEach(opt => opt.classList.remove('selected'));
-        }
-        updateDisplayLabel(category);
+    // 2. Determine which visual container to clear
+    let containerId;
+    if(category === 'cpuNames') containerId = 'cpuListContainer';
+    else if(category === 'gpuNames') containerId = 'gpuListContainer';
+    else if(category === 'socket') containerId = 'socketListContainer';
+    else if(category === 'vram') containerId = 'vramListContainer';
+    else if(category === 'length') containerId = 'lengthListContainer';
+    else if(category === 'moboNames') containerId = 'moboListContainer';
+    else if(category === 'ramNames') containerId = 'ramListContainer';
+    else if(category === 'ramMfgrs') containerId = 'ramMfgrListContainer';
+    else if(category === 'ramFreqs') containerId = 'ramFreqListContainer';
+    else if(category === 'ramSizes') containerId = 'ramSizeListContainer';
+    else if(category === 'gpuCount') containerId = 'gpuCountListContainer';
+    else if(category === 'caseNames') containerId = 'caseListContainer';
+    else if(category === 'ssdNames') containerId = 'ssdListContainer';
+    else if(category === 'hddNames') containerId = 'hddListContainer';
+
+    // 3. Update the UI
+    const container = document.getElementById(containerId);
+    
+    if (category === 'ssdNames' || category === 'hddNames') {
+         // Special handling for storage (quantity based)
+         refreshStorageDropdown(category);
+         if(container) container.querySelectorAll('.multi-option').forEach(opt => opt.style.display = 'flex');
+    } else {
+         // Standard handling: remove 'selected' class
+         if(container) container.querySelectorAll('.multi-option').forEach(opt => opt.classList.remove('selected'));
     }
+    
+    // 4. Update Label text
+    updateDisplayLabel(category);
+
+    // --- NEW LOGIC: Update Specific RAM List ---
+    // If we cleared a RAM filter, we need to refresh the list to show more options again
+    if (['ramMfgrs', 'ramFreqs', 'ramSizes'].includes(category)) {
+        refreshRamOptions();
+    }
+}
 
     function updateDisplayLabel(category) {
         let displayId;
