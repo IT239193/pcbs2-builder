@@ -1816,47 +1816,103 @@ const OPTIMIZE_CASE_SELECTION = true;  // If TRUE: Auto-selects the #1 Cheapest 
  * 3. Selected Frequencies
  * 4. Selected Sizes
  */
-function refreshRamOptions() {
-    const currentLvl = parseInt(document.getElementById('level').value) || 30;
+function populateMultiSelect(category, options, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    const isStorage = (category === 'ssdNames' || category === 'hddNames');
 
-    // 1. Start with all RAMs allowed by Level
-    let validRams = Array.from(DB.ram.values()).filter(r => r.level <= currentLvl);
+    options.forEach((opt, index) => {
+        const div = document.createElement('div');
+        div.className = 'multi-option';
+        let isSelected = false;
+        let count = 0;
 
-    // 2. Filter by Manufacturer (if any selected)
-    if (selectedOptions.ramMfgrs.size > 0) {
-        validRams = validRams.filter(r => selectedOptions.ramMfgrs.has(r.mfgr));
-    }
-
-    // 3. Filter by Frequency (if any selected)
-    if (selectedOptions.ramFreqs.size > 0) {
-        validRams = validRams.filter(r => selectedOptions.ramFreqs.has(r.freq));
-    }
-
-    // 4. Filter by Size (if any selected)
-    if (selectedOptions.ramSizes.size > 0) {
-        validRams = validRams.filter(r => selectedOptions.ramSizes.has(r.size));
-    }
-
-    // 5. NEW: Smart Compatibility Filter
-    // If user has already selected RAM(s), only show compatible ones
-    if (selectedOptions.ramNames.size > 0) {
-        const selectedRamArray = Array.from(selectedOptions.ramNames.keys()).map(name => DB.ram.get(name));
-        const firstRam = selectedRamArray[0];
-        
-        if (firstRam) {
-            // Only show RAMs that match: Same Type, Same Frequency, Same Size
-            validRams = validRams.filter(r => {
-                return r.type === firstRam.type &&
-                       r.freq === firstRam.freq &&
-                       r.size === firstRam.size;
-            });
+        if (isStorage) {
+            if (selectedOptions[category].has(opt)) {
+                isSelected = true;
+                count = selectedOptions[category].get(opt);
+            }
+            const s = DB.storage.get(opt);
+            if(s) div.dataset.sizeStr = s.sizeStr;
+        } else {
+            if (selectedOptions[category].has(opt)) isSelected = true;
         }
-    }
 
-    // 6. Update the dropdown list
-    populateMultiSelect('ramNames', validRams.map(r => r.name).sort(), 'ramListContainer');
+        if (isSelected) div.classList.add('selected');
+        div.dataset.value = opt;
+        div.dataset.index = index; 
+        
+        let label = opt;
+        
+        if (category === 'ramNames') {
+            const r = DB.ram.get(opt);
+            if (r) {
+                label = `<span style="font-size:1.2em"><b>${r.mfgr || 'Generic'}</b> - ${r.name} | Size Each: ${r.size}GB | Total: ${r.totalSize}GB | ${r.type} | ${r.freq}/${r.maxSpeed} MHz | ${r.voltage}/${r.maxVoltage} V | Lvl: ${r.level}</span>`;
+            }
+        } else if (category === 'moboNames') {
+            const m = DB.mobo.get(opt);
+            if (m) label = `<span style="font-size:0.9em">${m.name} | PCI Slots: ${m.pciSlots}</span>`;
+        } else if (category === 'caseNames') {
+            const c = DB.cases.get(opt);
+            if (c) label = `<span style="font-size:0.9em">${c.name} | GPU Slots: ${c.gpuSlots}</span>`;
+        } else if (isStorage) {
+            const s = DB.storage.get(opt);
+            if (s) label = `<span style="font-size:0.9em">${s.name} | ${s.sizeStr} | ${s.speed} MB/s</span>`;
+        } else {
+            if (category === 'vram') label += ' GB';
+            if (category === 'length') label += ' mm';
+            if (category === 'ramFreqs') label += ' MHz';
+            if (category === 'ramSizes') label += ' GB'; 
+            if (category === 'gpuCount') {
+                 if(opt == 1) label = "Single GPU";
+                 if(opt == 2) label = "Dual GPU";
+                 if(opt == 3) label = "Triple GPU";
+                 if(opt == 4) label = "Quad GPU";
+            }
+        }
+
+        if (isStorage) {
+            const safeName = opt.replace(/'/g, "\\'");
+            div.innerHTML = `
+                <div class="option-left" onclick="toggleStorageSelection('${category}', '${safeName}', 1)">
+                    <div class="cb-custom"></div>
+                    <span>${label}</span>
+                </div>
+                <div class="qty-controls" onclick="event.stopPropagation()">
+                    <button class="qty-btn" onclick="modifyStorageQty('${category}', '${safeName}', -1)">-</button>
+                    <span class="qty-val">${count}</span>
+                    <button class="qty-btn" onclick="modifyStorageQty('${category}', '${safeName}', 1)">+</button>
+                </div>
+            `;
+        } else if (category === 'ramNames') {
+            // BUG 1 FIX: Added event.stopPropagation() to the main onclick here
+            const safeName = opt.replace(/'/g, "\\'");
+            const ramCount = selectedOptions[category].has(opt) ? selectedOptions[category].get(opt) : 0;
+            if (ramCount > 0) {
+                isSelected = true;
+                div.classList.add('selected');
+            }
+            div.innerHTML = `
+                <div class="option-left" onclick="event.stopPropagation(); toggleRamSelection('${safeName}', 1)">
+                    <div class="cb-custom"></div>
+                    <span>${label}</span>
+                </div>
+                <div class="qty-controls" onclick="event.stopPropagation()">
+                    <button class="qty-btn" onclick="modifyRamQty('${safeName}', -1)">-</button>
+                    <span class="qty-val">${ramCount}</span>
+                    <button class="qty-btn" onclick="modifyRamQty('${safeName}', 1)">+</button>
+                </div>
+            `;
+        } else {
+            div.innerHTML = `<div class="cb-custom"></div><span>${label}</span>`;
+            div.onclick = (e) => toggleOption(category, opt, div, e);
+        }
+        
+        container.appendChild(div);
+    });
+    
+    updateDisplayLabel(category);
 }
-
     function getBuildsFromSQL(sortKey, limit, offset = 0) {
         if(!sqlDB) return [];
         
