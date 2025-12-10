@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1590,6 +1592,11 @@
         fan: new Map(),
         storage: new Map()
     };
+
+const ENABLE_OPTIMIZATION = false; 
+const OPTIMIZE_BUILD_RESULTS = true; // If TRUE: Limits results (e.g. Top 3 RAMs only). Default: ON.
+const OPTIMIZE_CASE_SELECTION = true;  // If TRUE: Auto-selects the #1 Cheapest valid Case only.
+
     
     const Loaded = { cpu: false, gpu: false, ram: false, mobo: false, cases: false, psu: false, cooler: false, fan: false, storage: false };
 
@@ -1955,6 +1962,8 @@
                 base.multTSX = getNum(cells, 'Mem Clock Multiplier (TSX)');   
                 base.memChannelMultTSX = getNum(cells, 'Mem Channels Multiplier (TSX)');
                 base.finalAdjTSX = getNum(cells, 'Final Adjustment (TSX)');
+                base.defaultMem = getNum(cells, 'Default Memory Speed') || 2133;
+
 
                 base.maxMemChannels = getNum(cells, 'Max Memory Channels') || 2;
                 base.maxMemChannelsRaw = get(cells, 'Max Memory Channels');
@@ -2016,6 +2025,7 @@
                 base.supportSLI = get(cells, 'Support SLI') === 'Yes';
                 base.supportCF = get(cells, 'Support Crossfire') === 'Yes';
                 base.maxMemSpeed = getNum(cells, 'Max Memory Speed'); 
+base.defaultMem = getNum(cells, 'Default Memory Speed') || 2133;
 
             } else if (type === 'cases') {
                 base.size = get(cells, 'Case Size');
@@ -2534,44 +2544,53 @@
         return '';
     }
     
-    // UPDATED CALCULATION LOGIC
-    function calculateCpuScore(cpu, ram, stickCount, mode, useOC, useXMP, moboLimit = 0) {
-        let freq = useOC ? cpu.maxFreq : cpu.stdFreq;
-        if (!freq) freq = cpu.baseFreq;
-        if (!freq) return 0;
+    // UPDATED: Can accept a RAM object OR raw numbers
+function calculateCpuScore(cpu, ramOrFreq, stickCount, mode, useOC, useXMP, moboLimit = 0) {
+    let freq = useOC ? cpu.maxFreq : cpu.stdFreq;
+    if (!freq) freq = cpu.baseFreq;
+    if (!freq) return 0;
 
-        const isTS = (mode === 'TS');
-        const coreMult = isTS ? cpu.coreClockMultTS : cpu.coreClockMultTSX;
-        const memChanMult = isTS ? cpu.memChannelMultTS : cpu.memChannelMultTSX;
-        const memClockMult = isTS ? cpu.multTS : cpu.multTSX;
-        const adjustment = isTS ? cpu.finalAdjTS : cpu.finalAdjTSX;
+    const isTS = (mode === 'TS');
+    // Get Multipliers
+    const coreMult = isTS ? cpu.coreClockMultTS : cpu.coreClockMultTSX;
+    const memChanMult = isTS ? cpu.memChannelMultTS : cpu.memChannelMultTSX;
+    const memClockMult = isTS ? cpu.multTS : cpu.multTSX;
+    const adjustment = isTS ? cpu.finalAdjTS : cpu.finalAdjTSX;
 
-        let activeChannels, actualMemSpeed;
-        
-        if (ram) {
-            activeChannels = Math.min(stickCount, cpu.maxMemChannels);
-            
-            if (useXMP) {
-                actualMemSpeed = ram.freq;
-                if (moboLimit > 0 && actualMemSpeed > moboLimit) {
-                    actualMemSpeed = moboLimit;
-                }
-            } else {
-                actualMemSpeed = Math.min(ram.freq, (cpu.defaultMem || 2133));
-            }
-        } else {
-            activeChannels = cpu.maxMemChannels;
-            actualMemSpeed = cpu.defaultMem;
-        }
+    let activeChannels, actualMemSpeed;
 
-        const coreScore = coreMult * freq;
-        const chanScore = memChanMult * activeChannels;
-        const speedScore = memClockMult * actualMemSpeed;
-        const sum = coreScore + chanScore + speedScore + adjustment;
-
-        const final = Math.floor(sum * 298);
-        return final > 0 ? final : 0;
+    // Determine Memory Speed
+    let targetRamFreq = 0;
+    
+    // Check if input is a RAM Object or just a number (Frequency)
+    if (typeof ramOrFreq === 'object' && ramOrFreq !== null) {
+        targetRamFreq = ramOrFreq.freq;
+    } else {
+        targetRamFreq = parseInt(ramOrFreq) || cpu.defaultMem || 2133;
     }
+
+    // Determine Channels
+    activeChannels = Math.min(stickCount, cpu.maxMemChannels);
+
+    // Determine Actual Operating Speed (XMP vs JEDEC vs Mobo Limit)
+    if (useXMP) {
+        actualMemSpeed = targetRamFreq;
+        if (moboLimit > 0 && actualMemSpeed > moboLimit) {
+            actualMemSpeed = moboLimit;
+        }
+    } else {
+        // Without XMP, it usually defaults to CPU default (e.g. 2133/2400) or the stick speed, whichever is lower
+        actualMemSpeed = Math.min(targetRamFreq, (cpu.defaultMem || 2133));
+    }
+
+    const coreScore = coreMult * freq;
+    const chanScore = memChanMult * activeChannels;
+    const speedScore = memClockMult * actualMemSpeed;
+    const sum = coreScore + chanScore + speedScore + adjustment;
+
+    const final = Math.floor(sum * 298);
+    return final > 0 ? final : 0;
+}
 
     function calculate3DMark(cpuScore, gpuScore) {
         if (!cpuScore || !gpuScore) return 0;
@@ -2642,7 +2661,10 @@
     
     let precalcGpuConfigs = []; // Stores flattened valid GPU configs
 
+
+
     async function generateBuilds() {
+        // Safety Checks
         if (!Loaded.cpu || !Loaded.gpu) return alert("Wait for Data Load!");
         
         // Ensure SQL is ready
@@ -2697,8 +2719,11 @@
         };
 
         // --- 2. PREPARE AUX LISTS ---
+        // For Cases: If Optimization is OFF, we need the raw list so the Assembler can iterate them.
+        let rawCases = Array.from(DB.cases.values()).filter(c=>c.level<=config.lvl);
+        
         const lists = {
-            allCases: config.useCase ? Array.from(DB.cases.values()).filter(c=>c.level<=config.lvl).sort((a,b)=>a.price-b.price) : [],
+            allCases: rawCases.sort((a,b)=>a.price-b.price),
             allCoolers: config.useCooler ? Array.from(DB.cooler.values()).filter(c=>c.level<=config.lvl).sort((a,b)=>a.price-b.price) : [],
             allPsu: config.usePsu ? Array.from(DB.psu.values()).filter(p=>p.level<=config.lvl).sort((a,b)=>a.price-b.price) : [],
             allFans: config.useFan ? Array.from(DB.fan.values()).filter(f=>f.level<=config.lvl).sort((a,b)=>a.price-b.price) : []
@@ -2753,9 +2778,22 @@
             return true;
         }).sort((a,b) => (currentMode === 'TS' ? b.scoreTS - a.scoreTS : b.scoreTSX - a.scoreTSX));
 
-        // --- 5. PRE-CALCULATE GPU LIST (FLATTEN) ---
-        // This moves the GPU loops outside the CPU loop.
-        const allGpus = getOptimizedGpuList(Array.from(DB.gpu.values()), config.lvl);
+        // --- 5. GPU LIST (RAW VS OPTIMIZED) ---
+        let allGpus = [];
+        if (OPTIMIZE_LISTS) {
+            allGpus = getOptimizedGpuList(Array.from(DB.gpu.values()), config.lvl);
+        } else {
+            // RAW LIST: Filter by constraints, but keep duplicates/variants
+            allGpus = Array.from(DB.gpu.values()).filter(g => {
+                if (g.level > config.lvl) return false;
+                if (selectedOptions.gpuNames.size > 0 && !selectedOptions.gpuNames.has(g.name)) return false;
+                if (selectedOptions.vram.size > 0 && !selectedOptions.vram.has(g.vram)) return false;
+                if (selectedOptions.length.size > 0 && !selectedOptions.length.has(g.length)) return false;
+                return true;
+            }).sort((a,b) => b.score - a.score);
+        }
+
+        // --- 6. FLATTEN GPU LIST (SINGLE/DUAL/ETC) ---
         let selectedCounts = Array.from(selectedOptions.gpuCount);
         if (selectedCounts.length === 0) selectedCounts = [1, 2, 3, 4];
         
@@ -2787,214 +2825,214 @@
                  });
              }
         }
-        // Sort for optimization
-        precalcGpuConfigs.sort((a,b) => b.score - a.score);
+        
+        // --- 7. MOTHERBOARD LIST (RAW VS OPTIMIZED) ---
+        let moboSource = Array.from(DB.mobo.values()).filter(m => {
+            if (m.level > config.lvl) return false;
+            if (selectedOptions.moboNames.size > 0 && !selectedOptions.moboNames.has(m.name)) return false;
+            return true;
+        });
 
-        lists.validMobos = getOptimizedMoboList(Array.from(DB.mobo.values()), config.lvl);
+        if (OPTIMIZE_LISTS) {
+            lists.validMobos = getOptimizedMoboList(moboSource, config.lvl);
+        } else {
+            lists.validMobos = moboSource.sort((a,b) => a.price - b.price);
+        }
         
         // Start Async Processing
         runScanChunk(0, config, lists);
     }
 
-    function runScanChunk(cpuIndex, config, lists) {
-        if (cpuIndex >= lists.validCpu.length) {
-            finishScan(config);
-            return;
-        }
+function runScanChunk(cpuIndex, config, lists) {
+    if (cpuIndex >= lists.validCpu.length) {
+        finishScan(config);
+        return;
+    }
 
-        const cpu = lists.validCpu[cpuIndex];
+    const cpu = lists.validCpu[cpuIndex];
+
+    // 1. PRE-CALCULATE ALL UNIQUE FREQUENCIES
+    
+    // A. Get Valid RAMs and their Frequencies (For XMP ON)
+    const availableRams = Array.from(DB.ram.values()).filter(r => {
+        if (r.level > config.lvl) return false;
+        if (selectedOptions.ramNames.size > 0 && !selectedOptions.ramNames.has(r.name)) return false;
+        if (selectedOptions.ramMfgrs.size > 0 && !selectedOptions.ramMfgrs.has(r.mfgr)) return false;
+        return true;
+    });
+    const uniqueXmpFreqs = [...new Set(availableRams.map(r => r.freq))].sort((a,b) => a - b);
+
+    // B. Get Valid Motherboards and their Default Speeds (For XMP OFF)
+    const cpuMobos = config.useMobo ? lists.validMobos.filter(m => m.socket === cpu.socket) : [null];
+    
+    // Extract unique 'Default Memory Speed' values from valid motherboards
+    const uniqueDefaultSpeeds = [...new Set(
+        cpuMobos
+        .filter(m => m !== null)
+        .map(m => m.defaultMem)
+    )].sort((a,b) => a - b);
+    
+    if (uniqueDefaultSpeeds.length === 0) uniqueDefaultSpeeds.push(cpu.defaultMem || 2133);
+
+    sqlDB.run("BEGIN TRANSACTION");
+    const stmt = sqlDB.prepare(`
+        INSERT INTO builds (
+            score, liveCpuScore, gpuScore, diff, price, watts,
+            cpuName, gpuName, gpuCnt, ramName, ramSticks,
+            moboName, caseName, coolerName, psuName, fanName, storageNames
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    // 2. GPU LOOP
+    for (const gpuConf of precalcGpuConfigs) {
+        if ((cpu.price + gpuConf.price) > config.budget) continue;
+
+        // 3. STICKS LOOP
+        const possibleSticks = config.reqSticks > 0 ? [config.reqSticks] : [1, 2, 4];
         
-        // --- A. Generate Valid Platforms for this CPU ---
-        let validPlatforms = [];
-        
-        let ramTiers = [];
-        if (config.useRam) {
-            let compatibleRam = Array.from(DB.ram.values()).filter(r => 
-                r.level <= config.lvl && 
-                cpu.memTypes.includes(r.type) && 
-                (selectedOptions.ramNames.size === 0 || selectedOptions.ramNames.has(r.name)) &&
-                (selectedOptions.ramMfgrs.size === 0 || selectedOptions.ramMfgrs.has(r.mfgr)) &&
-                (selectedOptions.ramFreqs.size === 0 || selectedOptions.ramFreqs.has(r.freq)) && 
-                (selectedOptions.ramSizes.size === 0 || selectedOptions.ramSizes.has(r.size)) 
-            );
+        for (const sticks of possibleSticks) {
+
+            // =========================================================
+            // CORE LOGIC: CHOOSE WHICH LIST OF SPEEDS TO ITERATE
+            // =========================================================
             
-            if (config.useRamPerfMode && selectedOptions.ramNames.size === 0) {
-                // Only keep best value RAM per unique spec
-                const bestValueBySpec = new Map();
-                for (const r of compatibleRam) {
-                    const mfgr = r.mfgr || "Generic";
-                    const key = `${r.type}-${mfgr}-${r.freq}-${r.size}`; 
-                    if (!bestValueBySpec.has(key) || r.price < bestValueBySpec.get(key).price) {
-                        bestValueBySpec.set(key, r);
-                    }
-                }
-                ramTiers = Array.from(bestValueBySpec.values());
-            } else {
-                ramTiers = compatibleRam;
-            }
-            ramTiers.sort((a,b) => b.freq - a.freq);
-        } else {
-            ramTiers.push(null); 
-        }
+            const freqsToTest = config.useXMP ? uniqueXmpFreqs : uniqueDefaultSpeeds;
+            
+            let foundWorkingSpec = false;
 
-        const stickCounts = config.reqSticks === 0 ? [1, 2, 4] : [config.reqSticks];
-        const cpuMobos = config.useMobo ? lists.validMobos.filter(m => m.socket === cpu.socket) : [null];
+            for (const freq of freqsToTest) {
+                if (foundWorkingSpec) break; // Stop checking higher speeds if target met
 
-        for (const ram of ramTiers) {
-            for (const sticks of stickCounts) {
-                if (config.targetRamVal > 0 && ram && (ram.size * sticks) !== config.targetRamVal) continue;
-                const memType = ram ? ram.type : (cpu.memTypes.includes("DDR5") ? "DDR5" : "DDR4");
-                
-                const fitMobos = cpuMobos.filter(m => {
-                   if (!m) return true;
-                   if (m.ramType !== memType) return false;
-                   if (sticks === 4 && m.size === 'Mini-ITX') return false;
-                   return true;
-                });
+                // 4. CALCULATE SCORE (Virtual Test)
+                const liveCpuScore = calculateCpuScore(cpu, freq, sticks, config.currentMode, config.useOC, config.useXMP, 0);
+                const totalScore = calculate3DMark(liveCpuScore, gpuConf.score);
 
-                if (fitMobos.length === 0) continue;
+                if (totalScore >= config.minScore) {
+                    foundWorkingSpec = true;
 
-                for (const mobo of fitMobos) {
-                    let moboLimit = (mobo && mobo.maxMemSpeed > 0) ? mobo.maxMemSpeed : 0;
-                    let liveCpuScore;
+                    // 5. FIND COMPONENTS THAT MATCH THIS FREQUENCY
                     
-                    if (config.currentMode === 'TSX') {
-                        liveCpuScore = cpu.scoreTSX;
-                    } else {
-                        liveCpuScore = calculateCpuScore(cpu, ram, sticks, config.currentMode, config.useOC, config.useXMP, moboLimit);
-                    }
+                    // A. Find RAM
+                    const validRams = availableRams.filter(r => {
+                        // Logic: RAM must be fast enough to run at 'freq'
+                        if (r.freq < freq) return false;
+                        
+                        // Compatibility
+                        const memType = r.type;
+                        if (!cpu.memTypes.includes(memType)) return false; 
+                        if (config.targetRamVal > 0 && (r.size * sticks) !== config.targetRamVal) return false;
+                        if (selectedOptions.ramSizes.size > 0 && !selectedOptions.ramSizes.has(r.size)) return false;
+                        
+                        return true;
+                    }).sort((a,b) => a.price - b.price);
 
-                    if (liveCpuScore === 0) continue;
+                    if (validRams.length === 0) continue;
 
-                    validPlatforms.push({
-                        cpu: cpu,
-                        ram: ram,
-                        sticks: sticks,
-                        mobo: mobo,
-                        score: liveCpuScore,
-                        price: cpu.price + (ram ? (ram.price * sticks) : 0) + (mobo ? mobo.price : 0),
-                        watts: cpu.watts
-                    });
-                }
-            }
-        }
+                    // B. Find Motherboards
+                    const validMobos = cpuMobos.filter(m => {
+                        if (!m) return true; // No mobo flow
+                        if (validRams[0].type !== m.ramType) return false; // Match RAM Type
+                        if (gpuConf.count > 1 && m.pciSlots < 5) return false;
+                        if (gpuConf.sliType === 'SLI' && !m.supportSLI) return false;
+                        if (gpuConf.sliType === 'Crossfire' && !m.supportCF) return false;
+                        if (sticks === 4 && m.size === 'Mini-ITX') return false;
 
-        // --- B. SQL TRANSACTION: Platform + Pre-calc GPUs ---
-        // We write to DB immediately inside a transaction
-        
-        sqlDB.run("BEGIN TRANSACTION");
-        
-        const stmt = sqlDB.prepare(`
-            INSERT INTO builds (
-                score, liveCpuScore, gpuScore, diff, price, watts,
-                cpuName, gpuName, gpuCnt, ramName, ramSticks,
-                moboName, caseName, coolerName, psuName, fanName, storageNames
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
-
-        for (const plat of validPlatforms) {
-            if (plat.price + lists.minAuxCost > config.budget) continue;
-
-            for (const gpuConf of precalcGpuConfigs) {
-                
-                if (plat.mobo && gpuConf.count > 1) {
-                    if (plat.mobo.pciSlots < 5) continue;
-                    if (gpuConf.sliType === 'SLI' && !plat.mobo.supportSLI) continue;
-                    if (gpuConf.sliType === 'Crossfire' && !plat.mobo.supportCF) continue;
-                }
-
-                const totalWatts = plat.watts + gpuConf.watts + config.extraW;
-                if (config.limitTotalW && totalWatts > config.limitTotalW) continue;
-
-                const final3D = calculate3DMark(plat.score, gpuConf.score);
-                if (config.minScore > 0 && final3D < config.minScore) continue;
-
-                let currentTotal = plat.price + gpuConf.price + lists.minAuxCost;
-                if (currentTotal > config.budget) continue;
-
-                // --- EXPENSIVE CHECKS (Case, PSU, Cooler) ---
-                let bCase = null;
-                let casePrice = 0;
-                if (config.useCase) {
-                    bCase = lists.allCases.find(c => {
-                        if (c.maxGpuLen < gpuConf.gpu.length) return false;
-                        if (plat.mobo && !c.moboSizes.includes(plat.mobo.size)) return false;
-                        if (gpuConf.count > 1 && c.gpuSlots < 3) return false;
-                        if (lists.reqSSDSlots > c.ssdSlots) return false;
-                        if (lists.reqHDDSlots > c.hddSlots) return false;
+                        // CRITICAL: FREQUENCY MATCHING
+                        if (config.useXMP) {
+                            // XMP ON: Mobo must handle this speed
+                            if (m.maxMemSpeed < freq) return false; 
+                        } else {
+                            // XMP OFF: Mobo's default speed MUST be exactly the freq we just tested
+                            if (m.defaultMem !== freq) return false;
+                        }
                         return true;
                     });
-                    if (!bCase) continue; 
-                    casePrice = bCase.price;
-                }
 
-                let cooler = null;
-                let coolerPrice = 0;
+                    // C. ASSEMBLE (Use helper to handle Case/PSU/Cooler expansion)
+                    const ramCap = OPTIMIZE_BUILD_RESULTS ? 3 : validRams.length;
+                    
+                    assembleBuilds(
+                        validRams.slice(0, ramCap), 
+                        validMobos, 
+                        cpu, gpuConf, sticks, totalScore, liveCpuScore, config, lists, stmt
+                    );
+                }
+            }
+        } 
+    }
+
+    stmt.free();
+    sqlDB.run("COMMIT");
+
+    const percent = Math.floor(((cpuIndex + 1) / lists.validCpu.length) * 100);
+document.getElementById('resCount').innerText = `${percent}% | ${formatNumber(buildCount)} builds`;
+    setTimeout(() => runScanChunk(cpuIndex + 1, config, lists), 0);
+}
+
+
+// PASTE THIS WHOLE FUNCTION INTO YOUR SCRIPT
+function assembleBuilds(rams, mobos, cpu, gpuConf, sticks, score, cpuScore, config, lists, stmt) {
+    for (const ram of rams) {
+        for (const mobo of mobos) {
+            
+            const corePrice = cpu.price + gpuConf.price + (ram.price * sticks) + (mobo ? mobo.price : 0);
+            if (corePrice + lists.minAuxCost > config.budget) continue;
+
+            const totalWatts = cpu.watts + gpuConf.watts + config.extraW;
+            if (config.limitTotalW && totalWatts > config.limitTotalW) continue;
+
+            let validCases = [];
+            if (config.useCase) {
+                validCases = lists.allCases.filter(c => {
+                    if (c.maxGpuLen < gpuConf.gpu.length) return false;
+                    if (mobo && !c.moboSizes.includes(mobo.size)) return false;
+                    if (gpuConf.count > 1 && c.gpuSlots < 3) return false;
+                    return true;
+                });
+                // Check Global Optimization Variable
+                if (OPTIMIZE_CASE_SELECTION && validCases.length > 0) validCases = [validCases[0]];
+            } else {
+                validCases = [null];
+            }
+
+            for (const bCase of validCases) {
+                let currentPrice = corePrice + (bCase ? bCase.price : 0);
+                
+                let cooler = null; 
                 if (config.useCooler) {
-                    cooler = lists.allCoolers.find(c => checkFit('cooler', c, {cpu: plat.cpu, case: bCase}));
-                    if(!cooler) cooler = { name: "None (No Fit)", price: 0, height: 0, size: 0, flow: 0, type: "N/A" };
-                    coolerPrice = cooler.price;
+                    cooler = lists.allCoolers.find(c => checkFit('cooler', c, {cpu, case: bCase}));
+                    if(cooler) currentPrice += cooler.price;
                 }
 
                 let psu = null;
-                let psuPrice = 0;
                 if (config.usePsu) {
-                    psu = lists.allPsu.find(p => {
-                        if (p.watts < totalWatts) return false;
-                        if (bCase && bCase.maxPsuLen > 0 && p.length > bCase.maxPsuLen) return false;
-                        return true;
-                    });
-                    if (!psu) continue;
-                    psuPrice = psu.price;
+                    psu = lists.allPsu.find(p => p.watts >= totalWatts && (!bCase || bCase.maxPsuLen === 0 || p.length <= bCase.maxPsuLen));
+                    if(psu) currentPrice += psu.price;
                 }
-
+                
                 let fan = null;
-                let fanPrice = 0;
                 if (config.useFan && bCase) {
                     fan = lists.allFans.find(f => checkFit('fan', f, {case: bCase}));
-                    if(fan) fanPrice = fan.price;
+                    if(fan) currentPrice += fan.price;
                 }
 
-                let realTotal = plat.price + gpuConf.price + casePrice + coolerPrice + psuPrice + fanPrice + lists.totalStorageCost;
-                if (realTotal > config.budget) continue;
+                currentPrice += lists.totalStorageCost;
+                if (currentPrice > config.budget) continue;
 
-                // NO BUFFERING. WRITE TO DB.
                 const storageNameList = JSON.stringify(lists.finalStorageList.map(s => s.name));
-                
                 stmt.run([
-                    final3D,
-                    plat.score,
-                    gpuConf.score,
-                    final3D - config.target,
-                    realTotal,
-                    totalWatts,
-                    plat.cpu.name,
-                    gpuConf.gpu.name,
-                    gpuConf.count,
-                    plat.ram?.name || null,
-                    plat.sticks,
-                    plat.mobo?.name || null,
-                    bCase?.name || null,
-                    cooler?.name || null,
-                    psu?.name || null,
-                    fan?.name || null,
+                    score, cpuScore, gpuConf.score, score - config.target,
+                    currentPrice, totalWatts, cpu.name, gpuConf.gpu.name, gpuConf.count,
+                    ram.name, sticks, mobo ? mobo.name : null, bCase ? bCase.name : null,
+                    cooler ? cooler.name : null, psu ? psu.name : null, fan ? fan.name : null,
                     storageNameList
                 ]);
-                
                 buildCount++;
             }
         }
-        
-        stmt.free();
-        sqlDB.run("COMMIT");
-
-        // Update Progress
-        const percent = Math.floor(((cpuIndex + 1) / lists.validCpu.length) * 100);
-        document.getElementById('resCount').innerText = `${percent}% Scanned... (${formatNumber(buildCount)} found)`;
-
-        // Next chunk
-        setTimeout(() => runScanChunk(cpuIndex + 1, config, lists), 0);
     }
+}
+
 
     function finishScan(config) {
         const btn = document.getElementById('generateBtn');
