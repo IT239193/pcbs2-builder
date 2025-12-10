@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1810,40 +1808,55 @@ const OPTIMIZE_CASE_SELECTION = true;  // If TRUE: Auto-selects the #1 Cheapest 
         return { min: result[0].values[0][0], max: result[0].values[0][1] };
     }
 
-
-// ---------------------------------------------------------
-// NEW FUNCTION: Filters RAM list based on selected Mfg/Freq/Size
-// ---------------------------------------------------------
+/**
+ * INTELLIGENT RAM FILTER
+ * Updates the 'Specific RAM Model' list based on:
+ * 1. Current Career Level
+ * 2. Selected Manufacturers
+ * 3. Selected Frequencies
+ * 4. Selected Sizes
+ */
 function refreshRamOptions() {
     const currentLvl = parseInt(document.getElementById('level').value) || 30;
-    
-    // 1. Get all RAMs allowed by Level
+
+    // 1. Start with all RAMs allowed by Level
     let validRams = Array.from(DB.ram.values()).filter(r => r.level <= currentLvl);
 
-    // 2. Filter by Manufacturer (if selected)
+    // 2. Filter by Manufacturer (if any selected)
     if (selectedOptions.ramMfgrs.size > 0) {
         validRams = validRams.filter(r => selectedOptions.ramMfgrs.has(r.mfgr));
     }
 
-    // 3. Filter by Frequency (if selected)
+    // 3. Filter by Frequency (if any selected)
     if (selectedOptions.ramFreqs.size > 0) {
         validRams = validRams.filter(r => selectedOptions.ramFreqs.has(r.freq));
     }
 
-    // 4. Filter by Size (if selected)
+    // 4. Filter by Size (if any selected)
     if (selectedOptions.ramSizes.size > 0) {
         validRams = validRams.filter(r => selectedOptions.ramSizes.has(r.size));
     }
 
-    // 5. Update the Specific RAM Model Dropdown with the filtered list
-    const sortedNames = validRams.map(r => r.name).sort();
+    // 5. NEW: Smart Compatibility Filter
+    // If user has already selected RAM(s), only show compatible ones
+    // 5. NEW: Smart Compatibility Filter
+// If user has already selected RAM(s), only show compatible ones
+if (selectedOptions.ramNames.size > 0) {
+    const selectedRamArray = Array.from(selectedOptions.ramNames.keys()).map(name => DB.ram.get(name));
+    const firstRam = selectedRamArray[0];
     
-    // We reuse the existing populate function, but for the specific ramNames list
-    populateMultiSelect('ramNames', sortedNames, 'ramListContainer');
+    if (firstRam) {
+        // Only show RAMs that match: Same Manufacturer AND Same DDR Type
+        validRams = validRams.filter(r => {
+            return r.mfgr === firstRam.mfgr && r.type === firstRam.type;
+        });
+    }
 }
 
 
-
+    // 6. Update the dropdown list
+    populateMultiSelect('ramNames', validRams.map(r => r.name).sort(), 'ramListContainer');
+}
 
     function getBuildsFromSQL(sortKey, limit, offset = 0) {
         if(!sqlDB) return [];
@@ -2246,66 +2259,64 @@ base.defaultMem = getNum(cells, 'Default Memory Speed') || 2133;
     }
 
     function refreshDropdowns() {
-    if (!Loaded.cpu) return;
+        if (!Loaded.cpu) return;
 
-    const currentLvl = parseInt(document.getElementById('level').value) || 30;
-    const allowsSingleGpu = selectedOptions.gpuCount.has(1) || selectedOptions.gpuCount.size === 0;
+        const currentLvl = parseInt(document.getElementById('level').value) || 30;
+        
+        const allowsSingleGpu = selectedOptions.gpuCount.has(1) || selectedOptions.gpuCount.size === 0;
 
-    let moboFilterMinPCI = 0;
-    let caseFilterMinGPU = 0;
+        let moboFilterMinPCI = 0;
+        let caseFilterMinGPU = 0;
 
-    if (!allowsSingleGpu) {
-        moboFilterMinPCI = 5;
-        caseFilterMinGPU = 3;
+        if (!allowsSingleGpu) {
+            moboFilterMinPCI = 5;
+            caseFilterMinGPU = 3;
+        }
+
+        const cpus = Array.from(DB.cpu.values()).filter(c => c.level <= currentLvl);
+        const gpus = Array.from(DB.gpu.values()).filter(g => g.level <= currentLvl);
+        const rams = Array.from(DB.ram.values()).filter(r => r.level <= currentLvl);
+        const allStorage = Array.from(DB.storage.values()).filter(s => s.level <= currentLvl);
+        
+        const ssdList = allStorage.filter(s => s.type === 'SSD' || s.type === 'M.2');
+        const hddList = allStorage.filter(s => s.type === 'HDD');
+        
+        const mobos = Array.from(DB.mobo.values()).filter(m => m.level <= currentLvl && m.pciSlots >= moboFilterMinPCI);
+        const cases = Array.from(DB.cases.values()).filter(c => c.level <= currentLvl && c.gpuSlots >= caseFilterMinGPU);
+
+        populateMultiSelect('gpuCount', [1, 2, 3, 4], 'gpuCountListContainer');
+        populateMultiSelect('socket', [...new Set(cpus.map(c => c.socket).filter(s => s))].sort(), 'socketListContainer');
+        populateMultiSelect('cpuNames', cpus.map(c => c.name).sort(), 'cpuListContainer');
+        populateMultiSelect('vram', [...new Set(gpus.map(g => g.vram).filter(v => v))].sort((a,b) => a-b), 'vramListContainer');
+        populateMultiSelect('length', [...new Set(gpus.map(g => g.length).filter(l => l))].sort((a,b) => a-b), 'lengthListContainer');
+        populateMultiSelect('gpuNames', [...new Set(gpus.map(g => g.name))].sort(), 'gpuListContainer');
+        populateMultiSelect('moboNames', mobos.map(m => m.name).sort(), 'moboListContainer');
+        populateMultiSelect('caseNames', cases.map(c => c.name).sort(), 'caseListContainer');
+            refreshRamOptions(); 
+        
+        populateMultiSelect('ssdNames', ssdList.map(s => s.name).sort(), 'ssdListContainer');
+        populateMultiSelect('hddNames', hddList.map(s => s.name).sort(), 'hddListContainer');
+        
+        populateMultiSelect('ramMfgrs', [...new Set(rams.map(r => r.mfgr).filter(m => m))].sort(), 'ramMfgrListContainer');
+        populateMultiSelect('ramFreqs', [...new Set(rams.map(r => r.freq).filter(f => f))].sort((a,b) => a-b), 'ramFreqListContainer');
+        populateMultiSelect('ramSizes', [...new Set(rams.map(r => r.size).filter(s => s))].sort((a,b) => a-b), 'ramSizeListContainer');
+
+        populateStorageSizeButtons('ssd', ssdList);
+        populateStorageSizeButtons('hdd', hddList);
+
+        const stickSelect = document.getElementById('ramSticks');
+        const fourStickOption = stickSelect.querySelector('option[value="4"]');
+        const canSupport4Sticks = mobos.some(m => m.size !== 'Mini-ITX');
+        
+        if (canSupport4Sticks) {
+            fourStickOption.disabled = false;
+            fourStickOption.innerText = "4 Sticks";
+        } else {
+            fourStickOption.disabled = true;
+            fourStickOption.innerText = "4 Sticks (Not Available at Level " + currentLvl + ")";
+            if(stickSelect.value == "4") stickSelect.value = "2";
+        }
     }
-
-    const cpus = Array.from(DB.cpu.values()).filter(c => c.level <= currentLvl);
-    const gpus = Array.from(DB.gpu.values()).filter(g => g.level <= currentLvl);
-    const rams = Array.from(DB.ram.values()).filter(r => r.level <= currentLvl);
-    const allStorage = Array.from(DB.storage.values()).filter(s => s.level <= currentLvl);
-    
-    const ssdList = allStorage.filter(s => s.type === 'SSD' || s.type === 'M.2');
-    const hddList = allStorage.filter(s => s.type === 'HDD');
-    
-    const mobos = Array.from(DB.mobo.values()).filter(m => m.level <= currentLvl && m.pciSlots >= moboFilterMinPCI);
-    const cases = Array.from(DB.cases.values()).filter(c => c.level <= currentLvl && c.gpuSlots >= caseFilterMinGPU);
-
-    populateMultiSelect('gpuCount', [1, 2, 3, 4], 'gpuCountListContainer');
-    populateMultiSelect('socket', [...new Set(cpus.map(c => c.socket).filter(s => s))].sort(), 'socketListContainer');
-    populateMultiSelect('cpuNames', cpus.map(c => c.name).sort(), 'cpuListContainer');
-    populateMultiSelect('vram', [...new Set(gpus.map(g => g.vram).filter(v => v))].sort((a,b) => a-b), 'vramListContainer');
-    populateMultiSelect('length', [...new Set(gpus.map(g => g.length).filter(l => l))].sort((a,b) => a-b), 'lengthListContainer');
-    populateMultiSelect('gpuNames', [...new Set(gpus.map(g => g.name))].sort(), 'gpuListContainer');
-    populateMultiSelect('moboNames', mobos.map(m => m.name).sort(), 'moboListContainer');
-    populateMultiSelect('caseNames', cases.map(c => c.name).sort(), 'caseListContainer');
-    
-    populateMultiSelect('ssdNames', ssdList.map(s => s.name).sort(), 'ssdListContainer');
-    populateMultiSelect('hddNames', hddList.map(s => s.name).sort(), 'hddListContainer');
-    
-    // RAM FILTERS
-    populateMultiSelect('ramMfgrs', [...new Set(rams.map(r => r.mfgr).filter(m => m))].sort(), 'ramMfgrListContainer');
-    populateMultiSelect('ramFreqs', [...new Set(rams.map(r => r.freq).filter(f => f))].sort((a,b) => a-b), 'ramFreqListContainer');
-    populateMultiSelect('ramSizes', [...new Set(rams.map(r => r.size).filter(s => s))].sort((a,b) => a-b), 'ramSizeListContainer');
-
-    // CALL THE NEW LOGIC HERE
-    refreshRamOptions(); 
-
-    populateStorageSizeButtons('ssd', ssdList);
-    populateStorageSizeButtons('hdd', hddList);
-
-    const stickSelect = document.getElementById('ramSticks');
-    const fourStickOption = stickSelect.querySelector('option[value="4"]');
-    const canSupport4Sticks = mobos.some(m => m.size !== 'Mini-ITX');
-    
-    if (canSupport4Sticks) {
-        fourStickOption.disabled = false;
-        fourStickOption.innerText = "4 Sticks";
-    } else {
-        fourStickOption.disabled = true;
-        fourStickOption.innerText = "4 Sticks (Not Available at Level " + currentLvl + ")";
-        if(stickSelect.value == "4") stickSelect.value = "2";
-    }
-}
 
     function populateStorageSizeButtons(type, list) {
         const container = document.getElementById(type + 'QuickFilter');
@@ -2358,102 +2369,103 @@ base.defaultMem = getNum(cells, 'Default Memory Speed') || 2133;
     }
     
     function populateMultiSelect(category, options, containerId) {
-    const container = document.getElementById(containerId);
-    container.innerHTML = '';
-    const isStorage = (category === 'ssdNames' || category === 'hddNames');
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        const isStorage = (category === 'ssdNames' || category === 'hddNames');
 
-    options.forEach((opt, index) => {
-        const div = document.createElement('div');
-        div.className = 'multi-option';
-        let isSelected = false;
-        let count = 0;
+        options.forEach((opt, index) => {
+            const div = document.createElement('div');
+            div.className = 'multi-option';
+            let isSelected = false;
+            let count = 0;
 
-        if (isStorage) {
-            if (selectedOptions[category].has(opt)) {
-                isSelected = true;
-                count = selectedOptions[category].get(opt);
+            if (isStorage) {
+                if (selectedOptions[category].has(opt)) {
+                    isSelected = true;
+                    count = selectedOptions[category].get(opt);
+                }
+                const s = DB.storage.get(opt);
+                if(s) div.dataset.sizeStr = s.sizeStr;
+            } else {
+                if (selectedOptions[category].has(opt)) isSelected = true;
             }
-            const s = DB.storage.get(opt);
-            if(s) div.dataset.sizeStr = s.sizeStr;
-        } else if (category === 'ramNames') {
-            if (selectedOptions[category].has(opt)) {
-                isSelected = true;
-                count = selectedOptions[category].get(opt);
-            }
-        } else {
-            if (selectedOptions[category].has(opt)) isSelected = true;
-        }
 
-        if (isSelected) div.classList.add('selected');
-        div.dataset.value = opt;
-        div.dataset.index = index; 
-        
-        let label = opt;
-        
-        if (category === 'ramNames') {
-            const r = DB.ram.get(opt);
-            if (r) {
-                label = `<span style="font-size:1.2em"><b>${r.mfgr || 'Generic'}</b> - ${r.name} | Size Each: ${r.size}GB | Total: ${r.totalSize}GB | ${r.type} | ${r.freq}/${r.maxSpeed} MHz | ${r.voltage}/${r.maxVoltage} V | Lvl: ${r.level}</span>`;
+            if (isSelected) div.classList.add('selected');
+            div.dataset.value = opt;
+            div.dataset.index = index; 
+            
+            let label = opt;
+            
+            if (category === 'ramNames') {
+                const r = DB.ram.get(opt);
+                if (r) {
+                    label = `<span style="font-size:1.2em"><b>${r.mfgr || 'Generic'}</b> - ${r.name} | Size Each: ${r.size}GB | Total: ${r.totalSize}GB | ${r.type} | ${r.freq}/${r.maxSpeed} MHz | ${r.voltage}/${r.maxVoltage} V | Lvl: ${r.level}</span>`;
+                }
+            } else if (category === 'moboNames') {
+                const m = DB.mobo.get(opt);
+                if (m) label = `<span style="font-size:0.9em">${m.name} | PCI Slots: ${m.pciSlots}</span>`;
+            } else if (category === 'caseNames') {
+                const c = DB.cases.get(opt);
+                if (c) label = `<span style="font-size:0.9em">${c.name} | GPU Slots: ${c.gpuSlots}</span>`;
+            } else if (isStorage) {
+                const s = DB.storage.get(opt);
+                if (s) label = `<span style="font-size:0.9em">${s.name} | ${s.sizeStr} | ${s.speed} MB/s</span>`;
+            } else {
+                if (category === 'vram') label += ' GB';
+                if (category === 'length') label += ' mm';
+                if (category === 'ramFreqs') label += ' MHz';
+                if (category === 'ramSizes') label += ' GB'; 
+                if (category === 'gpuCount') {
+                     if(opt == 1) label = "Single GPU";
+                     if(opt == 2) label = "Dual GPU";
+                     if(opt == 3) label = "Triple GPU";
+                     if(opt == 4) label = "Quad GPU";
+                }
             }
-        } else if (category === 'moboNames') {
-            const m = DB.mobo.get(opt);
-            if (m) label = `<span style="font-size:0.9em">${m.name} | PCI Slots: ${m.pciSlots}</span>`;
-        } else if (category === 'caseNames') {
-            const c = DB.cases.get(opt);
-            if (c) label = `<span style="font-size:0.9em">${c.name} | GPU Slots: ${c.gpuSlots}</span>`;
-        } else if (isStorage) {
-            const s = DB.storage.get(opt);
-            if (s) label = `<span style="font-size:0.9em">${s.name} | ${s.sizeStr} | ${s.speed} MB/s</span>`;
-        } else {
-            if (category === 'vram') label += ' GB';
-            if (category === 'length') label += ' mm';
-            if (category === 'ramFreqs') label += ' MHz';
-            if (category === 'ramSizes') label += ' GB'; 
-            if (category === 'gpuCount') {
-                 if(opt == 1) label = "Single GPU";
-                 else if(opt == 2) label = "Dual GPU";
-                 else if(opt == 3) label = "Triple GPU";
-                 else if(opt == 4) label = "Quad GPU";
-            }
-        }
 
-        const safeName = opt.replace(/'/g, "\\'");
+            if (isStorage) {
+                const safeName = opt.replace(/'/g, "\\'");
+                div.innerHTML = `
+                    <div class="option-left" onclick="toggleStorageSelection('${category}', '${safeName}', 1)">
+                        <div class="cb-custom"></div>
+                        <span>${label}</span>
+                    </div>
+                    <div class="qty-controls" onclick="event.stopPropagation()">
+                        <button class="qty-btn" onclick="modifyStorageQty('${category}', '${safeName}', -1)">-</button>
+                        <span class="qty-val">${count}</span>
+                        <button class="qty-btn" onclick="modifyStorageQty('${category}', '${safeName}', 1)">+</button>
+                    </div>
+                `;
+            } else if (category === 'ramNames') {
+                // NEW: RAM with quantity controls like storage
+                const safeName = opt.replace(/'/g, "\\'");
+                const ramCount = selectedOptions[category].has(opt) ? selectedOptions[category].get(opt) : 0;
+                if (ramCount > 0) {
+                    isSelected = true;
+                    div.classList.add('selected');
+                }
+div.innerHTML = `
+    <div class="option-left" onclick="event.stopPropagation(); toggleRamSelection('${safeName}', 1);">
+        <div class="cb-custom"></div>
+        <span>${label}</span>
+    </div>
+    <div class="qty-controls" onclick="event.stopPropagation()">
+
+                        <button class="qty-btn" onclick="modifyRamQty('${safeName}', -1)">-</button>
+                        <span class="qty-val">${ramCount}</span>
+                        <button class="qty-btn" onclick="modifyRamQty('${safeName}', 1)">+</button>
+                    </div>
+                `;
+            } else {
+                div.innerHTML = `<div class="cb-custom"></div><span>${label}</span>`;
+                div.onclick = (e) => toggleOption(category, opt, div, e);
+            }
+            
+            container.appendChild(div);
+        });
         
-        if (isStorage) {
-            div.innerHTML = `
-                <div class="option-left" onclick="event.stopPropagation(); toggleStorageSelection('${category}', '${safeName}', 1)">
-                    <div class="cb-custom"></div>
-                    <span>${label}</span>
-                </div>
-                <div class="qty-controls" onclick="event.stopPropagation()">
-                    <button class="qty-btn" onclick="modifyStorageQty('${category}', '${safeName}', -1)">-</button>
-                    <span class="qty-val">${count}</span>
-                    <button class="qty-btn" onclick="modifyStorageQty('${category}', '${safeName}', 1)">+</button>
-                </div>
-            `;
-        } else if (category === 'ramNames') {
-            // FIX: Added event.stopPropagation() here to prevent dropdown closing
-            div.innerHTML = `
-                <div class="option-left" onclick="event.stopPropagation(); toggleRamSelection('${safeName}', 1)">
-                    <div class="cb-custom"></div>
-                    <span>${label}</span>
-                </div>
-                <div class="qty-controls" onclick="event.stopPropagation()">
-                    <button class="qty-btn" onclick="modifyRamQty('${safeName}', -1)">-</button>
-                    <span class="qty-val">${count}</span>
-                    <button class="qty-btn" onclick="modifyRamQty('${safeName}', 1)">+</button>
-                </div>
-            `;
-        } else {
-            div.innerHTML = `<div class="cb-custom"></div><span>${label}</span>`;
-            div.onclick = (e) => toggleOption(category, opt, div, e);
-        }
-        
-        container.appendChild(div);
-    });
-    
-    updateDisplayLabel(category);
-}
+        updateDisplayLabel(category);
+    }
 
     window.toggleStorageSelection = function(category, value, defaultQty) {
         if (selectedOptions[category].has(value)) {
@@ -2485,6 +2497,7 @@ base.defaultMem = getNum(cells, 'Default Memory Speed') || 2133;
         populateMultiSelect(category, list.map(s=>s.name).sort(), containerId);
         container.scrollTop = scrollTop;
     }
+
 
 // NEW FUNCTION 1: Toggle RAM selection
 window.toggleRamSelection = function(value, defaultQty) {
@@ -2518,10 +2531,12 @@ function refreshRamDropdown() {
     container.scrollTop = scrollTop;
 }
 
-    function toggleOption(category, value, element, event) {
+    
+function toggleOption(category, value, element, event) {
     // Handle Shift+Click Range Selection
     if (event.shiftKey && lastClickedOption.category === category && lastClickedOption.index !== -1) {
         const container = element.parentElement;
+        // Get only currently visible options
         const options = Array.from(container.children).filter(c => c.style.display !== 'none');
         const currentIndex = options.indexOf(element);
         const lastIndex = options.findIndex(opt => parseInt(opt.dataset.index) === lastClickedOption.index);
@@ -2533,8 +2548,11 @@ function refreshRamDropdown() {
             for (let i = start; i <= end; i++) {
                 const opt = options[i];
                 const val = opt.dataset.value;
+                
+                // Add to selection set
                 if (category === 'gpuCount') selectedOptions[category].add(parseInt(val));
                 else selectedOptions[category].add(val);
+                
                 opt.classList.add('selected');
             }
         }
@@ -2550,10 +2568,14 @@ function refreshRamDropdown() {
         }
     }
 
+    // Update state for next click
     lastClickedOption = { category: category, index: parseInt(element.dataset.index) };
+    
+    // Update the label text (e.g. "3 selected")
     updateDisplayLabel(category);
 
-    // FIX: Trigger RAM list refresh if a RAM filter changed
+    // --- NEW LOGIC: Update Specific RAM List ---
+    // If we just clicked a Manufacturer, Frequency, or Size, refresh the specific model list
     if (['ramMfgrs', 'ramFreqs', 'ramSizes'].includes(category)) {
         refreshRamOptions();
     }
@@ -2577,8 +2599,10 @@ function refreshRamDropdown() {
     }
 
     function clearFilter(category) {
+    // 1. Clear the data set
     selectedOptions[category].clear();
 
+    // 2. Determine which visual container to clear
     let containerId;
     if(category === 'cpuNames') containerId = 'cpuListContainer';
     else if(category === 'gpuNames') containerId = 'gpuListContainer';
@@ -2595,20 +2619,26 @@ function refreshRamDropdown() {
     else if(category === 'ssdNames') containerId = 'ssdListContainer';
     else if(category === 'hddNames') containerId = 'hddListContainer';
 
+// 3. Update the UI
     const container = document.getElementById(containerId);
     
     if (category === 'ssdNames' || category === 'hddNames') {
+         // Special handling for storage (quantity based)
          refreshStorageDropdown(category);
          if(container) container.querySelectorAll('.multi-option').forEach(opt => opt.style.display = 'flex');
     } else if (category === 'ramNames') {
-         refreshRamOptions(); // Fix: Use the new refresh function
+         // NEW: Special handling for RAM (quantity based)
+         refreshRamDropdown();
     } else {
+         // Standard handling: remove 'selected' class
          if(container) container.querySelectorAll('.multi-option').forEach(opt => opt.classList.remove('selected'));
     }
     
+    // 4. Update Label text
     updateDisplayLabel(category);
 
-    // FIX: Trigger RAM list refresh if a RAM filter was cleared
+    // --- NEW LOGIC: Update Specific RAM List ---
+    // If we cleared a RAM filter, we need to refresh the list to show more options again
     if (['ramMfgrs', 'ramFreqs', 'ramSizes'].includes(category)) {
         refreshRamOptions();
     }
@@ -3695,3 +3725,4 @@ function assembleBuilds(rams, mobos, cpu, gpuConf, sticks, score, cpuScore, conf
 </script>
 </body>
 </html>
+
