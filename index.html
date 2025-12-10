@@ -1610,7 +1610,7 @@
     };
 
 const OPTIMIZE_LISTS = true; 
-const OPTIMIZE_BUILD_RESULTS = false; // If TRUE: Limits results (e.g. Top 3 RAMs only). Default: ON.
+const OPTIMIZE_BUILD_RESULTS = true; // If TRUE: Limits results (e.g. Top 3 RAMs only). Default: ON.
 const OPTIMIZE_CASE_SELECTION = true;  // If TRUE: Auto-selects the #1 Cheapest valid Case only.
 
     
@@ -3092,7 +3092,7 @@ function runScanChunk(cpuIndex, config, lists) {
             if ((cpu.price + gpuConf.price) > config.budget) continue;
 
             // 3. STICKS LOOP
-           const possibleSticks = config.reqSticks > 0 ? [config.reqSticks] : [1, 2, 3, 4];
+            const possibleSticks = config.reqSticks > 0 ? [config.reqSticks] : [1, 2, 4];
             
             for (const sticks of possibleSticks) {
 
@@ -3104,10 +3104,8 @@ function runScanChunk(cpuIndex, config, lists) {
                 
                 let foundWorkingSpec = false;
 
-for (const freq of freqsToTest) {
-    // Only stop looking at higher speeds if Optimization is ON.
-    // Since you set it to FALSE, this will now run for every frequency.
-    if (foundWorkingSpec && OPTIMIZE_BUILD_RESULTS) break;
+                for (const freq of freqsToTest) {
+                    if (foundWorkingSpec) break; 
 
                     // 4. CALCULATE SCORE (Virtual Test)
                     const liveCpuScore = calculateCpuScore(cpu, freq, sticks, config.currentMode, config.useOC, config.useXMP, 0);
@@ -3160,12 +3158,11 @@ for (const freq of freqsToTest) {
                         return true;
                     });
 
-// C. ASSEMBLE (Use helper to handle Case/PSU/Cooler expansion)
-// Force limit to 1. This matches e.txt which only saves the CHEAPEST set of parts for a specific Frequency/Channel combo.
-const ramCap = 1; 
-
-assembleBuilds(
-    validRams.slice(0, ramCap), 
+                    // C. ASSEMBLE (Use helper to handle Case/PSU/Cooler expansion)
+                    const ramCap = OPTIMIZE_BUILD_RESULTS ? 1 : validRams.length;
+                    
+                    assembleBuilds(
+                        validRams.slice(0, ramCap), 
                         validMobos, 
                         cpu, gpuConf, sticks, totalScore, liveCpuScore, config, lists, stmt
                     );
