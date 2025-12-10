@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1186,46 +1187,44 @@
                 <button id="btnTSX" class="mode-btn" onclick="setMode('TSX')">Time Spy Extreme (4K)</button>
             </div>
 
-            <!-- REPLACE THE FIRST .input-grid INSIDE "Benchmarking & Goals" WITH THIS -->
-<div class="input-grid">
-    <div class="input-group">
-        <label>Budget ($)</label>
-        <input type="text" id="budget" value="3,500">
-    </div>
-    
-    <div class="input-group">
-        <label>Min 3DMark Score</label>
-        <input type="text" id="minTargetScore" value="10,000">
-    </div>
-
-    <div class="input-group">
-        <label>Max 3DMark Score</label>
-        <input type="text" id="targetScore" value="20,000">
-    </div>
-
-    <div class="input-group">
-        <label>GPU Count</label>
-        <div id="multiGpuCount" class="multi-select-container">
-            <div class="multi-select-display" onclick="toggleDropdown('gpuCountDropdown')">Any</div>
-            <div id="gpuCountDropdown" class="multi-dropdown">
-                <div class="quick-filter-bar">
-                    <button class="filter-btn btn-clear" onclick="clearFilter('gpuCount')">Clear</button>
+            <div class="input-grid">
+                <div class="input-group">
+                    <label>Budget ($)</label>
+                    <input type="text" id="budget" value="3,500">
                 </div>
-                <div class="dropdown-list-container" id="gpuCountListContainer"></div>
-            </div>
-        </div>
-    </div>
-    <div class="input-group">
-        <label>Career Level</label>
-        <input type="number" id="level" value="30" min="1" oninput="refreshDropdowns()">
-    </div>
+                
+                <div class="input-group">
+                    <label>Min 3DMark Score</label>
+                    <input type="text" id="minTargetScore" value="10,000">
+                </div>
 
-    <!-- REMOVED resLimit input, Moved Results Per Page here -->
-    <div class="input-group">
-        <label>Results Per Page</label>
-        <input type="number" id="resultsPerPage" value="100" min="1" max="1000">
-    </div>
-</div>
+                <div class="input-group">
+                    <label>Max 3DMark Score</label>
+                    <input type="text" id="targetScore" value="20,000">
+                </div>
+
+                <div class="input-group">
+                    <label>GPU Count</label>
+                    <div id="multiGpuCount" class="multi-select-container">
+                        <div class="multi-select-display" onclick="toggleDropdown('gpuCountDropdown')">Any</div>
+                        <div id="gpuCountDropdown" class="multi-dropdown">
+                            <div class="quick-filter-bar">
+                                <button class="filter-btn btn-clear" onclick="clearFilter('gpuCount')">Clear</button>
+                            </div>
+                            <div class="dropdown-list-container" id="gpuCountListContainer"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Career Level</label>
+                    <input type="number" id="level" value="30" min="1" oninput="refreshDropdowns()">
+                </div>
+
+                <div class="input-group">
+                    <label>Results Per Page</label>
+                    <input type="number" id="resultsPerPage" value="100" min="1" max="1000">
+                </div>
+            </div>
 
             <div class="section-header">2. RAM Configuration</div>
             <div class="ram-grid">
@@ -1573,7 +1572,7 @@
         </div>
     </div>
 
-    <!-- REPLACE THE ENTIRE <div id="dataView"> SECTION WITH THIS -->
+    <!-- Data Viewer -->
 <div id="dataView" style="display: none;">
     <div class="viewer-tabs">
         <button class="v-tab-btn active" onclick="switchDataTab('gpu')">GPUs</button>
@@ -1609,9 +1608,9 @@
         storage: new Map()
     };
 
-const OPTIMIZE_LISTS = false; 
-const OPTIMIZE_BUILD_RESULTS = true; // If TRUE: Limits results (e.g. Top 3 RAMs only). Default: ON.
-const OPTIMIZE_CASE_SELECTION = true;  // If TRUE: Auto-selects the #1 Cheapest valid Case only.
+    const OPTIMIZE_LISTS = false; 
+    const OPTIMIZE_BUILD_RESULTS = true; 
+    const OPTIMIZE_CASE_SELECTION = true;
 
     
     const Loaded = { cpu: false, gpu: false, ram: false, mobo: false, cases: false, psu: false, cooler: false, fan: false, storage: false };
@@ -1650,7 +1649,7 @@ const OPTIMIZE_CASE_SELECTION = true;  // If TRUE: Auto-selects the #1 Cheapest 
 
     function setToggle(type, state) {
         if (type === 'oc') {
-            if (currentMode === 'TSX' && state === true) return; // Prevent OC in TSX
+            if (currentMode === 'TSX' && state === true) return; 
             globalUseOC = state;
             
             const onBtn = document.getElementById('btnOC_On');
@@ -1689,7 +1688,7 @@ const OPTIMIZE_CASE_SELECTION = true;  // If TRUE: Auto-selects the #1 Cheapest 
         }
     };
 
-    let builds = []; // Only holds CURRENT PAGE now
+    let builds = []; 
     let currentMode = 'TS';
     let currentPage = 1;
     let itemsPerPage = 100;
@@ -1749,7 +1748,6 @@ const OPTIMIZE_CASE_SELECTION = true;  // If TRUE: Auto-selects the #1 Cheapest 
             });
             sqlDB = new SQL.Database();
             
-            // Create Schema with Indices for TURBO speed
             sqlDB.run(`
                 CREATE TABLE builds (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1787,8 +1785,7 @@ const OPTIMIZE_CASE_SELECTION = true;  // If TRUE: Auto-selects the #1 Cheapest 
 
     function clearSQLite() {
         if(sqlDB) {
-            sqlDB.run('DELETE FROM builds'); // Faster than Drop/Create
-            // Reset auto increment
+            sqlDB.run('DELETE FROM builds'); 
             sqlDB.run('DELETE FROM sqlite_sequence WHERE name="builds"');
         }
         buildCount = 0;
@@ -1807,41 +1804,6 @@ const OPTIMIZE_CASE_SELECTION = true;  // If TRUE: Auto-selects the #1 Cheapest 
         if (!result.length || !result[0].values[0][0]) return { min: 0, max: 0 };
         return { min: result[0].values[0][0], max: result[0].values[0][1] };
     }
-
-/**
- * INTELLIGENT RAM FILTER
- * Updates the 'Specific RAM Model' list based on:
- * 1. Current Career Level
- * 2. Selected Manufacturers
- * 3. Selected Frequencies
- * 4. Selected Sizes
- */
-function refreshRamOptions() {
-    const currentLvl = parseInt(document.getElementById('level').value) || 30;
-
-    // 1. Start with all RAMs allowed by Level
-    let validRams = Array.from(DB.ram.values()).filter(r => r.level <= currentLvl);
-
-    // 2. Filter by Manufacturer (if any selected)
-    if (selectedOptions.ramMfgrs.size > 0) {
-        validRams = validRams.filter(r => selectedOptions.ramMfgrs.has(r.mfgr));
-    }
-
-    // 3. Filter by Frequency (if any selected)
-    if (selectedOptions.ramFreqs.size > 0) {
-        validRams = validRams.filter(r => selectedOptions.ramFreqs.has(r.freq));
-    }
-
-    // 4. Filter by Size (if any selected)
-    if (selectedOptions.ramSizes.size > 0) {
-        validRams = validRams.filter(r => selectedOptions.ramSizes.has(r.size));
-    }
-
-    // 5. Update the specific list
-    // Note: The populateMultiSelect function automatically checks 'selectedOptions.ramNames'
-    // to keep your existing selections highlighted (green).
-    populateMultiSelect('ramNames', validRams.map(r => r.name).sort(), 'ramListContainer');
-}
 
     function getBuildsFromSQL(sortKey, limit, offset = 0) {
         if(!sqlDB) return [];
@@ -1868,8 +1830,6 @@ function refreshRamOptions() {
         const output = [];
         while(stmt.step()) {
             const row = stmt.getAsObject();
-            
-            // Reconstruct Object
             const storageNames = JSON.parse(row.storageNames || '[]');
             
             output.push({
@@ -1906,7 +1866,7 @@ function refreshRamOptions() {
         Object.keys(DB).forEach(k => DB[k].clear());
         Object.keys(Loaded).forEach(k => Loaded[k] = false);
 
-        await initSQLite(); // Init DB on load
+        await initSQLite(); 
 
         const targets = [
             { id: 'cpu',       file: 'CPU.txt',              label: 'CPU' },
@@ -2180,10 +2140,10 @@ base.defaultMem = getNum(cells, 'Default Memory Speed') || 2133;
             let priceB = b.price || 999999;
 
             if (currentDataTab === 'gpu') {
-                scoreA = a.score || 0; // Single GPU score
+                scoreA = a.score || 0; 
                 scoreB = b.score || 0;
             } else {
-                scoreA = a.scoreTS || 0; // Base CPU Score
+                scoreA = a.scoreTS || 0; 
                 scoreB = b.scoreTS || 0;
             }
 
@@ -2192,12 +2152,11 @@ base.defaultMem = getNum(cells, 'Default Memory Speed') || 2133;
             if (sortMode === 'price_desc') return priceB - priceA;
             if (sortMode === 'price_asc') return priceA - priceB;
             
-            // Value = Score / Price
             let valA = (priceA > 0) ? scoreA / priceA : 0;
             let valB = (priceB > 0) ? scoreB / priceB : 0;
             
-            if (sortMode === 'val_desc') return valB - valA; // Most Overperforming (High value)
-            if (sortMode === 'val_asc') return valA - valB; // Most Underperforming (Low value)
+            if (sortMode === 'val_desc') return valB - valA; 
+            if (sortMode === 'val_asc') return valA - valB; 
             
             return 0;
         });
@@ -2277,15 +2236,18 @@ base.defaultMem = getNum(cells, 'Default Memory Speed') || 2133;
         populateMultiSelect('gpuNames', [...new Set(gpus.map(g => g.name))].sort(), 'gpuListContainer');
         populateMultiSelect('moboNames', mobos.map(m => m.name).sort(), 'moboListContainer');
         populateMultiSelect('caseNames', cases.map(c => c.name).sort(), 'caseListContainer');
-            refreshRamOptions(); 
         
-        populateMultiSelect('ssdNames', ssdList.map(s => s.name).sort(), 'ssdListContainer');
-        populateMultiSelect('hddNames', hddList.map(s => s.name).sort(), 'hddListContainer');
-        
+        // RAM Initial Population - Now calls specialized updater
         populateMultiSelect('ramMfgrs', [...new Set(rams.map(r => r.mfgr).filter(m => m))].sort(), 'ramMfgrListContainer');
         populateMultiSelect('ramFreqs', [...new Set(rams.map(r => r.freq).filter(f => f))].sort((a,b) => a-b), 'ramFreqListContainer');
         populateMultiSelect('ramSizes', [...new Set(rams.map(r => r.size).filter(s => s))].sort((a,b) => a-b), 'ramSizeListContainer');
+        
+        // Call the specific filter update function for RAM Names to respect initial filters
+        updateRamSpecificDropdown();
 
+        populateMultiSelect('ssdNames', ssdList.map(s => s.name).sort(), 'ssdListContainer');
+        populateMultiSelect('hddNames', hddList.map(s => s.name).sort(), 'hddListContainer');
+        
         populateStorageSizeButtons('ssd', ssdList);
         populateStorageSizeButtons('hdd', hddList);
 
@@ -2301,6 +2263,29 @@ base.defaultMem = getNum(cells, 'Default Memory Speed') || 2133;
             fourStickOption.innerText = "4 Sticks (Not Available at Level " + currentLvl + ")";
             if(stickSelect.value == "4") stickSelect.value = "2";
         }
+    }
+
+    // New Function to Filter specific RAM list based on other filters
+    function updateRamSpecificDropdown() {
+        const lvl = parseInt(document.getElementById('level').value) || 30;
+        let rams = Array.from(DB.ram.values()).filter(r => r.level <= lvl);
+
+        // Filter by Manufacturer
+        if (selectedOptions.ramMfgrs.size > 0) {
+            rams = rams.filter(r => selectedOptions.ramMfgrs.has(r.mfgr));
+        }
+
+        // Filter by Frequency
+        if (selectedOptions.ramFreqs.size > 0) {
+            rams = rams.filter(r => selectedOptions.ramFreqs.has(r.freq));
+        }
+
+        // Filter by Size
+        if (selectedOptions.ramSizes.size > 0) {
+            rams = rams.filter(r => selectedOptions.ramSizes.has(r.size));
+        }
+
+        populateMultiSelect('ramNames', rams.map(r => r.name).sort(), 'ramListContainer');
     }
 
     function populateStorageSizeButtons(type, list) {
@@ -2463,56 +2448,42 @@ base.defaultMem = getNum(cells, 'Default Memory Speed') || 2133;
         container.scrollTop = scrollTop;
     }
 
-    
-function toggleOption(category, value, element, event) {
-    // Handle Shift+Click Range Selection
-    if (event.shiftKey && lastClickedOption.category === category && lastClickedOption.index !== -1) {
-        const container = element.parentElement;
-        // Get only currently visible options
-        const options = Array.from(container.children).filter(c => c.style.display !== 'none');
-        const currentIndex = options.indexOf(element);
-        const lastIndex = options.findIndex(opt => parseInt(opt.dataset.index) === lastClickedOption.index);
+    function toggleOption(category, value, element, event) {
+        if (event.shiftKey && lastClickedOption.category === category && lastClickedOption.index !== -1) {
+            const container = element.parentElement;
+            const options = Array.from(container.children).filter(c => c.style.display !== 'none');
+            const currentIndex = options.indexOf(element);
+            const lastIndex = options.findIndex(opt => parseInt(opt.dataset.index) === lastClickedOption.index);
 
-        if (currentIndex !== -1 && lastIndex !== -1) {
-            const start = Math.min(currentIndex, lastIndex);
-            const end = Math.max(currentIndex, lastIndex);
-            
-            for (let i = start; i <= end; i++) {
-                const opt = options[i];
-                const val = opt.dataset.value;
-                
-                // Add to selection set
-                if (category === 'gpuCount') selectedOptions[category].add(parseInt(val));
-                else selectedOptions[category].add(val);
-                
-                opt.classList.add('selected');
+            if (currentIndex !== -1 && lastIndex !== -1) {
+                const start = Math.min(currentIndex, lastIndex);
+                const end = Math.max(currentIndex, lastIndex);
+                for (let i = start; i <= end; i++) {
+                    const opt = options[i];
+                    const val = opt.dataset.value;
+                    if(category === 'gpuCount') selectedOptions[category].add(parseInt(val));
+                    else selectedOptions[category].add(val);
+                    opt.classList.add('selected');
+                }
+            }
+        } 
+        else {
+            if (selectedOptions[category].has(value)) {
+                selectedOptions[category].delete(value);
+                element.classList.remove('selected');
+            } else {
+                selectedOptions[category].add(value);
+                element.classList.add('selected');
             }
         }
-    } 
-    // Handle Standard Click (Toggle)
-    else {
-        if (selectedOptions[category].has(value)) {
-            selectedOptions[category].delete(value);
-            element.classList.remove('selected');
-        } else {
-            selectedOptions[category].add(value);
-            element.classList.add('selected');
+        lastClickedOption = { category: category, index: parseInt(element.dataset.index) };
+        updateDisplayLabel(category);
+
+        // If RAM Filter changes, update specific RAM list
+        if (['ramMfgrs', 'ramFreqs', 'ramSizes'].includes(category)) {
+            updateRamSpecificDropdown();
         }
     }
-
-    // Update state for next click
-    lastClickedOption = { category: category, index: parseInt(element.dataset.index) };
-    
-    // Update the label text (e.g. "3 selected")
-    updateDisplayLabel(category);
-
-    // --- NEW LOGIC: Update Specific RAM List ---
-    // If we just clicked a Manufacturer, Frequency, or Size, refresh the specific model list
-    if (['ramMfgrs', 'ramFreqs', 'ramSizes'].includes(category)) {
-        refreshRamOptions();
-    }
-}
-
 
     function applyQuickFilter(category, type) {
         const keywords = filterKeywords[category][type];
@@ -2531,47 +2502,37 @@ function toggleOption(category, value, element, event) {
     }
 
     function clearFilter(category) {
-    // 1. Clear the data set
-    selectedOptions[category].clear();
+        selectedOptions[category].clear();
+        let containerId;
+        if(category === 'cpuNames') containerId = 'cpuListContainer';
+        else if(category === 'gpuNames') containerId = 'gpuListContainer';
+        else if(category === 'socket') containerId = 'socketListContainer';
+        else if(category === 'vram') containerId = 'vramListContainer';
+        else if(category === 'length') containerId = 'lengthListContainer';
+        else if(category === 'moboNames') containerId = 'moboListContainer';
+        else if(category === 'ramNames') containerId = 'ramListContainer';
+        else if(category === 'ramMfgrs') containerId = 'ramMfgrListContainer';
+        else if(category === 'ramFreqs') containerId = 'ramFreqListContainer';
+        else if(category === 'ramSizes') containerId = 'ramSizeListContainer';
+        else if(category === 'gpuCount') containerId = 'gpuCountListContainer';
+        else if(category === 'caseNames') containerId = 'caseListContainer';
+        else if(category === 'ssdNames') containerId = 'ssdListContainer';
+        else if(category === 'hddNames') containerId = 'hddListContainer';
 
-    // 2. Determine which visual container to clear
-    let containerId;
-    if(category === 'cpuNames') containerId = 'cpuListContainer';
-    else if(category === 'gpuNames') containerId = 'gpuListContainer';
-    else if(category === 'socket') containerId = 'socketListContainer';
-    else if(category === 'vram') containerId = 'vramListContainer';
-    else if(category === 'length') containerId = 'lengthListContainer';
-    else if(category === 'moboNames') containerId = 'moboListContainer';
-    else if(category === 'ramNames') containerId = 'ramListContainer';
-    else if(category === 'ramMfgrs') containerId = 'ramMfgrListContainer';
-    else if(category === 'ramFreqs') containerId = 'ramFreqListContainer';
-    else if(category === 'ramSizes') containerId = 'ramSizeListContainer';
-    else if(category === 'gpuCount') containerId = 'gpuCountListContainer';
-    else if(category === 'caseNames') containerId = 'caseListContainer';
-    else if(category === 'ssdNames') containerId = 'ssdListContainer';
-    else if(category === 'hddNames') containerId = 'hddListContainer';
+        const container = document.getElementById(containerId);
+        if (category === 'ssdNames' || category === 'hddNames') {
+             refreshStorageDropdown(category);
+             if(container) container.querySelectorAll('.multi-option').forEach(opt => opt.style.display = 'flex');
+        } else {
+             if(container) container.querySelectorAll('.multi-option').forEach(opt => opt.classList.remove('selected'));
+        }
+        updateDisplayLabel(category);
 
-    // 3. Update the UI
-    const container = document.getElementById(containerId);
-    
-    if (category === 'ssdNames' || category === 'hddNames') {
-         // Special handling for storage (quantity based)
-         refreshStorageDropdown(category);
-         if(container) container.querySelectorAll('.multi-option').forEach(opt => opt.style.display = 'flex');
-    } else {
-         // Standard handling: remove 'selected' class
-         if(container) container.querySelectorAll('.multi-option').forEach(opt => opt.classList.remove('selected'));
+        // Update Specific RAM list if filters cleared
+        if (['ramMfgrs', 'ramFreqs', 'ramSizes'].includes(category)) {
+            updateRamSpecificDropdown();
+        }
     }
-    
-    // 4. Update Label text
-    updateDisplayLabel(category);
-
-    // --- NEW LOGIC: Update Specific RAM List ---
-    // If we cleared a RAM filter, we need to refresh the list to show more options again
-    if (['ramMfgrs', 'ramFreqs', 'ramSizes'].includes(category)) {
-        refreshRamOptions();
-    }
-}
 
     function updateDisplayLabel(category) {
         let displayId;
@@ -2657,14 +2618,12 @@ function toggleOption(category, value, element, event) {
         return '';
     }
     
-    // UPDATED: Can accept a RAM object OR raw numbers
 function calculateCpuScore(cpu, ramOrFreq, stickCount, mode, useOC, useXMP, moboLimit = 0) {
     let freq = useOC ? cpu.maxFreq : cpu.stdFreq;
     if (!freq) freq = cpu.baseFreq;
     if (!freq) return 0;
 
     const isTS = (mode === 'TS');
-    // Get Multipliers
     const coreMult = isTS ? cpu.coreClockMultTS : cpu.coreClockMultTSX;
     const memChanMult = isTS ? cpu.memChannelMultTS : cpu.memChannelMultTSX;
     const memClockMult = isTS ? cpu.multTS : cpu.multTSX;
@@ -2672,27 +2631,22 @@ function calculateCpuScore(cpu, ramOrFreq, stickCount, mode, useOC, useXMP, mobo
 
     let activeChannels, actualMemSpeed;
 
-    // Determine Memory Speed
     let targetRamFreq = 0;
     
-    // Check if input is a RAM Object or just a number (Frequency)
     if (typeof ramOrFreq === 'object' && ramOrFreq !== null) {
         targetRamFreq = ramOrFreq.freq;
     } else {
         targetRamFreq = parseInt(ramOrFreq) || cpu.defaultMem || 2133;
     }
 
-    // Determine Channels
     activeChannels = Math.min(stickCount, cpu.maxMemChannels);
 
-    // Determine Actual Operating Speed (XMP vs JEDEC vs Mobo Limit)
     if (useXMP) {
         actualMemSpeed = targetRamFreq;
         if (moboLimit > 0 && actualMemSpeed > moboLimit) {
             actualMemSpeed = moboLimit;
         }
     } else {
-        // Without XMP, it usually defaults to CPU default (e.g. 2133/2400) or the stick speed, whichever is lower
         actualMemSpeed = Math.min(targetRamFreq, (cpu.defaultMem || 2133));
     }
 
@@ -2722,7 +2676,6 @@ function calculateCpuScore(cpu, ramOrFreq, stickCount, mode, useOC, useXMP, mobo
         const map = new Map();
         allMobos.forEach(m => {
             if (m.level > lvl) return;
-            // Group by socket, ram type, size, PCI slots, and Max Memory Speed
             const key = `${m.socket}|${m.ramType}|${m.size}|${m.pciSlots}|${m.maxMemSpeed}|${m.supportSLI}|${m.supportCF}`;
             if (!map.has(key) || m.price < map.get(key).price) {
                 map.set(key, m);
@@ -2733,7 +2686,6 @@ function calculateCpuScore(cpu, ramOrFreq, stickCount, mode, useOC, useXMP, mobo
     }
 
     function getOptimizedGpuList(allGpus, lvl) {
-        // 1. If user selected specific GPUs in the filter menu, return ONLY those.
         if (selectedOptions.gpuNames.size > 0) {
             return allGpus.filter(g => g.level <= lvl && selectedOptions.gpuNames.has(g.name));
         }
@@ -2744,22 +2696,14 @@ function calculateCpuScore(cpu, ramOrFreq, stickCount, mode, useOC, useXMP, mobo
             if (selectedOptions.vram.size > 0 && !selectedOptions.vram.has(g.vram)) return;
             if (selectedOptions.length.size > 0 && !selectedOptions.length.has(g.length)) return;
 
-            // Calculate Max Multi-GPU count for this card
             const maxCap = getMultiGPUCap(g.name, g.length);
-
-            // Generate a unique key based on performance stats
             let key = `${g.score}|${g.vram}|${g.watts}|${g.multi}|${g.isWater}|${maxCap}`;
 
-            // --- UPDATE: FORCE INCLUDE R9 280 & GTX 970 ---
-            // We append the name to the key for these specific cards.
-            // This prevents them from being filtered out if a "better value" generic card exists.
             const n = g.name.toLowerCase();
             if (n.includes('r9 280') || n.includes('gtx 970')) {
                 key += `|${g.name}`; 
             }
-            // ----------------------------------------------
 
-            // If this key doesn't exist, or if this specific card is CHEAPER than the one stored, save it.
             if (!map.has(key) || g.price < map.get(key).price) {
                 map.set(key, g);
             }
@@ -2772,15 +2716,11 @@ function calculateCpuScore(cpu, ramOrFreq, stickCount, mode, useOC, useXMP, mobo
     // MAIN GENERATOR FUNCTION (SQLITE POWERED)
     // =========================================================
     
-    let precalcGpuConfigs = []; // Stores flattened valid GPU configs
-
-
+    let precalcGpuConfigs = []; 
 
     async function generateBuilds() {
-        // Safety Checks
         if (!Loaded.cpu || !Loaded.gpu) return alert("Wait for Data Load!");
         
-        // Ensure SQL is ready
         if (!sqlDB) {
             document.getElementById('loadingOverlay').style.display = 'flex';
             document.getElementById('loadingOverlay').style.opacity = '1';
@@ -2788,7 +2728,6 @@ function calculateCpuScore(cpu, ramOrFreq, stickCount, mode, useOC, useXMP, mobo
             document.getElementById('loadingOverlay').style.display = 'none';
         }
 
-        // Reset state
         builds = [];
         precalcGpuConfigs = [];
         clearSQLite();
@@ -2804,12 +2743,10 @@ function calculateCpuScore(cpu, ramOrFreq, stickCount, mode, useOC, useXMP, mobo
         const config = {
             budget: parseVal('budget'),
             
-            // NEW: Min and Max Range Logic
             minGenScore: parseVal('minTargetScore'), 
             maxGenScore: parseVal('targetScore'), 
             
             lvl: parseInt(document.getElementById('level').value),
-            // CHANGED: Removed DOM reference, defaulted to 2000 internally
             
             sort: document.getElementById('mainSort').value,
             
@@ -2835,11 +2772,6 @@ function calculateCpuScore(cpu, ramOrFreq, stickCount, mode, useOC, useXMP, mobo
             currentMode: currentMode
         };
 
-        // ... (REST OF THE FUNCTION REMAINS UNCHANGED from previous version)
-        // Ensure you keep the rest of generateBuilds() exactly as it was, just replacing the config block above.
-        
-        // --- 2. PREPARE AUX LISTS ---
-        // For Cases: If Optimization is OFF, we need the raw list so the Assembler can iterate them.
         let rawCases = Array.from(DB.cases.values()).filter(c=>c.level<=config.lvl);
         
         const lists = {
@@ -2849,9 +2781,6 @@ function calculateCpuScore(cpu, ramOrFreq, stickCount, mode, useOC, useXMP, mobo
             allFans: config.useFan ? Array.from(DB.fan.values()).filter(f=>f.level<=config.lvl).sort((a,b)=>a.price-b.price) : []
         };
         
-        // ... (Continue with existing function code) ...
-        
-        // --- 3. STORAGE & MIN COSTS ---
         let minAuxCost = 0;
         let totalStorageCost = 0;
         let finalStorageList = [];
@@ -2922,7 +2851,6 @@ function calculateCpuScore(cpu, ramOrFreq, stickCount, mode, useOC, useXMP, mobo
         precalcGpuConfigs = [];
         for (const gpu of allGpus) {
              for (const cnt of selectedCounts) {
-                 // Check basic validity
                  if (cnt === 2 && !gpu.score2) continue;
                  if (cnt === 3 && !gpu.score3) continue;
                  if (cnt === 4 && !gpu.score4) continue;
@@ -2975,13 +2903,13 @@ function runScanChunk(cpuIndex, config, lists) {
 
         const cpu = lists.validCpu[cpuIndex];
 
-        // 1. PRE-CALCULATE ALL UNIQUE FREQUENCIES
-        
         // A. Get Valid RAMs and their Frequencies (For XMP ON)
         const availableRams = Array.from(DB.ram.values()).filter(r => {
             if (r.level > config.lvl) return false;
             if (selectedOptions.ramNames.size > 0 && !selectedOptions.ramNames.has(r.name)) return false;
             if (selectedOptions.ramMfgrs.size > 0 && !selectedOptions.ramMfgrs.has(r.mfgr)) return false;
+            if (selectedOptions.ramFreqs.size > 0 && !selectedOptions.ramFreqs.has(r.freq)) return false;
+            if (selectedOptions.ramSizes.size > 0 && !selectedOptions.ramSizes.has(r.size)) return false;
             return true;
         });
         const uniqueXmpFreqs = [...new Set(availableRams.map(r => r.freq))].sort((a,b) => a - b);
@@ -2989,7 +2917,6 @@ function runScanChunk(cpuIndex, config, lists) {
         // B. Get Valid Motherboards and their Default Speeds (For XMP OFF)
         const cpuMobos = config.useMobo ? lists.validMobos.filter(m => m.socket === cpu.socket) : [null];
         
-        // Extract unique 'Default Memory Speed' values from valid motherboards
         const uniqueDefaultSpeeds = [...new Set(
             cpuMobos
             .filter(m => m !== null)
@@ -3015,10 +2942,6 @@ function runScanChunk(cpuIndex, config, lists) {
             const possibleSticks = config.reqSticks > 0 ? [config.reqSticks] : [1, 2, 4];
             
             for (const sticks of possibleSticks) {
-
-                // =========================================================
-                // CORE LOGIC: CHOOSE WHICH LIST OF SPEEDS TO ITERATE
-                // =========================================================
                 
                 const freqsToTest = config.useXMP ? uniqueXmpFreqs : uniqueDefaultSpeeds;
                 
@@ -3031,11 +2954,8 @@ function runScanChunk(cpuIndex, config, lists) {
                     const liveCpuScore = calculateCpuScore(cpu, freq, sticks, config.currentMode, config.useOC, config.useXMP, 0);
                     const totalScore = calculate3DMark(liveCpuScore, gpuConf.score);
 
-                    // ===============================================
-                    //  MIN / MAX RANGE CHECK
-                    // ===============================================
                     if (totalScore < config.minGenScore || totalScore > config.maxGenScore) {
-                        continue; // Skip if outside the defined range
+                        continue; 
                     }
                     
                     foundWorkingSpec = true;
@@ -3044,14 +2964,12 @@ function runScanChunk(cpuIndex, config, lists) {
                     
                     // A. Find RAM
                     const validRams = availableRams.filter(r => {
-                        // Logic: RAM must be fast enough to run at 'freq'
                         if (r.freq < freq) return false;
                         
                         // Compatibility
                         const memType = r.type;
                         if (!cpu.memTypes.includes(memType)) return false; 
                         if (config.targetRamVal > 0 && (r.size * sticks) !== config.targetRamVal) return false;
-                        if (selectedOptions.ramSizes.size > 0 && !selectedOptions.ramSizes.has(r.size)) return false;
                         
                         return true;
                     }).sort((a,b) => a.price - b.price);
@@ -3100,12 +3018,10 @@ function runScanChunk(cpuIndex, config, lists) {
 
 
 function assembleBuilds(rams, mobos, cpu, gpuConf, sticks, score, cpuScore, config, lists, stmt) {
-    // 1. Loop through the RAMs passed in (This respects your slice(0,3) from runScanChunk)
     for (const ram of rams) {
         
         let buildSavedForRam = false;
 
-        // 2. Loop Mobos
         for (const mobo of mobos) {
 
             const corePrice = cpu.price + gpuConf.price + (ram.price * sticks) + (mobo ? mobo.price : 0);
@@ -3146,7 +3062,6 @@ function assembleBuilds(rams, mobos, cpu, gpuConf, sticks, score, cpuScore, conf
             for (const bCase of validCases) {
                 let currentPrice = corePrice + (bCase ? bCase.price : 0);
 
-                // Coolers (Fast .find)
                 let cooler = null;
                 if (config.useCooler) {
                     cooler = lists.allCoolers.find(c => checkFit('cooler', c, { cpu, case: bCase }));
@@ -3154,7 +3069,6 @@ function assembleBuilds(rams, mobos, cpu, gpuConf, sticks, score, cpuScore, conf
                     else continue; 
                 }
 
-                // PSU (Fast .find)
                 let psu = null;
                 if (config.usePsu) {
                     psu = lists.allPsu.find(p => p.watts >= totalWatts && (!bCase || bCase.maxPsuLen === 0 || p.length <= bCase.maxPsuLen));
@@ -3162,7 +3076,6 @@ function assembleBuilds(rams, mobos, cpu, gpuConf, sticks, score, cpuScore, conf
                     else continue; 
                 }
 
-                // Fans (Fast .find)
                 let fan = null;
                 if (config.useFan && bCase) {
                     fan = lists.allFans.find(f => checkFit('fan', f, { case: bCase }));
@@ -3187,14 +3100,9 @@ function assembleBuilds(rams, mobos, cpu, gpuConf, sticks, score, cpuScore, conf
                 buildSavedForRam = true;
             }
 
-            // CRITICAL FIX: 
-            // We BREAK here because we found the cheapest Motherboard/Case for THIS specific RAM stick.
-            // We don't need to check expensive Mobos for the same RAM.
             if (buildSavedForRam && OPTIMIZE_BUILD_RESULTS) break;
         }
 
-        // CRITICAL FIX:
-        // We DO NOT break here. We continue to the next RAM in the "Top 3" list passed by runScanChunk.
     }
 }
 
