@@ -1533,11 +1533,11 @@
                     </div>
                 </div>
 
-                <div class="toggle-wrapper">
+<div class="toggle-wrapper">
                     <div class="toggle-label">RAM XMP</div>
                     <div class="toggle-btns">
-                        <button id="btnXMP_Off" class="toggle-btn active" onclick="setToggle('xmp', false)">OFF</button>
-                        <button id="btnXMP_On" class="toggle-btn" onclick="setToggle('xmp', true)">ON</button>
+                        <button id="btnXMP_Off" class="toggle-btn" onclick="setToggle('xmp', false)">OFF</button>
+                        <button id="btnXMP_On" class="toggle-btn active active-green" onclick="setToggle('xmp', true)">ON</button>
                     </div>
                 </div>
 
@@ -1642,7 +1642,7 @@ const OPTIMIZE_CASE_SELECTION = true;  // If TRUE: Auto-selects the #1 Cheapest 
 
     // Global State for Toggles
     let globalUseOC = false;
-    let globalUseXMP = false;
+    let globalUseXMP = true;
 
     // Caching for Sorting (Still used by SQL query builder indirectly)
     const PRECALC_GPU_SORT = false; 
