@@ -1195,13 +1195,11 @@
         <input type="text" id="budget" value="3,500">
     </div>
     
-    <!-- NEW: Min Score Input -->
     <div class="input-group">
         <label>Min 3DMark Score</label>
         <input type="text" id="minTargetScore" value="10,000">
     </div>
 
-    <!-- RENAMED: Target Score -> Max Score -->
     <div class="input-group">
         <label>Max 3DMark Score</label>
         <input type="text" id="targetScore" value="20,000">
@@ -1223,10 +1221,8 @@
         <label>Career Level</label>
         <input type="number" id="level" value="30" min="1" oninput="refreshDropdowns()">
     </div>
-    <div class="input-group">
-        <label>Max Results Limit (for Display)</label>
-        <input type="text" id="resLimit" value="2,000">
-    </div>
+
+    <!-- REMOVED resLimit input, Moved Results Per Page here -->
     <div class="input-group">
         <label>Results Per Page</label>
         <input type="number" id="resultsPerPage" value="100" min="1" max="1000">
@@ -1579,15 +1575,27 @@
         </div>
     </div>
 
-    <!-- DATA VIEWER VIEW -->
-    <div id="dataView" style="display: none;">
-        <div class="viewer-tabs">
-            <button class="v-tab-btn active" onclick="switchDataTab('gpu')">GPUs</button>
-            <button class="v-tab-btn" onclick="switchDataTab('cpu')">CPUs</button>
-        </div>
-        <input type="text" id="dataSearchBox" class="dropdown-search" style="margin-bottom:20px; padding:15px; font-size:1.1em;" placeholder="Type to filter components list..." oninput="filterDataList()">
-        <div id="dataViewListContainer"></div>
+    <!-- REPLACE THE ENTIRE <div id="dataView"> SECTION WITH THIS -->
+<div id="dataView" style="display: none;">
+    <div class="viewer-tabs">
+        <button class="v-tab-btn active" onclick="switchDataTab('gpu')">GPUs</button>
+        <button class="v-tab-btn" onclick="switchDataTab('cpu')">CPUs</button>
     </div>
+    
+    <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+        <input type="text" id="dataSearchBox" class="dropdown-search" style="flex: 2; padding:15px; font-size:1.1em;" placeholder="Type to filter components list..." oninput="filterDataList()">
+        
+        <select id="dataViewSort" class="dropdown-search" style="flex: 1; padding: 15px; font-size: 1.1em; cursor: pointer;" onchange="renderDataList()">
+            <option value="score_desc">Highest Score</option>
+            <option value="score_asc">Lowest Score</option>
+            <option value="price_desc">Highest Price</option>
+            <option value="price_asc">Lowest Price</option>
+            <option value="val_desc">Most Overperforming</option>
+            <option value="val_asc">Most Underperforming</option>
+        </select>
+    </div>
+
+    <div id="dataViewListContainer"></div>
 </div>
 
 <script>
@@ -2126,12 +2134,40 @@ base.defaultMem = getNum(cells, 'Default Memory Speed') || 2133;
     function renderDataList() {
         const container = document.getElementById('dataViewListContainer');
         container.innerHTML = '';
+        const sortMode = document.getElementById('dataViewSort').value;
         
         let items = [];
         if (currentDataTab === 'gpu') items = Array.from(DB.gpu.values());
         else items = Array.from(DB.cpu.values());
 
-        items.sort((a,b) => b.level - a.level || a.name.localeCompare(b.name));
+        // SORTING LOGIC
+        items.sort((a,b) => {
+            let scoreA = 0, scoreB = 0;
+            let priceA = a.price || 999999;
+            let priceB = b.price || 999999;
+
+            if (currentDataTab === 'gpu') {
+                scoreA = a.score || 0; // Single GPU score
+                scoreB = b.score || 0;
+            } else {
+                scoreA = a.scoreTS || 0; // Base CPU Score
+                scoreB = b.scoreTS || 0;
+            }
+
+            if (sortMode === 'score_desc') return scoreB - scoreA;
+            if (sortMode === 'score_asc') return scoreA - scoreB;
+            if (sortMode === 'price_desc') return priceB - priceA;
+            if (sortMode === 'price_asc') return priceA - priceB;
+            
+            // Value = Score / Price
+            let valA = (priceA > 0) ? scoreA / priceA : 0;
+            let valB = (priceB > 0) ? scoreB / priceB : 0;
+            
+            if (sortMode === 'val_desc') return valB - valA; // Most Overperforming (High value)
+            if (sortMode === 'val_asc') return valA - valB; // Most Underperforming (Low value)
+            
+            return 0;
+        });
 
         items.forEach(item => {
             const div = document.createElement('div');
@@ -2703,10 +2739,11 @@ function calculateCpuScore(cpu, ramOrFreq, stickCount, mode, useOC, useXMP, mobo
             
             // NEW: Min and Max Range Logic
             minGenScore: parseVal('minTargetScore'), 
-            maxGenScore: parseVal('targetScore'), // The old "Target Score" input is now the Max
+            maxGenScore: parseVal('targetScore'), 
             
             lvl: parseInt(document.getElementById('level').value),
-            maxPoolSize: parseIntVal('resLimit'),
+            // CHANGED: Removed DOM reference, defaulted to 2000 internally
+            
             sort: document.getElementById('mainSort').value,
             
             useOC: globalUseOC,
@@ -2731,6 +2768,9 @@ function calculateCpuScore(cpu, ramOrFreq, stickCount, mode, useOC, useXMP, mobo
             currentMode: currentMode
         };
 
+        // ... (REST OF THE FUNCTION REMAINS UNCHANGED from previous version)
+        // Ensure you keep the rest of generateBuilds() exactly as it was, just replacing the config block above.
+        
         // --- 2. PREPARE AUX LISTS ---
         // For Cases: If Optimization is OFF, we need the raw list so the Assembler can iterate them.
         let rawCases = Array.from(DB.cases.values()).filter(c=>c.level<=config.lvl);
@@ -2741,7 +2781,9 @@ function calculateCpuScore(cpu, ramOrFreq, stickCount, mode, useOC, useXMP, mobo
             allPsu: config.usePsu ? Array.from(DB.psu.values()).filter(p=>p.level<=config.lvl).sort((a,b)=>a.price-b.price) : [],
             allFans: config.useFan ? Array.from(DB.fan.values()).filter(f=>f.level<=config.lvl).sort((a,b)=>a.price-b.price) : []
         };
-
+        
+        // ... (Continue with existing function code) ...
+        
         // --- 3. STORAGE & MIN COSTS ---
         let minAuxCost = 0;
         let totalStorageCost = 0;
@@ -2855,6 +2897,8 @@ function calculateCpuScore(cpu, ramOrFreq, stickCount, mode, useOC, useXMP, mobo
         // Start Async Processing
         runScanChunk(0, config, lists);
     }
+
+
 
 function runScanChunk(cpuIndex, config, lists) {
         if (cpuIndex >= lists.validCpu.length) {
