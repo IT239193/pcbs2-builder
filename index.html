@@ -3534,15 +3534,27 @@ async function generateBuilds() {
 
                 // PSU Selection (Cheapest Valid)
                 // Since lists.allPsu is sorted by price, .find() gets the cheapest one that meets Watts & Length.
-                let psu = null;
-                if (config.usePsu) {
-                    psu = lists.allPsu.find(p => 
-                        p.watts >= totalWatts && 
-                        (!validCase || validCase.maxPsuLen === 0 || p.length <= validCase.maxPsuLen)
-                    );
-                    if (psu) currentPrice += psu.price;
-                    else continue; 
-                }
+                // PSU Selection (Minimum Wattage, Then Cheapest)
+let psu = null;
+if (config.usePsu) {
+    // Find all PSUs that meet requirements
+    const validPsus = lists.allPsu.filter(p => 
+        p.watts >= totalWatts && 
+        (!validCase || validCase.maxPsuLen === 0 || p.length <= validCase.maxPsuLen)
+    );
+    
+    if (validPsus.length > 0) {
+        // Sort by wattage FIRST (lowest wattage), THEN by price (cheapest)
+        validPsus.sort((a, b) => {
+            if (a.watts !== b.watts) return a.watts - b.watts; // Prefer lower wattage
+            return a.price - b.price; // If same wattage, prefer cheaper
+        });
+        psu = validPsus[0];
+        currentPrice += psu.price;
+    } else {
+        continue; // No valid PSU found
+    }
+}
 
                 // Fans Selection (Cheapest Valid)
                 let fan = null;
