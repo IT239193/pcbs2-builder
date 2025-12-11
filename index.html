@@ -3153,8 +3153,6 @@ function calculateCpuScore(cpu, ramOrFreq, stickCount, mode, useOC, useXMP, mobo
         runScanChunk(0, config, lists);
     }
 
-
-
 function runScanChunk(cpuIndex, config, lists) {
     if (cpuIndex >= lists.validCpu.length) {
         finishScan(config);
@@ -3172,11 +3170,11 @@ function runScanChunk(cpuIndex, config, lists) {
         if (selectedOptions.ramSizes.size > 0 && !selectedOptions.ramSizes.has(r.size)) return false;
         return true;
     });
-    
-    const uniqueXmpFreqs = [...new Set(availableRams.map(r => r.freq))].sort((a, b) => a - b);
+
+    const uniqueXmpFreqs = [...new Set(availableRams.map(r => r.freq))].sort((a, b) => b - a);
     
     const cpuMobos = config.useMobo ? lists.validMobos.filter(m => m.socket === cpu.socket) : [null];
-    const uniqueDefaultSpeeds = [...new Set(cpuMobos.filter(m => m !== null).map(m => m.defaultMem))].sort((a, b) => a - b);
+    const uniqueDefaultSpeeds = [...new Set(cpuMobos.filter(m => m !== null).map(m => m.defaultMem))].sort((a, b) => b - a);
     if (uniqueDefaultSpeeds.length === 0) uniqueDefaultSpeeds.push(cpu.defaultMem || 2133);
 
     sqlDB.run("BEGIN TRANSACTION");
@@ -3197,99 +3195,47 @@ function runScanChunk(cpuIndex, config, lists) {
 
         for (const sticks of possibleSticks) {
             
-            // Choose Frequency List
-            const freqsToTest = config.useXMP ? uniqueXmpFreqs : uniqueDefaultSpeeds;
+            // DEDUPLICATION SETS
+            // uniqueBuilds: Tracks "Parts + Score" to stop exact duplicates.
+            // uniqueHardware: Tracks "Parts Only" (Used for PerfMode optimization).
+            const uniqueBuilds = new Set();
+            const uniqueHardware = new Set();
 
-            // =========================================================
-            //  LOGIC SPLIT: PERFORMANCE MODE (v1) VS THOROUGH (r)
-            // =========================================================
+            let freqsToTest = config.useXMP ? uniqueXmpFreqs : uniqueDefaultSpeeds;
             
-            if (globalPerfMode) {
-                // --- PERFORMANCE MODE ON (v1.txt Logic) ---
-                // Stops looking for frequencies as soon as one works for this CPU/GPU/Stick combo
-                
-                let foundWorkingSpec = false;
+            for (const freq of freqsToTest) {
+                // If PerfMode is ON, and we already found a valid build for this hardware config, stop checking lower freqs.
+                if (globalPerfMode && uniqueHardware.size > 0) break;
 
-                for (const freq of freqsToTest) {
-                    if (foundWorkingSpec) break; // Optimization: Stop after first match
+                const liveCpuScore = calculateCpuScore(cpu, freq, sticks, config.currentMode, config.useOC, config.useXMP, 0);
+                const totalScore = calculate3DMark(liveCpuScore, gpuConf.score);
 
-                    const liveCpuScore = calculateCpuScore(cpu, freq, sticks, config.currentMode, config.useOC, config.useXMP, 0);
-                    const totalScore = calculate3DMark(liveCpuScore, gpuConf.score);
+                if (totalScore < config.minGenScore || totalScore > config.maxGenScore) continue;
 
-                    if (totalScore < config.minGenScore || totalScore > config.maxGenScore) continue;
+                // Find RAMs for this freq
+                const validRams = availableRams.filter(r => {
+                    if (r.freq < freq) return false;
+                    if (!cpu.memTypes.includes(r.type)) return false;
+                    if (config.targetRamVal > 0 && (r.size * sticks) !== config.targetRamVal) return false;
+                    return true;
+                }).sort((a, b) => a.price - b.price);
 
-                    foundWorkingSpec = true;
+                if (validRams.length === 0) continue;
 
-                    // Find RAM & Mobo for this freq
-                    const validRams = availableRams.filter(r => {
-                        if (r.freq < freq) return false;
-                        if (!cpu.memTypes.includes(r.type)) return false;
-                        if (config.targetRamVal > 0 && (r.size * sticks) !== config.targetRamVal) return false;
-                        return true;
-                    }).sort((a, b) => a.price - b.price);
+                const validMobos = cpuMobos.filter(m => {
+                    if (!m) return true;
+                    if (validRams[0].type !== m.ramType) return false;
+                    if (gpuConf.count > 1 && m.pciSlots < 5) return false;
+                    if (gpuConf.sliType === 'SLI' && !m.supportSLI) return false;
+                    if (gpuConf.sliType === 'Crossfire' && !m.supportCF) return false;
+                    if (sticks === 4 && m.size === 'Mini-ITX') return false;
+                    if (config.useXMP) { if (m.maxMemSpeed < freq) return false; } 
+                    else { if (m.defaultMem !== freq) return false; }
+                    return true;
+                });
 
-                    if (validRams.length === 0) continue;
-
-                    const validMobos = cpuMobos.filter(m => {
-                        if (!m) return true;
-                        if (validRams[0].type !== m.ramType) return false;
-                        if (gpuConf.count > 1 && m.pciSlots < 5) return false;
-                        if (gpuConf.sliType === 'SLI' && !m.supportSLI) return false;
-                        if (gpuConf.sliType === 'Crossfire' && !m.supportCF) return false;
-                        if (sticks === 4 && m.size === 'Mini-ITX') return false;
-                        if (config.useXMP) { if (m.maxMemSpeed < freq) return false; } 
-                        else { if (m.defaultMem !== freq) return false; }
-                        return true;
-                    });
-
-                    // Optimization: Only use top 1 RAM
-                    const ramCap = 1; 
-                    assembleBuilds(validRams.slice(0, ramCap), validMobos, cpu, gpuConf, sticks, totalScore, liveCpuScore, config, lists, stmt);
-                }
-
-            } else {
-                // --- PERFORMANCE MODE OFF (r.txt Logic) ---
-                // Buffers ALL valid frequencies for this CPU/GPU/Stick combo, then generates builds for ALL of them.
-                
-                const validFreqCandidates = [];
-
-                for (const freq of freqsToTest) {
-                    const liveCpuScore = calculateCpuScore(cpu, freq, sticks, config.currentMode, config.useOC, config.useXMP, 0);
-                    const totalScore = calculate3DMark(liveCpuScore, gpuConf.score);
-
-                    if (totalScore < config.minGenScore || totalScore > config.maxGenScore) continue;
-
-                    validFreqCandidates.push({ freq, totalScore, liveCpuScore });
-                }
-
-                for (const candidate of validFreqCandidates) {
-                    const { freq, totalScore, liveCpuScore } = candidate;
-
-                    const validRams = availableRams.filter(r => {
-                        if (r.freq < freq) return false;
-                        if (!cpu.memTypes.includes(r.type)) return false;
-                        if (config.targetRamVal > 0 && (r.size * sticks) !== config.targetRamVal) return false;
-                        return true;
-                    }).sort((a, b) => a.price - b.price);
-
-                    if (validRams.length === 0) continue;
-
-                    const validMobos = cpuMobos.filter(m => {
-                        if (!m) return true;
-                        if (validRams[0].type !== m.ramType) return false;
-                        if (gpuConf.count > 1 && m.pciSlots < 5) return false;
-                        if (gpuConf.sliType === 'SLI' && !m.supportSLI) return false;
-                        if (gpuConf.sliType === 'Crossfire' && !m.supportCF) return false;
-                        if (sticks === 4 && m.size === 'Mini-ITX') return false;
-                        if (config.useXMP) { if (m.maxMemSpeed < freq) return false; } 
-                        else { if (m.defaultMem !== freq) return false; }
-                        return true;
-                    });
-
-                    // Even in r.txt logic, we usually only pick the cheapest RAM per frequency to avoid DB explosion
-                    const ramCap = 1;
-                    assembleBuilds(validRams.slice(0, ramCap), validMobos, cpu, gpuConf, sticks, totalScore, liveCpuScore, config, lists, stmt);
-                }
+                // Pass the deduplication sets to the assembler
+                assembleBuilds(validRams, validMobos, cpu, gpuConf, sticks, totalScore, liveCpuScore, config, lists, stmt, uniqueBuilds, uniqueHardware);
             }
         }
     }
@@ -3489,107 +3435,125 @@ async function generateBuilds() {
         runScanChunk(0, config, lists);
     }
 
-    function assembleBuilds(rams, mobos, cpu, gpuConf, sticks, score, cpuScore, config, lists, stmt) {
-        // 1. Loop through RAMs
-        for (const ram of rams) {
+function assembleBuilds(rams, mobos, cpu, gpuConf, sticks, score, cpuScore, config, lists, stmt, uniqueBuilds, uniqueHardware) {
+    let buildInserted = false;
+
+    // Optimization: Limit to the cheapest RAM for this specific frequency/config
+    const ramLoop = OPTIMIZE_BUILD_RESULTS ? [rams[0]] : rams;
+
+    for (const ram of ramLoop) {
+        
+        for (const mobo of mobos) {
+
+            // Cost Check
+            const corePrice = cpu.price + gpuConf.price + (ram.price * sticks) + (mobo ? mobo.price : 0);
+            if (corePrice + lists.minAuxCost > config.budget) continue; 
+
+            // Wattage Check
+            const totalWatts = cpu.watts + gpuConf.watts + config.extraW;
+            if (config.limitTotalW && totalWatts > config.limitTotalW) continue;
+
+            // Case Selection
+            let validCase = null;
+            if (config.useCase) {
+                validCase = lists.allCases.find(c => {
+                    if (c.maxGpuLen < gpuConf.gpu.length) return false;
+                    if (gpuConf.count > 1 && c.gpuSlots < 3) return false;
+                    if (mobo && !c.moboSizes.includes(mobo.size)) return false;
+                    return true;
+                });
+                if (!validCase) continue; 
+            }
+
+            // Cooler / PSU / Fan
+            let currentPrice = corePrice + (validCase ? validCase.price : 0);
             
-            // 2. Loop Mobos
-            // Mobos are already sorted by Price. The first one that fits is the best one.
-            for (const mobo of mobos) {
+            let cooler = null;
+            if (config.useCooler) {
+                cooler = lists.allCoolers.find(c => {
+                   if (!c.sockets.includes(cpu.socket)) return false;
+                   if (validCase && c.type.includes('Air') && validCase.maxCpuHeight < c.height) return false;
+                   return true;
+                });
+                if (cooler) currentPrice += cooler.price;
+                else continue; 
+            }
 
-                // Optimization: Cost Check
-                const corePrice = cpu.price + gpuConf.price + (ram.price * sticks) + (mobo ? mobo.price : 0);
-                if (corePrice + lists.minAuxCost > config.budget) continue; 
-
-                // Optimization: Wattage Check
-                const totalWatts = cpu.watts + gpuConf.watts + config.extraW;
-                if (config.limitTotalW && totalWatts > config.limitTotalW) continue;
-
-                // 3. CASE SELECTION
-                // lists.allCases is sorted by Price Ascending. .find() returns the CHEAPEST valid case.
-                let validCase = null;
-                if (config.useCase) {
-                    validCase = lists.allCases.find(c => {
-                        if (c.maxGpuLen < gpuConf.gpu.length) return false;
-                        if (gpuConf.count > 1 && c.gpuSlots < 3) return false;
-                        if (mobo && !c.moboSizes.includes(mobo.size)) return false;
-                        return true;
+            let psu = null;
+            if (config.usePsu) {
+                const validPsus = lists.allPsu.filter(p => 
+                    p.watts >= totalWatts && 
+                    (!validCase || validCase.maxPsuLen === 0 || p.length <= validCase.maxPsuLen)
+                );
+                
+                if (validPsus.length > 0) {
+                    validPsus.sort((a, b) => {
+                        if (a.watts !== b.watts) return a.watts - b.watts; 
+                        return a.price - b.price;
                     });
-                    if (!validCase) continue; 
+                    psu = validPsus[0];
+                    currentPrice += psu.price;
+                } else {
+                    continue; 
                 }
+            }
 
-                // 4. COOLER / PSU / FAN SELECTION
-                let currentPrice = corePrice + (validCase ? validCase.price : 0);
+            let fan = null;
+            if (config.useFan && validCase) {
+                fan = lists.allFans.find(f => true);
+                if (fan) currentPrice += fan.price;
+            }
 
-                // Cooler Selection (Cheapest Valid)
-                let cooler = null;
-                if (config.useCooler) {
-                    cooler = lists.allCoolers.find(c => {
-                       if (!c.sockets.includes(cpu.socket)) return false;
-                       if (validCase && c.type.includes('Air') && validCase.maxCpuHeight < c.height) return false;
-                       return true;
-                    });
-                    if (cooler) currentPrice += cooler.price;
-                    else continue; 
-                }
+            currentPrice += lists.totalStorageCost;
+            if (currentPrice > config.budget) continue;
 
-                // PSU Selection (Cheapest Valid)
-                // Since lists.allPsu is sorted by price, .find() gets the cheapest one that meets Watts & Length.
-                // PSU Selection (Minimum Wattage, Then Cheapest)
-let psu = null;
-if (config.usePsu) {
-    // Find all PSUs that meet requirements
-    const validPsus = lists.allPsu.filter(p => 
-        p.watts >= totalWatts && 
-        (!validCase || validCase.maxPsuLen === 0 || p.length <= validCase.maxPsuLen)
-    );
-    
-    if (validPsus.length > 0) {
-        // Sort by wattage FIRST (lowest wattage), THEN by price (cheapest)
-        validPsus.sort((a, b) => {
-            if (a.watts !== b.watts) return a.watts - b.watts; // Prefer lower wattage
-            return a.price - b.price; // If same wattage, prefer cheaper
-        });
-        psu = validPsus[0];
-        currentPrice += psu.price;
-    } else {
-        continue; // No valid PSU found
+            // --- IN-GENERATION DEDUPLICATION LOGIC ---
+            // 1. Create a Key for the Hardware Config (matches your SQL GROUP BY fields)
+            const partsKey = `${ram.name}|${sticks}|${mobo ? mobo.name : 'N/A'}|${validCase ? validCase.name : 'N/A'}|${psu ? psu.name : 'N/A'}`;
+            
+            // 2. PerfMode Check: If ON, we only want 1 build per hardware config (best score).
+            // Since we sort freqs High->Low, the first one we find is the best.
+            if (globalPerfMode && uniqueHardware.has(partsKey)) {
+                continue; 
+            }
+
+            // 3. Exact Duplicate Check:
+            // Key = Hardware + SCORE. 
+            // If this exact hardware + exact score exists, skip it.
+            // If this exact hardware + DIFFERENT score exists, allow it.
+            const fullKey = `${partsKey}|${score}`;
+            
+            if (uniqueBuilds.has(fullKey)) {
+                continue; 
+            }
+            // ---------------------------
+
+            const storageNameList = JSON.stringify(lists.finalStorageList.map(s => s.name));
+
+            stmt.run([
+                score, cpuScore, gpuConf.score,
+                score - config.maxGenScore, 
+                currentPrice, totalWatts, cpu.name, gpuConf.gpu.name, gpuConf.count,
+                ram.name, sticks, mobo ? mobo.name : null, validCase ? validCase.name : null,
+                cooler ? cooler.name : null, psu ? psu.name : null, fan ? fan.name : null,
+                storageNameList
+            ]);
+            
+            uniqueBuilds.add(fullKey);
+            uniqueHardware.add(partsKey);
+            
+            buildCount++;
+            buildInserted = true;
+            
+            if (OPTIMIZE_BUILD_RESULTS) break; 
+        }
+        
+        if (OPTIMIZE_BUILD_RESULTS && buildInserted) break;
     }
+
+    return buildInserted;
 }
 
-                // Fans Selection (Cheapest Valid)
-                let fan = null;
-                if (config.useFan && validCase) {
-                    fan = lists.allFans.find(f => true); // Assumes generic 120/140 fits if case exists
-                    if (fan) currentPrice += fan.price;
-                }
-
-                // Final Budget Check
-                currentPrice += lists.totalStorageCost;
-                if (currentPrice > config.budget) continue;
-
-                // 5. INSERT INTO DB
-                const storageNameList = JSON.stringify(lists.finalStorageList.map(s => s.name));
-
-                stmt.run([
-                    score, cpuScore, gpuConf.score,
-                    score - config.maxGenScore, 
-                    currentPrice, totalWatts, cpu.name, gpuConf.gpu.name, gpuConf.count,
-                    ram.name, sticks, mobo ? mobo.name : null, validCase ? validCase.name : null,
-                    cooler ? cooler.name : null, psu ? psu.name : null, fan ? fan.name : null,
-                    storageNameList
-                ]);
-                
-                buildCount++;
-                
-                // OPTIMIZATION:
-                // We found a working Case + Mobo + PSU for this specific RAM stick.
-                // Since lists were sorted by price, this is the cheapest configuration for this RAM.
-                // Stop checking other mobos for this same RAM to save speed.
-                if (OPTIMIZE_BUILD_RESULTS) break; 
-            }
-        }
-    }
 
 function deduplicateBuilds() {
     if (!sqlDB) return;
