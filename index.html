@@ -2920,7 +2920,14 @@ function calculateCpuScore(cpu, ramOrFreq, stickCount, mode, useOC, useXMP, mobo
         
         // --- 2. PREPARE AUX LISTS ---
         // For Cases: If Optimization is OFF, we need the raw list so the Assembler can iterate them.
-        let rawCases = Array.from(DB.cases.values()).filter(c=>c.level<=config.lvl);
+        // --- 2. PREPARE AUX LISTS ---
+        // FIX: Added filter for Case Names
+        let rawCases = Array.from(DB.cases.values()).filter(c => {
+            if (c.level > config.lvl) return false;
+            // Check if specific cases are selected
+            if (selectedOptions.caseNames.size > 0 && !selectedOptions.caseNames.has(c.name)) return false;
+            return true;
+        });
         
         const lists = {
             allCases: rawCases.sort((a,b)=>a.price-b.price),
@@ -3058,10 +3065,18 @@ function runScanChunk(cpuIndex, config, lists) {
         // 1. PRE-CALCULATE ALL UNIQUE FREQUENCIES
         
         // A. Get Valid RAMs and their Frequencies (For XMP ON)
+        // 1. PRE-CALCULATE ALL UNIQUE FREQUENCIES
+        
+        // A. Get Valid RAMs and their Frequencies (For XMP ON)
         const availableRams = Array.from(DB.ram.values()).filter(r => {
             if (r.level > config.lvl) return false;
+            
+            // FIX: Ensure all RAM filters are respected
             if (selectedOptions.ramNames.size > 0 && !selectedOptions.ramNames.has(r.name)) return false;
             if (selectedOptions.ramMfgrs.size > 0 && !selectedOptions.ramMfgrs.has(r.mfgr)) return false;
+            if (selectedOptions.ramFreqs.size > 0 && !selectedOptions.ramFreqs.has(r.freq)) return false;
+            if (selectedOptions.ramSizes.size > 0 && !selectedOptions.ramSizes.has(r.size)) return false;
+            
             return true;
         });
         const uniqueXmpFreqs = [...new Set(availableRams.map(r => r.freq))].sort((a,b) => a - b);
