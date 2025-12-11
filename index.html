@@ -100,6 +100,52 @@
             position: relative;
         }
 
+/* Add inside <style> */
+
+.btn-revert {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background: var(--warning);
+    color: #000;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    box-shadow: 0 0 5px rgba(241, 196, 15, 0.5);
+    z-index: 10;
+    transition: 0.2s;
+}
+
+.btn-revert:hover {
+    transform: translateY(-50%) scale(1.1);
+    background: #fff;
+}
+
+/* Update popup button styles */
+.btn-select-part.selected {
+    background: var(--brand-generic); /* Dark Grey/Blue */
+    color: #ccc;
+    border: 1px solid #555;
+    cursor: default;
+}
+.btn-select-part.is-current {
+    background: var(--error); /* Red for currently active part to allow deselect/revert logic */
+    color: white;
+    cursor: pointer;
+}
+.btn-select-part.revert-target {
+    background: var(--highlight); /* Orange for Original part */
+    color: white;
+}
+
         header h1 {
             font-size: 2.5em;
             background: linear-gradient(90deg, #3498db, #2ecc71);
@@ -761,6 +807,8 @@
             border-left: 4px solid #555;
             position: relative;
             --row-color: #fff;
+    padding-left: 45px; /* Make room for the revert button on the left */
+
         }
 
         .part-row.brand-amd { border-left-color: var(--brand-amd); --row-color: var(--brand-amd); }
@@ -1907,57 +1955,71 @@ if (selectedOptions.ramNames.size > 0) {
 }
 
     function getBuildsFromSQL(sortKey, limit, offset = 0) {
-        if(!sqlDB) return [];
+    if(!sqlDB) return [];
+    
+    let orderBy = 'ABS(diff) ASC'; 
+    
+    if (sortKey === 'score_desc') orderBy = 'score DESC';
+    else if (sortKey === 'score_asc') orderBy = 'score ASC';
+    else if (sortKey === 'price_asc') orderBy = 'price ASC';
+    else if (sortKey === 'price_desc') orderBy = 'price DESC';
+    else if (sortKey === 'gpu_score') orderBy = 'gpuScore DESC';
+    else if (sortKey === 'cpu_score') orderBy = 'liveCpuScore DESC';
+    else if (sortKey === 'value_desc') orderBy = '(score * 1.0 / price) DESC';
+    else if (sortKey === 'value_asc') orderBy = '(score * 1.0 / price) ASC';
+    
+    const stmt = sqlDB.prepare(`
+        SELECT * FROM builds 
+        ORDER BY ${orderBy}
+        LIMIT $limit OFFSET $offset
+    `);
+    
+    stmt.bind({$limit: limit, $offset: offset});
+    
+    const output = [];
+    while(stmt.step()) {
+        const row = stmt.getAsObject();
+        const storageNames = JSON.parse(row.storageNames || '[]');
         
-        let orderBy = 'ABS(diff) ASC'; 
-        
-        if (sortKey === 'score_desc') orderBy = 'score DESC';
-        else if (sortKey === 'score_asc') orderBy = 'score ASC';
-        else if (sortKey === 'price_asc') orderBy = 'price ASC';
-        else if (sortKey === 'price_desc') orderBy = 'price DESC';
-        else if (sortKey === 'gpu_score') orderBy = 'gpuScore DESC';
-        else if (sortKey === 'cpu_score') orderBy = 'liveCpuScore DESC';
-        else if (sortKey === 'value_desc') orderBy = '(score * 1.0 / price) DESC';
-        else if (sortKey === 'value_asc') orderBy = '(score * 1.0 / price) ASC';
-        
-        const stmt = sqlDB.prepare(`
-            SELECT * FROM builds 
-            ORDER BY ${orderBy}
-            LIMIT $limit OFFSET $offset
-        `);
-        
-        stmt.bind({$limit: limit, $offset: offset});
-        
-        const output = [];
-        while(stmt.step()) {
-            const row = stmt.getAsObject();
-            
-            // Reconstruct Object
-            const storageNames = JSON.parse(row.storageNames || '[]');
-            
-            output.push({
-                score: row.score,
-                liveCpuScore: row.liveCpuScore,
-                gpuScore: row.gpuScore,
-                diff: row.diff,
-                price: row.price,
-                watts: row.watts,
-                cpu: DB.cpu.get(row.cpuName),
-                gpu: DB.gpu.get(row.gpuName),
-                gpuCnt: row.gpuCnt,
-                ram: row.ramName ? DB.ram.get(row.ramName) : null,
-                ramSticks: row.ramSticks,
-                mobo: row.moboName ? DB.mobo.get(row.moboName) : null,
-                case: row.caseName ? DB.cases.get(row.caseName) : null,
-                cooler: row.coolerName ? DB.cooler.get(row.coolerName) : null,
-                psu: row.psuName ? DB.psu.get(row.psuName) : null,
-                fan: row.fanName ? DB.fan.get(row.fanName) : null,
-                storages: storageNames.map(n => DB.storage.get(n)).filter(Boolean)
-            });
-        }
-        stmt.free();
-        return output;
+        // Construct the build object
+        const buildObj = {
+            score: row.score,
+            liveCpuScore: row.liveCpuScore,
+            gpuScore: row.gpuScore,
+            diff: row.diff,
+            price: row.price,
+            watts: row.watts,
+            cpu: DB.cpu.get(row.cpuName),
+            gpu: DB.gpu.get(row.gpuName),
+            gpuCnt: row.gpuCnt,
+            ram: row.ramName ? DB.ram.get(row.ramName) : null,
+            ramSticks: row.ramSticks,
+            mobo: row.moboName ? DB.mobo.get(row.moboName) : null,
+            case: row.caseName ? DB.cases.get(row.caseName) : null,
+            cooler: row.coolerName ? DB.cooler.get(row.coolerName) : null,
+            psu: row.psuName ? DB.psu.get(row.psuName) : null,
+            fan: row.fanName ? DB.fan.get(row.fanName) : null,
+            storages: storageNames.map(n => DB.storage.get(n)).filter(Boolean)
+        };
+
+        // NEW: Store a snapshot of the original parts to track changes
+        buildObj.original = {
+            ram: buildObj.ram,
+    ramSticks: buildObj.ramSticks, // ADD THIS LINE
+            mobo: buildObj.mobo,
+            case: buildObj.case,
+            cooler: buildObj.cooler,
+            psu: buildObj.psu,
+            fan: buildObj.fan,
+            // Storage is an array, shallow copy it
+            storages: [...buildObj.storages]
+        };
+
+        output.push(buildObj);
     }
+    stmt.free();
+    return output;
+}
 
     // ==========================================
     // DATA FETCHING
@@ -3375,216 +3437,295 @@ function assembleBuilds(rams, mobos, cpu, gpuConf, sticks, score, cpuScore, conf
         renderPage(1);
     }
 
-    function renderPage(page) {
-        currentPage = page;
-        const sort = document.getElementById('mainSort').value;
-        const total = getTotalBuilds();
+    function renderPage(page, forceRefresh = false) {
+    currentPage = page;
+    const sort = document.getElementById('mainSort').value;
+    const total = getTotalBuilds();
 
-        if (total === 0) {
-            document.getElementById('resultsList').innerHTML = '<div style="text-align:center;padding:40px;color:#e74c3c;font-size:1.4em;">No Builds Found</div>';
-            return;
-        }
+    if (total === 0) {
+        document.getElementById('resultsList').innerHTML = '<div style="text-align:center;padding:40px;color:#e74c3c;font-size:1.4em;">No Builds Found</div>';
+        return;
+    }
 
-        const start = (page - 1) * itemsPerPage;
-        
-        // PULL PAGE FROM SQL (Keep SQL logic from v1.txt)
+    const start = (page - 1) * itemsPerPage;
+    
+    // FIX: Only fetch from SQL if we aren't forcing a local refresh
+    if (!forceRefresh) {
         builds = getBuildsFromSQL(sort, itemsPerPage, start);
+    }
+    
+    const totalPages = Math.ceil(total / itemsPerPage);
+    const useOC = globalUseOC;
+
+    const list = document.getElementById('resultsList');
+    list.innerHTML = '';
+
+    builds.forEach((b, i) => {
+        const diffClass = b.diff > 0 ? 'diff-pos' : 'diff-neg';
+        const sign = b.diff > 0 ? '+' : '';
+        const gpuClass = getBrandClass(b.gpu);
+        const cpuClass = getBrandClass(b.cpu);
+        const buildIdx = i; // Index relative to current page
+
+        const gpuCountStr = b.gpuCnt > 1 ? `${b.gpuCnt}x ` : '';
+        const gpuEmoji = b.gpu.isWater ? '💧' : '💨';
         
-        const totalPages = Math.ceil(total / itemsPerPage);
-        const useOC = globalUseOC;
+        const gpuSpecs = `
+            Score: ${formatNumber(b.gpuScore)} | ${b.gpu.vram}GB | ${b.gpu.length}mm | ${b.gpu.watts * b.gpuCnt}W | ${gpuEmoji} | 
+            Base Core/Max Core: ${b.gpu.baseCore || '?'}/${b.gpu.maxCore || '?'} MHz | 
+            Base Mem/Max Mem: ${b.gpu.baseMem || '?'}/${b.gpu.maxMem || '?'} MHz
+        `;
+        
+        const displayCpuScore = b.liveCpuScore;
+        let cpuSpecs = "";
 
-        const list = document.getElementById('resultsList');
-        list.innerHTML = '';
-
-        builds.forEach((b, i) => {
-            const diffClass = b.diff > 0 ? 'diff-pos' : 'diff-neg';
-            const sign = b.diff > 0 ? '+' : '';
-            const gpuClass = getBrandClass(b.gpu);
-            const cpuClass = getBrandClass(b.cpu);
-            const buildIdx = i; // Index relative to current page for popup
-
-            const gpuCountStr = b.gpuCnt > 1 ? `${b.gpuCnt}x ` : '';
-            const gpuEmoji = b.gpu.isWater ? '💧' : '💨';
-            
-            // --- UPDATED: Richer GPU Specs ---
-            const gpuSpecs = `
-                Score: ${formatNumber(b.gpuScore)} | ${b.gpu.vram}GB | ${b.gpu.length}mm | ${b.gpu.watts * b.gpuCnt}W | ${gpuEmoji} | 
-                Base Core/Max Core: ${b.gpu.baseCore || '?'}/${b.gpu.maxCore || '?'} MHz | 
-                Base Mem/Max Mem: ${b.gpu.baseMem || '?'}/${b.gpu.maxMem || '?'} MHz
+        if (currentMode === 'TSX') {
+            cpuSpecs = `
+                Base Score (TSX): ${formatNumber(displayCpuScore)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
+                ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
+                ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
             `;
-            
-            const displayCpuScore = b.liveCpuScore;
-            let cpuSpecs = "";
-
-            // --- UPDATED: Richer CPU Specs (Freq, Voltage, Cores) ---
-            if (currentMode === 'TSX') {
-                cpuSpecs = `
-                    Base Score (TSX): ${formatNumber(displayCpuScore)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
-                    ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
-                    ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
-                `;
-            } else if (useOC) {
-                // OC ON: Hide Base Score, show OC Score
-                cpuSpecs = `
-                    OC Score: ${formatNumber(displayCpuScore)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
-                    ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
-                    ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
-                `;
-            } else {
-                // OC OFF: Hide OC Potential, show Base Score
-                cpuSpecs = `
-                    Base Score: ${formatNumber(displayCpuScore)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
-                    ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
-                    ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
-                `;
-            }
-
-            let ramHTML = '';
-            if (b.ram) {
-                // --- UPDATED: Detailed RAM Specs ---
-                ramHTML = `
-                <div class="part-row brand-ram text-colored">
-                    <div class="part-header">
-                        <span class="part-label">RAM</span>
-                        <span class="part-price">${formatCurrency(b.ram.price * b.ramSticks)}</span>
-                    </div>
-                    <div class="part-name">${b.ramSticks}x ${b.ram.name}</div>
-                    <div class="part-specs">${b.ram.freq} MHz | ${b.ram.type} | Size Each: ${b.ram.size}GB | Total: ${b.ram.size * b.ramSticks}GB</div>
-                </div>`;
-            }
-
-            let auxHTML = '';
-            if (b.mobo) {
-                // --- UPDATED: Detailed Mobo Specs ---
-                auxHTML += `
-                <div class="part-row brand-aux text-colored">
-                    <div class="part-header">
-                        <span class="part-label">Motherboard</span>
-                        <span class="part-price">${formatCurrency(b.mobo.price)}</span>
-                    </div>
-                    <div class="part-name">${b.mobo.name}</div>
-                    <div class="part-specs">${b.mobo.socket} | ${b.mobo.ramType} | ${b.mobo.size} Form Factor | PCI Slots: ${b.mobo.pciSlots}</div>
-                </div>`;
-            }
-            if (b.psu) {
-                auxHTML += `
-                <div class="part-row brand-aux text-colored">
-                    <div class="part-header">
-                        <span class="part-label">PSU</span>
-                        <span class="part-price">${formatCurrency(b.psu.price)}</span>
-                    </div>
-                    <div class="part-name">${b.psu.name}</div>
-                    <div class="part-specs">${b.psu.watts}W | Length: ${b.psu.length}mm</div>
-                </div>`;
-            }
-
-            let interactiveHTML = '';
-            
-            if (b.storages && b.storages.length > 0) {
-                let totalStoragePrice = b.storages.reduce((acc, s) => acc + s.price, 0);
-                const storageCounts = {};
-                b.storages.forEach(s => {
-                    if (!storageCounts[s.name]) storageCounts[s.name] = { count: 0, part: s };
-                    storageCounts[s.name].count++;
-                });
-
-                let summaryParts = [];
-                Object.values(storageCounts).forEach(item => {
-                    const s = item.part;
-                    const c = item.count;
-                    summaryParts.push(`${c}x ${s.sizeStr} ${s.type}`);
-                });
-
-                interactiveHTML += renderInteractive('Storage', 
-                    { name: "Manage Storage", price: totalStoragePrice }, 
-                    buildIdx, 'storage', summaryParts.join(" | ")
-                );
-            } else if (document.getElementById('incStorage').checked) {
-                 interactiveHTML += renderInteractive('Storage', {name: "Add Storage", price: 0}, buildIdx, 'storage', "No drives selected");
-            }
-
-            if (b.case) {
-                // --- UPDATED: Detailed Case Specs ---
-                interactiveHTML += renderInteractive('Case', b.case, buildIdx, 'cases',
-                    `Max GPU: ${b.case.maxGpuLen}mm | CPU H: ${b.case.maxCpuHeight}mm | Size: ${b.case.size} | GPU Slots: ${b.case.gpuSlots} | SSD: ${b.case.ssdSlots} | HDD: ${b.case.hddSlots}`
-                );
-            }
-            if (b.cooler) {
-                 // --- UPDATED: Detailed Cooler Specs ---
-                interactiveHTML += renderInteractive('Cooler', b.cooler, buildIdx, 'cooler',
-                    `${b.cooler.type} | ${b.cooler.type.includes('Air') ? `Height: ${b.cooler.height}mm` : `Size: ${b.cooler.size}mm`} | Flow: ${b.cooler.flow} CFM`
-                );
-            }
-            if (b.fan) {
-                interactiveHTML += renderInteractive('Case Fans (x1)', b.fan, buildIdx, 'fan',
-                    `Size: ${b.fan.size}mm | Airflow: ${b.fan.flow} CFM`
-                );
-            }
-
-            const html = `
-            <div class="build-card" style="animation-delay:${i*0.02}s">
-                <div class="card-header">
-                    <div class="score-container">
-                        <span class="build-number">#${start + i + 1}</span>
-                        <div class="score-box">${formatNumber(b.score)}</div>
-                        <div class="diff-box ${diffClass}">${sign}${Math.abs(Math.round(b.diff))}</div>
-                    </div>
-                    <div class="header-stats">
-                        <div class="stats-row">
-                            <div class="watts-box">⚡ ${b.watts}W</div>
-                            <div class="price-box">${formatCurrency(b.price)}</div>
-                        </div>
-                        <div class="level-box">GPU L${b.gpu.level} | CPU L${b.cpu.level}</div>
-                    </div>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="part-row ${gpuClass} text-colored">
-                        <div class="part-header">
-                            <span class="part-label" style="font-size: 1.5em; font-weight: 900;">${gpuCountStr}GPU</span>
-                            <span class="part-price">${formatCurrency(b.gpu.price * b.gpuCnt)}</span>
-                        </div>
-                        <div class="part-name">${b.gpu.name}</div>
-                        <div class="part-specs">${gpuSpecs}</div>
-                    </div>
-                    <div class="part-row ${cpuClass} text-colored">
-                        <div class="part-header">
-                            <span class="part-label">CPU</span>
-                            <span class="part-price">${formatCurrency(b.cpu.price)}</span>
-                        </div>
-                        <div class="part-name">${b.cpu.name}</div>
-                        <div class="part-specs">${cpuSpecs}</div>
-                    </div>
-                    ${ramHTML}
-                    ${auxHTML}
-                    ${interactiveHTML}
-                </div>
-            </div>`;
-            list.innerHTML += html;
-        });
-
-        const pageInfo = document.getElementById('pageInfo');
-        if (!pageInfo.querySelector('input')) {
-            pageInfo.innerText = `Page ${page} of ${totalPages}`;
+        } else if (useOC) {
+            cpuSpecs = `
+                OC Score: ${formatNumber(displayCpuScore)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
+                ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
+                ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
+            `;
+        } else {
+            cpuSpecs = `
+                Base Score: ${formatNumber(displayCpuScore)} | ${b.cpu.socket} | ${b.cpu.cores} Cores | 
+                ${b.cpu.baseFreq || '?'} / ${b.cpu.maxFreq || '?'} MHz | 
+                ${b.cpu.voltage || '?'}/${b.cpu.maxVoltage || '?'} V
+            `;
         }
-        document.getElementById('btnPrev').disabled = (page === 1);
-        document.getElementById('btnNext').disabled = (page === totalPages || totalPages === 0);
-    }
 
-    function renderInteractive(label, part, bIdx, type, specs) {
-        let price = part.price;
-        return `
-        <div class="part-row interactive brand-generic" onclick="openSwapPopup('${type}', ${bIdx})">
-            <button class="btn-change">${type === 'storage' ? 'Manage' : 'Change'}</button>
-            <div class="part-header">
-                <span class="part-label">${label}</span>
-                <span class="part-price">${formatCurrency(price)}</span>
+        let ramHTML = '';
+        if (b.ram) {
+            ramHTML = renderInteractive('RAM', 
+                b.ram, 
+                buildIdx, 
+                'ram', 
+                `${b.ramSticks}x | ${b.ram.freq} MHz | ${b.ram.type} | Size Each: ${b.ram.size}GB | Total: ${b.ram.size * b.ramSticks}GB`,
+                'brand-ram'
+            );
+        }
+
+        let auxHTML = '';
+        if (b.mobo) {
+            auxHTML += renderInteractive('Motherboard',
+                b.mobo,
+                buildIdx,
+                'mobo',
+                `${b.mobo.socket} | ${b.mobo.ramType} | ${b.mobo.size} Form Factor | PCI Slots: ${b.mobo.pciSlots}`,
+                'brand-aux'
+            );
+        }
+
+        if (b.psu) {
+            auxHTML += renderInteractive('PSU',
+                b.psu,
+                buildIdx,
+                'psu',
+                `${b.psu.watts}W | Length: ${b.psu.length}mm`,
+                'brand-aux'
+            );
+        }
+
+        let interactiveHTML = '';
+        
+        if (b.storages && b.storages.length > 0) {
+            let totalStoragePrice = b.storages.reduce((acc, s) => acc + s.price, 0);
+            const storageCounts = {};
+            b.storages.forEach(s => {
+                if (!storageCounts[s.name]) storageCounts[s.name] = { count: 0, part: s };
+                storageCounts[s.name].count++;
+            });
+
+            let summaryParts = [];
+            Object.values(storageCounts).forEach(item => {
+                const s = item.part;
+                const c = item.count;
+                summaryParts.push(`${c}x ${s.sizeStr} ${s.type}`);
+            });
+
+            interactiveHTML += renderInteractive('Storage', 
+                { name: "Manage Storage", price: totalStoragePrice }, 
+                buildIdx, 'storage', summaryParts.join(" | ")
+            );
+        } else if (document.getElementById('incStorage').checked) {
+                interactiveHTML += renderInteractive('Storage', {name: "Add Storage", price: 0}, buildIdx, 'storage', "No drives selected");
+        }
+
+        if (b.case) {
+            interactiveHTML += renderInteractive('Case', b.case, buildIdx, 'cases',
+                `Max GPU: ${b.case.maxGpuLen}mm | CPU H: ${b.case.maxCpuHeight}mm | Size: ${b.case.size} | GPU Slots: ${b.case.gpuSlots} | SSD: ${b.case.ssdSlots} | HDD: ${b.case.hddSlots}`
+            );
+        }
+        if (b.cooler) {
+            interactiveHTML += renderInteractive('Cooler', b.cooler, buildIdx, 'cooler',
+                `${b.cooler.type} | ${b.cooler.type.includes('Air') ? `Height: ${b.cooler.height}mm` : `Size: ${b.cooler.size}mm`} | Flow: ${b.cooler.flow} CFM`
+            );
+        }
+        if (b.fan) {
+            interactiveHTML += renderInteractive('Case Fans (x1)', b.fan, buildIdx, 'fan',
+                `Size: ${b.fan.size}mm | Airflow: ${b.fan.flow} CFM`
+            );
+        }
+
+        const html = `
+        <div class="build-card" style="animation-delay:${forceRefresh ? '0s' : i*0.02 + 's'}">
+            <div class="card-header">
+                <div class="score-container">
+                    <span class="build-number">#${start + i + 1}</span>
+                    <div class="score-box">${formatNumber(b.score)}</div>
+                    <div class="diff-box ${diffClass}">${sign}${Math.abs(Math.round(b.diff))}</div>
+                </div>
+                <div class="header-stats">
+                    <div class="stats-row">
+                        <div class="watts-box">⚡ ${b.watts}W</div>
+                        <div class="price-box">${formatCurrency(b.price)}</div>
+                    </div>
+                    <div class="level-box">GPU L${b.gpu.level} | CPU L${b.cpu.level}</div>
+                </div>
+                </div>
             </div>
-            <div class="part-name">${part.name}</div>
-            <div class="part-specs">${specs}</div>
+            <div class="card-body">
+                <div class="part-row ${gpuClass} text-colored">
+                    <div class="part-header">
+                        <span class="part-label" style="font-size: 1.5em; font-weight: 900;">${gpuCountStr}GPU</span>
+                        <span class="part-price">${formatCurrency(b.gpu.price * b.gpuCnt)}</span>
+                    </div>
+                    <div class="part-name">${b.gpu.name}</div>
+                    <div class="part-specs">${gpuSpecs}</div>
+                </div>
+                <div class="part-row ${cpuClass} text-colored">
+                    <div class="part-header">
+                        <span class="part-label">CPU</span>
+                        <span class="part-price">${formatCurrency(b.cpu.price)}</span>
+                    </div>
+                    <div class="part-name">${b.cpu.name}</div>
+                    <div class="part-specs">${cpuSpecs}</div>
+                </div>
+                ${ramHTML}
+                ${auxHTML}
+                ${interactiveHTML}
+            </div>
         </div>`;
+        list.innerHTML += html;
+    });
+
+    const pageInfo = document.getElementById('pageInfo');
+    if (!pageInfo.querySelector('input')) {
+        pageInfo.innerText = `Page ${page} of ${totalPages}`;
+    }
+    document.getElementById('btnPrev').disabled = (page === 1);
+    document.getElementById('btnNext').disabled = (page === totalPages || totalPages === 0);
+}
+
+function renderInteractive(label, part, bIdx, type, specs, colorClass = 'brand-generic') {
+    const build = builds[bIdx];
+    let price = part.price;
+    let revertBtn = '';
+
+    // Check if we need a Revert Button
+    let isChanged = false;
+
+    // FIX: Normalize the key name to match the build object structure
+    // The build object uses 'case' (singular), but the category type is 'cases' (plural)
+    const buildKey = type === 'cases' ? 'case' : type;
+
+    if (type === 'storage') {
+        // Complex check for storage arrays
+        const origNames = build.original.storages.map(s => s.name).sort().join(',');
+        const currNames = build.storages.map(s => s.name).sort().join(',');
+        if (origNames !== currNames) isChanged = true;
+    } else {
+        // Simple name check for single parts using the corrected buildKey
+        if (build.original[buildKey] && build.original[buildKey].name !== part.name) {
+            isChanged = true;
+        } else if (!build.original[buildKey] && part) {
+            // Part was added where there was none
+            isChanged = true;
+        } 
+        // --- FIX IS HERE ---
+        // Change 'build.originalSticks' to 'build.original.ramSticks'
+        else if (type === 'ram' && build.ramSticks !== build.original.ramSticks) {
+            // Special check for RAM quantity changes
+            isChanged = true;
+        }
     }
 
+    if (isChanged) {
+        // We pass 'type' to revertPart because the rest of the system uses the category strings
+        revertBtn = `<button class="btn-revert" onclick="revertPart(${bIdx}, '${type}', event)" title="Revert to original">↺</button>`;
+    }
+
+    return `
+    <div class="part-row interactive ${colorClass} text-colored" onclick="openSwapPopup('${type}', ${bIdx})">
+        ${revertBtn}
+        <button class="btn-change">${type === 'storage' ? 'Manage' : 'Change'}</button>
+        <div class="part-header">
+            <span class="part-label">${label}</span>
+            <span class="part-price">${formatCurrency(price)}</span>
+        </div>
+        <div class="part-name">${part.name}</div>
+        <div class="part-specs">${specs}</div>
+    </div>`;
+}
+
+function revertPart(buildIdx, type, event) {
+    if(event) event.stopPropagation(); 
+    
+    const build = builds[buildIdx];
+    const buildKey = type === 'cases' ? 'case' : type;
+    
+    // 1. Restore Logic
+    if (type === 'storage') {
+        build.storages = [...build.original.storages]; 
+    } else {
+        const originalPart = build.original[buildKey];
+        if (!originalPart && type !== 'fan') return; // Fan is optional, might not have original
+        
+        build[buildKey] = originalPart;
+
+        // If restoring RAM, Restore Sticks count AND Recalc Scores
+        if (type === 'ram') {
+            // Restore original stick count
+            if (build.original.ramSticks) {
+                build.ramSticks = build.original.ramSticks; // Assumes you save this during generation (see below)
+            } else {
+                // Fallback if not saved in original object
+                build.ramSticks = parseInt(document.getElementById('ramSticks').value) || 1; 
+                // Note: To make this perfect, you should add ramSticks to build.original in getBuildsFromSQL
+            }
+
+             const newCpuScore = calculateCpuScore(
+                build.cpu, originalPart, build.ramSticks,
+                currentMode, globalUseOC, globalUseXMP
+            );
+            build.liveCpuScore = newCpuScore;
+            build.score = calculate3DMark(newCpuScore, build.gpuScore);
+            
+            const targetScore = parseInt(document.getElementById('targetScore').value.replace(/,/g, '')) || 20000;
+            build.diff = build.score - targetScore;
+        }
+    }
+
+    // 2. Recalculate Total Price
+    let newPrice = build.cpu.price + (build.gpu.price * build.gpuCnt);
+    if (build.ram) newPrice += (build.ram.price * build.ramSticks);
+    if (build.mobo) newPrice += build.mobo.price;
+    if (build.case) newPrice += build.case.price;
+    if (build.cooler) newPrice += build.cooler.price;
+    if (build.psu) newPrice += build.psu.price;
+    if (build.fan) newPrice += build.fan.price;
+    if (build.storages) build.storages.forEach(s => newPrice += s.price);
+    
+    build.price = newPrice;
+
+    // 3. Render
+    renderPage(currentPage, true);
+}
     function changePage(d) {
         const total = getTotalBuilds();
         const totalPages = Math.ceil(total / itemsPerPage);
@@ -3617,26 +3758,30 @@ function assembleBuilds(rams, mobos, cpu, gpuConf, sticks, score, cpuScore, conf
     }
 
     function openSwapPopup(type, buildIdx) {
-        const build = builds[buildIdx];
-        
-        let original = null;
-        if (type === 'fan') original = build.fan;
-        else if (type === 'cases') original = build.case;
-        else if (type === 'cooler') original = build.cooler;
-        else if (type === 'storage') original = null; 
+    const build = builds[buildIdx];
+    
+    let original = null;
+    if (type === 'fan') original = build.fan;
+    else if (type === 'cases') original = build.case;
+    else if (type === 'cooler') original = build.cooler;
+    else if (type === 'mobo') original = build.mobo;          // NEW
+    else if (type === 'ram') original = build.ram;            // NEW
+    else if (type === 'psu') original = build.psu;            // NEW
+    else if (type === 'storage') original = null; 
 
-        currentPopupData = {
-            type,
-            buildIdx, 
-            originalPart: original
-        };
+    currentPopupData = {
+        type,
+        buildIdx, 
+        originalPart: original,
+        originalSticks: type === 'ram' ? build.ramSticks : null  // NEW - Store RAM stick count
+    };
 
-        document.getElementById('popupSearch').value = "";
-        document.getElementById('popupTitle').innerText = `Swap ${type.toUpperCase()}`;
-        document.getElementById('popupOverlay').style.display = 'block';
-        document.getElementById('popupContainer').style.display = 'flex';
-        refreshPopup();
-    }
+    document.getElementById('popupSearch').value = "";
+    document.getElementById('popupTitle').innerText = `Swap ${type.toUpperCase()}`;
+    document.getElementById('popupOverlay').style.display = 'block';
+    document.getElementById('popupContainer').style.display = 'flex';
+    refreshPopup();
+}
 
     function closePopup() {
         document.getElementById('popupOverlay').style.display = 'none';
@@ -3645,139 +3790,314 @@ function assembleBuilds(rams, mobos, cpu, gpuConf, sticks, score, cpuScore, conf
     }
 
     function refreshPopup() {
-        if (!currentPopupData) return;
-        const { type, buildIdx, originalPart } = currentPopupData;
-        const build = builds[buildIdx];
-        const fitOnly = document.getElementById('popupFit').checked;
-        const sortMode = document.getElementById('popupSort').value;
-        const searchVal = document.getElementById('popupSearch').value.toLowerCase();
+    // 1. Safety Checks
+    if (!currentPopupData) return;
+    const { type, buildIdx } = currentPopupData;
+    const build = builds[buildIdx];
+    
+    // 2. Get Filter Inputs
+    const fitOnly = document.getElementById('popupFit').checked;
+    const sortMode = document.getElementById('popupSort').value;
+    const searchVal = document.getElementById('popupSearch').value.toLowerCase();
+    
+    const tbody = document.getElementById('popupTableBody');
+    tbody.innerHTML = '';
+
+    // 3. Get Candidates from Database
+    let candidates = Array.from(DB[type].values());
+
+    // 4. Apply Filters
+    if (fitOnly) {
+        candidates = candidates.filter(part => checkFit(type, part, build));
+    }
+
+    if (searchVal) {
+        candidates = candidates.filter(part => part.name.toLowerCase().includes(searchVal));
+    }
+
+    // 5. Apply Sorting
+    candidates.sort((a,b) => {
+        if (sortMode === 'price_asc') return a.price - b.price;
+        if (sortMode === 'price_desc') return b.price - a.price;
         
-        const tbody = document.getElementById('popupTableBody');
-        tbody.innerHTML = '';
+        let valA = 0;
+        let valB = 0;
+        
+        // Define "Performance" metric based on type
+        if (type === 'cases') { valA = a.maxGpuLen; valB = b.maxGpuLen; } 
+        else if (type === 'cooler' || type === 'fan') { valA = a.flow || 0; valB = b.flow || 0; }
+        else if (type === 'storage') { valA = a.speed || 0; valB = b.speed || 0; }
+        else if (type === 'ram') { valA = a.freq || 0; valB = b.freq || 0; }
+        else if (type === 'psu') { valA = a.watts || 0; valB = b.watts || 0; }
+        
+        if (sortMode === 'perf_desc') return valB - valA;
 
-        let candidates = Array.from(DB[type].values());
+        // Value Sorting (Performance / Price)
+        let scoreA = (valA / (a.price || 1));
+        let scoreB = (valB / (b.price || 1));
+        
+        if (sortMode === 'val_desc') return scoreB - scoreA; 
+        if (sortMode === 'val_asc') return scoreA - scoreB; 
+        
+        return 0;
+    });
 
-        if (fitOnly) {
-            candidates = candidates.filter(part => checkFit(type, part, build));
-        }
+    // 6. Identification logic
+    // Handle Singular keys vs Plural types (case vs cases)
+    const buildKey = type === 'cases' ? 'case' : type;
+    const currentPartName = (type !== 'storage' && build[buildKey]) ? build[buildKey].name : null;
+    const originalPartName = (type !== 'storage' && build.original && build.original[buildKey]) ? build.original[buildKey].name : null;
 
-        if (searchVal) {
-            candidates = candidates.filter(part => part.name.toLowerCase().includes(searchVal));
-        }
+    // 7. Render Loop (Limit to 100 to prevent lag)
+    const subset = candidates.slice(0, 100);
 
-        candidates.sort((a,b) => {
-            if (sortMode === 'price_asc') return a.price - b.price;
-            if (sortMode === 'price_desc') return b.price - a.price;
+    subset.forEach((p, idx) => {
+        let currentPrice = 0;
+        if (type === 'storage') currentPrice = 0; 
+        else if (type === 'ram') currentPrice = build.ram ? build.ram.price : 0; // Per stick price for diff
+        else if (build[buildKey]) currentPrice = build[buildKey].price;
+
+        let newPrice = p.price;
+        let actionBtn = "";
+        let diffStr = "";
+        let diffClass = "";
+
+        const safeName = p.name.replace(/'/g, "\\'");
+
+        // --- BRANCH A: STORAGE LOGIC ---
+        if (type === 'storage') {
+            const currentDrives = build.storages || [];
+            const isSelected = currentDrives.some(d => d.name === p.name);
+            const count = currentDrives.filter(d => d.name === p.name).length;
             
-            let valA = 0;
-            let valB = 0;
-            if (type === 'cases') { valA = a.maxGpuLen; valB = b.maxGpuLen; } 
-            else if (type === 'cooler' || type === 'fan') { valA = a.flow || 0; valB = b.flow || 0; }
-            else if (type === 'storage') { valA = a.speed || 0; valB = b.speed || 0; }
-            
-            if (sortMode === 'perf_desc') return valB - valA;
+            const isSSD = (p.type === 'SSD' || p.type === 'M.2');
+            const slotCount = isSSD ? build.case.ssdSlots : build.case.hddSlots;
+            const currentSameType = currentDrives.filter(d => (d.type === 'SSD' || d.type === 'M.2') === isSSD);
+            const slotsFull = currentSameType.length >= slotCount;
 
-            let scoreA = (valA / (a.price || 1));
-            let scoreB = (valB / (b.price || 1));
-            if (sortMode === 'val_desc') return scoreB - scoreA; 
-            if (sortMode === 'val_asc') return scoreA - scoreB; 
-            
-            return 0;
-        });
-
-        const subset = candidates.slice(0, 100);
-
-        subset.forEach((p, idx) => {
-            let origPrice = originalPart ? originalPart.price : 0;
-            let newPrice = p.price;
-            let actionBtn = "";
-            let diffStr = "";
-            let diffClass = "";
-
-            if (type === 'storage') {
-                const currentDrives = build.storages || [];
-                const isSelected = currentDrives.some(d => d.name === p.name);
-                const isSSD = (p.type === 'SSD' || p.type === 'M.2');
-                const currentSameType = currentDrives.filter(d => (d.type === 'SSD' || d.type === 'M.2') === isSSD);
-                const slotCount = isSSD ? build.case.ssdSlots : build.case.hddSlots;
-                const slotsFull = currentSameType.length >= slotCount;
-
-                if (isSelected) {
-                    const count = currentDrives.filter(d => d.name === p.name).length;
-                    actionBtn = `
-                        <button class="btn-select-part selected" onclick="toggleStorage('${p.name.replace(/'/g, "\\'")}', -1)">REMOVE (Has ${count})</button>
-                        ${!slotsFull ? `<button class="btn-select-part" onclick="toggleStorage('${p.name.replace(/'/g, "\\'")}', 1)">ADD</button>` : ''}
-                    `;
-                } else if (slotsFull) {
-                    actionBtn = `<button class="btn-select-part" disabled title="No Slots Available">FULL</button>`;
-                } else {
-                    actionBtn = `<button class="btn-select-part" onclick="toggleStorage('${p.name.replace(/'/g, "\\'")}', 1)">ADD</button>`;
-                }
-                diffStr = formatCurrency(p.price);
-
+            if (isSelected) {
+                let addBtn = !slotsFull 
+                    ? `<button class="btn-select-part" style="padding: 8px 12px; margin-left:5px;" onclick="toggleStorage('${safeName}', 1)">+</button>` 
+                    : '';
+                
+                actionBtn = `
+                    <div style="display:flex; align-items:center;">
+                        <button class="btn-select-part is-current" onclick="toggleStorage('${safeName}', -1)">REMOVE (${count})</button>
+                        ${addBtn}
+                    </div>
+                `;
+            } else if (slotsFull) {
+                actionBtn = `<button class="btn-select-part" disabled style="background:#444; color:#888;">FULL</button>`;
             } else {
-                const diff = newPrice - origPrice;
-                diffStr = diff > 0 ? `+${formatCurrency(diff)}` : (diff < 0 ? `-${formatCurrency(Math.abs(diff))}` : '$0.00');
-                diffClass = diff > 0 ? 'val-neg' : (diff < 0 ? 'val-pos' : '');
-                const safeName = p.name.replace(/'/g, "\\'");
+                actionBtn = `<button class="btn-select-part" onclick="toggleStorage('${safeName}', 1)">ADD</button>`;
+            }
+            diffStr = formatCurrency(p.price);
+        } 
+        // --- BRANCH B: RAM LOGIC (NEW MULTI-ADD) ---
+        else if (type === 'ram') {
+            // Is this the currently selected RAM model?
+            const isCurrentModel = (p.name === currentPartName);
+            const count = isCurrentModel ? build.ramSticks : 0;
+            
+            // Limit check (Mobo slots)
+            const maxSlots = (build.mobo && build.mobo.size === 'Mini-ITX') ? 2 : 4;
+            const isFull = (count >= maxSlots);
+
+            if (isCurrentModel) {
+                 let addBtn = !isFull 
+                    ? `<button class="btn-select-part" style="padding: 8px 12px; margin-left:5px;" onclick="toggleRam('${safeName}', 1)">+</button>` 
+                    : `<button class="btn-select-part" disabled style="padding: 8px 12px; margin-left:5px; background:#555;">Max</button>`;
+                
+                actionBtn = `
+                    <div style="display:flex; align-items:center;">
+                        <button class="btn-select-part is-current" onclick="toggleRam('${safeName}', -1)">-</button>
+                        <span style="font-weight:bold; margin:0 10px; font-size:1.2em;">${count}</span>
+                        ${addBtn}
+                    </div>
+                `;
+            } else {
+                // If selecting a NEW RAM, start with 1 stick (or keep current count? Let's start with 1 to be safe/clear)
+                actionBtn = `<button class="btn-select-part" onclick="toggleRam('${safeName}', 1, true)">SELECT</button>`;
+            }
+
+            // Price diff per stick
+            const diff = newPrice - currentPrice;
+            diffStr = diff > 0 ? `+${formatCurrency(diff)}` : (diff < 0 ? `-${formatCurrency(Math.abs(diff))}` : '$0.00');
+            diffStr += " / stick"; // Clarify it's unit price
+            diffClass = diff > 0 ? 'val-neg' : (diff < 0 ? 'val-pos' : '');
+        }
+        // --- BRANCH C: STANDARD PART LOGIC ---
+        else {
+            const diff = newPrice - currentPrice;
+            diffStr = diff > 0 ? `+${formatCurrency(diff)}` : (diff < 0 ? `-${formatCurrency(Math.abs(diff))}` : '$0.00');
+            diffClass = diff > 0 ? 'val-neg' : (diff < 0 ? 'val-pos' : '');
+
+            if (p.name === currentPartName) {
+                if (p.name !== originalPartName) {
+                    actionBtn = `<button class="btn-select-part is-current" onclick="revertPart(${buildIdx}, '${type}'); closePopup();">CURRENT (REVERT)</button>`;
+                } else {
+                    actionBtn = `<button class="btn-select-part selected">SELECTED</button>`;
+                }
+            } else if (p.name === originalPartName) {
+                actionBtn = `<button class="btn-select-part revert-target" onclick="revertPart(${buildIdx}, '${type}'); closePopup();">REVERT TO THIS</button>`;
+            } else {
                 actionBtn = `<button class="btn-select-part" onclick="selectReplacementPart('${safeName}')">SELECT</button>`;
             }
+        }
 
-            let details = '';
-            if (type === 'cases') details = `Max GPU: ${p.maxGpuLen}mm | Size: ${p.size} | GPU Slots: ${p.gpuSlots}`;
-            if (type === 'cooler') details = `${p.type} | Flow: ${p.flow}`;
-            if (type === 'fan') details = `Size: ${p.size}mm | Flow: ${p.flow} CFM`;
-            if (type === 'storage') details = `${p.sizeStr} | ${p.type} | Level ${p.level} | ${p.speed} MB/s`;
+        let details = '';
+        if (type === 'cases') details = `Max GPU: ${p.maxGpuLen}mm | Size: ${p.size} | GPU Slots: ${p.gpuSlots}`;
+        else if (type === 'cooler') details = `${p.type} | Flow: ${p.flow}`;
+        else if (type === 'fan') details = `Size: ${p.size}mm | Flow: ${p.flow} CFM`;
+        else if (type === 'storage') details = `${p.sizeStr} | ${p.type} | Level ${p.level} | ${p.speed} MB/s`;
+        else if (type === 'ram') details = `${p.freq} MHz | ${p.type} | ${p.size}GB | ${p.mfgr}`;
+        else if (type === 'mobo') details = `${p.socket} | ${p.size} | ${p.ramType}`;
+        else if (type === 'psu') details = `${p.watts}W | ${p.length}mm`;
 
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${actionBtn}</td>
-                <td style="font-weight:bold; color:#fff;">${p.name}</td>
-                <td style="font-size:0.9em; color:#aaa;">${details}</td>
-                <td class="price-red-cell">${formatCurrency(newPrice)}</td>
-                <td class="${diffClass}">${diffStr}</td>
-            `;
-            tbody.appendChild(tr);
-        });
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td style="width:180px;">${actionBtn}</td>
+            <td style="font-weight:bold; color:#fff;">${p.name}</td>
+            <td style="font-size:0.9em; color:#aaa;">${details}</td>
+            <td class="price-red-cell">${formatCurrency(newPrice)}</td>
+            <td class="${diffClass}">${diffStr}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+
+window.toggleRam = function(partName, delta, isNewSelection = false) {
+    if (!currentPopupData || currentPopupData.type !== 'ram') return;
+    
+    const newPart = DB['ram'].get(partName);
+    const build = builds[currentPopupData.buildIdx];
+    if (!newPart) return;
+
+    let newCount = build.ramSticks;
+
+    if (isNewSelection) {
+        // Switching to a completely new RAM model
+        build.ram = newPart;
+        // Default to 1 stick when switching, or keep existing count? 
+        // Let's default to 1 to ensure validity, user can add more.
+        newCount = 1; 
+    } else {
+        // Adjusting count of current RAM
+        newCount += delta;
     }
+
+    // Bounds Check
+    const maxSlots = (build.mobo && build.mobo.size === 'Mini-ITX') ? 2 : 4;
+    if (newCount > maxSlots) newCount = maxSlots;
+    if (newCount < 1) newCount = 1; // Minimum 1 stick
+
+    // Apply Count
+    build.ramSticks = newCount;
+
+    // Recalculate Scores (Changing sticks/model affects Dual/Quad Channel score)
+    const newCpuScore = calculateCpuScore(
+        build.cpu, build.ram, build.ramSticks,
+        currentMode, globalUseOC, globalUseXMP
+    );
+    build.liveCpuScore = newCpuScore;
+    build.score = calculate3DMark(newCpuScore, build.gpuScore);
+    
+    // Update Diff
+    const targetScore = parseInt(document.getElementById('targetScore').value.replace(/,/g, '')) || 20000;
+    build.diff = build.score - targetScore;
+
+    // Recalculate Price
+    // Price = Core Parts + RAM + Storage + Case/Mobo/etc
+    // Easiest way is to recalculate total from scratch to be safe
+    let newTotal = 0;
+    newTotal += build.cpu.price;
+    newTotal += (build.gpu.price * build.gpuCnt);
+    newTotal += (build.ram.price * build.ramSticks);
+    if(build.mobo) newTotal += build.mobo.price;
+    if(build.case) newTotal += build.case.price;
+    if(build.cooler) newTotal += build.cooler.price;
+    if(build.psu) newTotal += build.psu.price;
+    if(build.fan) newTotal += build.fan.price;
+    if(build.storages) build.storages.forEach(s => newTotal += s.price);
+
+    build.price = newTotal;
+
+    // Refresh UI
+    refreshPopup();
+    renderPage(currentPage, true);
+}
 
     window.toggleStorage = function(partName, delta) {
-        if (!currentPopupData || currentPopupData.type !== 'storage') return;
-        const newPart = DB['storage'].get(partName);
-        const build = builds[currentPopupData.buildIdx];
+    if (!currentPopupData || currentPopupData.type !== 'storage') return;
+    const newPart = DB['storage'].get(partName);
+    const build = builds[currentPopupData.buildIdx];
 
-        if (delta > 0) {
-            build.storages.push(newPart);
-            build.price += newPart.price;
-        } else {
-            const existsIdx = build.storages.findIndex(d => d.name === partName);
-            if (existsIdx > -1) {
-                build.storages.splice(existsIdx, 1);
-                build.price -= newPart.price;
-            }
+    if (delta > 0) {
+        build.storages.push(newPart);
+        build.price += newPart.price;
+    } else {
+        const existsIdx = build.storages.findIndex(d => d.name === partName);
+        if (existsIdx > -1) {
+            build.storages.splice(existsIdx, 1);
+            build.price -= newPart.price;
         }
-        refreshPopup();
-        renderPage(currentPage);
     }
+    refreshPopup();
+    
+    // FIX: Pass 'true' to keep storage changes
+    renderPage(currentPage, true);
+}
 
     window.selectReplacementPart = function(partName) {
-        if (!currentPopupData) return;
-        const newPart = DB[currentPopupData.type].get(partName);
-        if(!newPart) return;
+    if (!currentPopupData) return;
+    const newPart = DB[currentPopupData.type].get(partName);
+    if(!newPart) return;
 
-        const { type, buildIdx, originalPart } = currentPopupData;
-        const build = builds[buildIdx];
+    const { type, buildIdx, originalPart } = currentPopupData;
+    const build = builds[buildIdx];
 
-        let priceDiff = newPart.price - (originalPart ? originalPart.price : 0);
-        
-        if (type === 'cases') build.case = newPart;
-        else if (type === 'cooler') build.cooler = newPart;
-        else if (type === 'fan') build.fan = newPart;
-
-        build.price += priceDiff;
-        closePopup();
-        renderPage(currentPage); 
+    // 1. Calculate Price Difference
+    let priceDiff = 0;
+    
+    if (type === 'ram') {
+        const count = build.ramSticks || 1;
+        const oldPriceTotal = originalPart ? (originalPart.price * count) : 0;
+        const newPriceTotal = newPart.price * count;
+        priceDiff = newPriceTotal - oldPriceTotal;
+    } else {
+        priceDiff = newPart.price - (originalPart ? originalPart.price : 0);
     }
+    
+    // 2. Assign the new part
+    if (type === 'cases') build.case = newPart;
+    else if (type === 'cooler') build.cooler = newPart;
+    else if (type === 'fan') build.fan = newPart;
+    else if (type === 'mobo') build.mobo = newPart;
+    else if (type === 'psu') build.psu = newPart;
+    else if (type === 'ram') {
+        build.ram = newPart;
+
+        // Recalculate Scores for RAM
+        const newCpuScore = calculateCpuScore(
+            build.cpu, newPart, build.ramSticks,
+            currentMode, globalUseOC, globalUseXMP
+        );
+        build.liveCpuScore = newCpuScore;
+        build.score = calculate3DMark(newCpuScore, build.gpuScore);
+        
+        const targetScore = parseInt(document.getElementById('targetScore').value.replace(/,/g, '')) || 20000;
+        build.diff = build.score - targetScore;
+    }
+
+    // 3. Update Build Price
+    build.price += priceDiff;
+
+    closePopup();
+    
+    // FIX: Pass 'true' to keep the changes we just made in memory
+    renderPage(currentPage, true); 
+}
 
     function checkFit(type, part, build) {
         const lvl = parseInt(document.getElementById('level').value);
@@ -3808,12 +4128,42 @@ function assembleBuilds(rams, mobos, cpu, gpuConf, sticks, score, cpuScore, conf
             return true;
         }
 
-        if (type === 'fan') {
+if (type === 'fan') {
             if (!build.case) return true;
             const s120 = build.case.radSizes.includes('120');
             const s140 = build.case.radSizes.includes('140');
             if (part.size === 120 && !s120) return false;
             if (part.size === 140 && !s140) return false;
+            return true;
+        }
+
+        // NEW: Motherboard compatibility checks
+        if (type === 'mobo') {
+            if (part.socket !== build.cpu.socket) return false;
+            if (build.ram && part.ramType !== build.ram.type) return false;
+            if (build.gpuCnt > 1 && part.pciSlots < 5) return false;
+            if (build.gpuCnt > 1) {
+                const sliType = build.gpu.sliType;
+                if (sliType === 'SLI' && !part.supportSLI) return false;
+                if (sliType === 'Crossfire' && !part.supportCF) return false;
+            }
+            if (build.case && !build.case.moboSizes.includes(part.size)) return false;
+            if (build.ramSticks === 4 && part.size === 'Mini-ITX') return false;
+            return true;
+        }
+
+        // NEW: RAM compatibility checks
+        if (type === 'ram') {
+            if (build.mobo && part.type !== build.mobo.ramType) return false;
+            if (!build.cpu.memTypes.includes(part.type)) return false;
+            return true;
+        }
+
+        // NEW: PSU compatibility checks
+        if (type === 'psu') {
+            const totalWatts = build.watts; // Build already has total watts calculated
+            if (part.watts < totalWatts) return false;
+            if (build.case && build.case.maxPsuLen > 0 && part.length > build.case.maxPsuLen) return false;
             return true;
         }
 
