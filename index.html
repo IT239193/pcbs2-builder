@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -3589,8 +3590,43 @@ if (config.usePsu) {
             }
         }
     }
+
+function deduplicateBuilds() {
+    if (!sqlDB) return;
+    
+    console.log("Removing duplicate builds...");
+    
+    sqlDB.run(`
+        DELETE FROM builds 
+        WHERE id NOT IN (
+            SELECT MIN(id) 
+            FROM (
+                SELECT id, score,
+                    cpuName, gpuName, gpuCnt, ramName, ramSticks,
+                    moboName, caseName, coolerName, psuName, fanName, storageNames,
+                    MAX(score) OVER (
+                        PARTITION BY cpuName, gpuName, gpuCnt, ramName, ramSticks,
+                                     moboName, caseName, coolerName, psuName, fanName, storageNames
+                    ) as bestScore
+                FROM builds
+            )
+            WHERE score = bestScore
+            GROUP BY cpuName, gpuName, gpuCnt, ramName, ramSticks,
+                     moboName, caseName, coolerName, psuName, fanName, storageNames
+        )
+    `);
+    
+    const removed = sqlDB.exec("SELECT changes()")[0].values[0][0];
+    console.log(`Removed ${removed} duplicate builds`);
+}
+
+
+
     function finishScan(config) {
-        const btn = document.getElementById('generateBtn');
+
+    deduplicateBuilds(); // ADD THIS LINE
+    
+    const btn = document.getElementById('generateBtn');
         btn.disabled = false;
         btn.innerText = "GENERATE BUILDS";
 
