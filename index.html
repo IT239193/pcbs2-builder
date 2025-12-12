@@ -3226,9 +3226,31 @@ function runScanChunk(cpuIndex, config, lists) {
 
     const cpu = lists.validCpu[cpuIndex];
 
+    // --- FIX 1: RAM TYPE PRE-FILTERING ---
+    // If the user selected specific motherboards, we must determine what RAM type they use.
+    // This prevents the scanner from locking onto cheap DDR4 RAM when you selected a DDR5 board.
+    let allowedRamTypes = new Set();
+    const userHasSelectedMobos = selectedOptions.moboNames.size > 0;
+
+    if (userHasSelectedMobos) {
+        lists.validMobos.forEach(m => {
+            // Only check types of the selected boards
+            if (selectedOptions.moboNames.has(m.name)) {
+                allowedRamTypes.add(m.ramType);
+            }
+        });
+    }
+    // --------------------------------------
+
     // 1. PRE-CALCULATE ALL UNIQUE FREQUENCIES
     const availableRams = Array.from(DB.ram.values()).filter(r => {
         if (r.level > config.lvl) return false;
+
+        // --- APPLY FIX 1 ---
+        // If we know the allowable types from selected mobos, reject RAMs that don't match.
+        if (allowedRamTypes.size > 0 && !allowedRamTypes.has(r.type)) return false;
+        // -------------------
+
         if (selectedOptions.ramNames.size > 0 && !selectedOptions.ramNames.has(r.name)) return false;
         if (selectedOptions.ramMfgrs.size > 0 && !selectedOptions.ramMfgrs.has(r.mfgr)) return false;
         if (selectedOptions.ramFreqs.size > 0 && !selectedOptions.ramFreqs.has(r.freq)) return false;
@@ -3260,12 +3282,14 @@ function runScanChunk(cpuIndex, config, lists) {
 
         for (const sticks of possibleSticks) {
             
+            // DEDUPLICATION SETS
             const uniqueBuilds = new Set();
             const uniqueHardware = new Set();
 
             let freqsToTest = config.useXMP ? uniqueXmpFreqs : uniqueDefaultSpeeds;
             
             for (const freq of freqsToTest) {
+                // If PerfMode is ON, and we already found a valid build for this hardware config, stop checking lower freqs.
                 if (globalPerfMode && uniqueHardware.size > 0) break;
 
                 const liveCpuScore = calculateCpuScore(cpu, freq, sticks, config.currentMode, config.useOC, config.useXMP, 0);
@@ -3291,22 +3315,23 @@ function runScanChunk(cpuIndex, config, lists) {
                     if (gpuConf.sliType === 'Crossfire' && !m.supportCF) return false;
                     if (sticks === 4 && m.size === 'Mini-ITX') return false;
                     
-                    // --- BUG FIX START ---
+                    // --- FIX 2: SPEED LIMIT RELAXATION ---
                     if (config.useXMP) { 
                         // Only strictly filter by speed if the user HAS NOT manually selected a motherboard.
                         // If they picked a specific board, allow it even if it throttles the RAM.
-                        if (selectedOptions.moboNames.size === 0) {
+                        if (!userHasSelectedMobos) {
                             if (m.maxMemSpeed < freq) return false; 
                         }
                     } 
                     else { 
                         if (m.defaultMem !== freq) return false; 
                     }
-                    // --- BUG FIX END ---
+                    // -------------------------------------
 
                     return true;
                 });
 
+                // Pass the deduplication sets to the assembler
                 assembleBuilds(validRams, validMobos, cpu, gpuConf, sticks, totalScore, liveCpuScore, config, lists, stmt, uniqueBuilds, uniqueHardware);
             }
         }
