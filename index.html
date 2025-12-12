@@ -3278,7 +3278,7 @@ function runScanChunk(cpuIndex, config, lists) {
         if ((cpu.price + gpuConf.price) > config.budget) continue;
 
         // 3. STICKS LOOP
-        const possibleSticks = config.reqSticks > 0 ? [config.reqSticks] : [1, 2, 4];
+       const possibleSticks = config.reqSticks > 0 ? [config.reqSticks] : [1, 2, 3, 4];
 
         for (const sticks of possibleSticks) {
             
