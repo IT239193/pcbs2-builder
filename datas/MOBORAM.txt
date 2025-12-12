@@ -1,0 +1,208 @@
+* A320M 4TUNE X | 4
+* A320M Mtech plus | 4
+* H170 4TUNE X | 4
+* H170 Mtech | 4
+* H170 Mtech plus | 4
+* Motherboard_HTBAPC | 4
+* Motherboard_AM4 | 4
+* Motherboard_LGA1151 | 4
+
+**ASRock**
+* B550 Extreme4 | 4
+* B550 PG Velocita | 4
+* B550 Steel Legend | 4
+* B550 Taichi Razer Edition | 4
+* B650 PG Lightning | 4
+* X570 Phantom Gaming-ITX/TB3 | 4
+* X870 Pro RS WiFi | 4
+* X870 Riptide WiFi | 4
+* X870 Steel Legend WiFi | 4
+* X870E Nova WiFi | 4
+* X870E Taichi | 4
+* X870E Taichi Lite | 4
+* Z590 Phantom Gaming-ITX/TB4 | 2
+* Z590 Taichi | 4
+* Z690 PG Riptide | 4
+* Z890 Lightning WiFi | 4
+* Z890 LiveMixer WiFi | 4
+* Z890 Riptide WiFi | 4
+* Z890 Taichi | 4
+* Z890 Taichi Lite | 4
+* Z890M Riptide WiFI | 4
+* MB_ASRock_B450_M_Steel_Legend | 4
+* MB_ASRock_B450_Steel_Legend | 4
+* MB_Asrock_Z390_Gaming_6 | 4
+* MB_ASRock_Z390_Phantom_Gaming_4 | 4
+* MB_ASRock_Z390_PhantomGaming_SLI_ac | 4
+* MB_Asrock_Z390_Pro4 | 4
+* MB_AsRock_Z390_Taichi | 4
+* MB_Asrock_Z390M_Pro | 4
+* MB_MSH_Z390_Phantom Gaming-ITX-ac | 2
+* MB_Z390_Extreme4 | 4
+* MB_Z390_Phantom_Gaming_9 | 4
+* MB_Z390_TaichiUltimate | 4
+* MB_Z390M-ITX_ac | 2
+* MB_ASRock_B550_Pro4 | 4
+* MB_ASRock_B550M_ITXac | 2
+* MB_ASRock_TRX40_Taichi | 8
+* MB_ASRock_X570_Extreme4 | 4
+* MB_ASRock_X570_Pro4 | 4
+* MB_ASRock_Z590_Phantom_Gaming_4 | 4
+* MB_ASRock_Z590M_ITXac | 2
+* MB_ASRock_Z590M_Phantom_Gaming_4 | 4
+
+**ASUS**
+* ROG MAXIMUS Z690 APEX | 2
+* ROG MAXIMUS Z690 HERO | 4
+* ROG Strix Z690-I Gaming Wifi | 2
+* TUF Z690 PLUS WIFI D4 | 4
+* X570 Crosshair VIII Formula | 4
+* ASUS_Crosshair_VII_Hero | 4
+* ASUS_Maximus_X | 4
+* ASUS_Maximus_X_Apex | 2
+* ASUS_Maximus_X_CODE | 4
+* ASUS_Maximus_X_Hero | 4
+* ASUS_Prime_X299_Deluxe | 8
+* ASUS_PRIME_X470_PRO | 4
+* ASUS_Prime_Z370_A | 4
+* ASUS_ROG_Rampage_VI_Apex | 4
+* ASUS_ROG_Strix_X299-EGaming | 8
+* ASUS_ROG_Strix_Z370-I_Gaming | 2
+* ASUS_ROGStrix_X399E_Gaming | 8
+* ASUS_ROGStrix_X470F_Gaming | 4
+* ASUS_ROGStrixZ370-EGaming | 4
+* ASUS_ROGStrixZ370-GGaming_WifiAC | 4
+* ASUS_Strix_X470_I_Gaming | 2
+* ASUS_Tuf_X299_MARK_1 | 8
+* ASUS_TUF_Z370-PLUS_GAMING | 4
+* ASUS_TUF_Z370PRO_GAMING | 4
+* ASUSROGRampageVIExtreme | 8
+* MB_ASUS_ROG_Zenith_Extreme | 8
+* MB_ASUS_ROG_Strix_TRX40-E_Gaming | 8
+* MB_ASUS_ROG_Strix_X570-I_Gaming | 2
+* MB_ASUS_ROG_Zenith_II_Extreme_Alpha | 8
+* MB_ASUS_ROG_STRIX_B550-E_GAMING | 4
+* MB_ASUS_ROG_STRIX_B550-F_GAMING_WiFi | 4
+
+**Colorful**
+* MB_CVN_B365_GamingPro_V2 | 4
+* MB_CVN_Z390_GamingPro_V2 | 4
+* MB_Igame_Z390_Vulcan_X_V20 | 4
+* MB_CVN_X570_GAMING_PRO_V14 | 4
+
+**EVGA**
+* EVGA_Z270 | 4
+* EVGA_Z370_FTW | 4
+* MB_EVGA_X299_FTWK | 8
+* MB_EVGA_x299_Micro | 4
+* EVGA_classified_K_Z270 | 4
+* MB_EVGA_Z490_DARK | 2
+* MB_EVGA_Z490_FTW_WIFI | 4
+* MB_EVGA_X299_Dark | 4
+
+**Gigabyte**
+* MEG X670E GODLIKE | 4
+* X670E Aorus Xtreme | 4
+* Z590 AORUS MASTER (rev. 1.0) | 4
+* Z690 AERO D | 4
+* Z690I AORUS ULTRA PLUS | 2
+* Z690I AORUS ULTRA PLUS DDR4 | 2
+* GigaByte_GA_AB350_Gaming_3 | 4
+* GigaByte_GA_AX370_Gaming_5 | 4
+* GigaByte_GA_AX370_Gaming_K7 | 4
+* GIGABYTE_GA-AB350M-Gaming_3 | 4
+* Gigabyte_GA-Z270X-Gaming_8 | 4
+* GigaByte_X399_AORUS_Gaming_7 | 8
+* GigaByte_X399_Designare _EX | 8
+* GigaByte_X470_AORUS_Gaming_7 | 4
+* GigaByte_Z370_AORUS_Gaming_7 | 4
+* GigaByte_Z370_AORUS_UltraGaming | 4
+* MB_[Gigabyte]_GA-B250M-Gaming_5_AM | 4
+* MB_GIGABYTE_AORUS_H370 | 4
+* MB_Gigabyte_B360_AORUS_GAMING_3 | 4
+* MB_Gigabyte_B360M_AORUS_GAMING_3 | 4
+* MB_Gigabyte_B360N_AourusWIFI | 2
+* MB_Gigabyte_B450_AORUS_M | 4
+* MB_Gigabyte_X299AORUSGaming9 | 8
+* MB_Gigabyte_X299DESIGNAREEX | 8
+* MB_Gigabyte_X570_Aorus_Master | 4
+* MB_Gigabyte_X570_Aorus_Xtreme | 4
+* MB_GIGABYTE_Z490_AORUS_XTREME | 4
+* MB_GIGABYTE_Z490_Aorus_Xtreme_Waterforce | 4
+* MB_GIGABYTE_Z590_AORUS_ULTRA | 4
+* MB_GIGABYTE_Z590_VISION_G | 4
+* MB_GIGABYTE_Z590I_VISION_D | 2
+* MB_GYGABYTE_Z590_Aorus_Xtreme_Waterforce | 4
+* MB_Gigabyte_X570_Aorus_Elite_Wifi | 4
+* MB_Gigabyte_X570_Aorus_Pro_Wifi | 4
+* MB_Gigabyte_X570_Aorus_Ultra | 4
+* MB_Gigabyte_X570_GamingX | 4
+* MB_Gigabyte_X570_I_Aorus_Pro_Wifi | 2
+* MB_Gigabyte_TRX40_Aorus_Master | 8
+* MB_Gigabyte_TRX40_Aorus_Pro_Wifi | 8
+* MB_Gigabyte_TRX40_AORUS_XTREME | 8
+* MB_Gigabyte_TRX40_DESIGNARE | 8
+
+**MSI**
+* MAG B650M MORTAR WIFI | 4
+* MAG Z690 TOMAHAWK WIFI DDR4 | 4
+* MEG X670E GODLIKE | 4
+* MEG Z590I UNIFY | 2
+* MEG Z690 GODLIKE | 4
+* MEG Z690 UNIFY | 4
+* MEG Z690 UNIFY X | 2
+* MEG Z790 ACE | 4
+* MPG B650 EDGE Wifi | 4
+* MPG Z690 CARBON WIFI | 4
+* Pro B650-P WiFi | 4
+* ROG Maximus X Formula | 4
+* MB_MSI_B450_TOMAHAWK | 4
+* MB_MSI_B450I_GAMING_PLUS_AC | 2
+* MB_MSI_MEG_Z390ACE | 4
+* MB_MSI_MPG_Z390_GamingEdge_AC | 4
+* MB_MSI_MPG_Z390_GAMINGPROCARBON | 4
+* MSI_MAG_Z390_TOMAHAWK | 4
+* MSI_X399_Gaming_Pro_Carbon_AC | 8
+* MSI_Z270_GAMINGPROCARBON | 4
+* MSI_Z370_GamingProCarbon | 4
+* MB_MSI_Creator_TRX40 | 8
+* MB_MSI_MEG_X570_ACE | 4
+* MB_MSI_MEG_X570_UNIFY | 4
+* MB_MSI_MPG_B550_GAMING_EDGE_WIFI | 4
+* MB_MSI_MPG_X570_GAMING_PLUS | 4
+* MB_MSI_TRX40_Pro_10G | 8
+* MB_MSI_MAG_B550_TOMAHAWK | 4
+* MB_MSI_MAG_B550M_BAZOOKA | 4
+* MB_MSI_MAG_B550M_MORTAR_WIFI | 4
+* MB_MSI_MAG_Z590_TOMAHAWK_WIFI | 4
+* MB_MSI_MAG_Z590_TORPEDO | 4
+* MB_MSI_MEG_B550_UNIFY_X | 2
+* MB_MSI_MEG_Z590_ACE | 4
+* MB_MSI_MPG_B550_GAMING_CARBON_WIFI | 4
+* MB_MSI_MPG_B550I_GAMING_EDGE_WIFI | 2
+* MB_MSI_MPG_Z590_CARBON_EK_X | 4
+* MB_MSI_MPG_Z590_GAMING_CARBON_WIFI | 4
+* MB_MSI_B450M_Mortar_Max | 4
+* MB_MSI_MEG_X570_Godlike | 4
+* MB_MSI_MPG_X570_Gaming_Edge_Wifi | 4
+* MB_MSI_MPG_X570_Gaming_Pro_Carbon_Wifi | 4
+* MB_MSI_MAG_B460_Tomahawk | 4
+* MB_MSI_MAG_B460M_Bazooka | 4
+* MB_MSI_MEG_Z490I_Unify | 2
+* MB_MSI_MPG_Z490_GAMING_CARBON_WIFI | 4
+* MB_MSI_MPG_Z490M_Gaming_Edge_Wifi | 4
+* MB_MSI_Prestige_X570_Creation | 4
+* MB_MSI_TRX40_Pro_Wifi | 8
+* MB_MSI_X570_A_Pro | 4
+
+**NZXT**
+* N5 Z690 | 4
+* N7 Z690 | 4
+* MB_NZXT_N7Z390_Motherboard_Black | 4
+* MB_NZXT_N7Z390_Motherboard_White | 4
+* NZXT_N7_Z370 | 4
+* NZXT_N7_Z370_BLACK | 4
+* MB_NZXT_N7_B550 | 4
+* MB_NZXT_N7_B550_White_MS | 4
+* MB_NZXT_N7_Z590 | 4
+* MB_NZXT_N7_Z590_White_MS | 4
