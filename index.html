@@ -1247,8 +1247,8 @@
     <!-- Benchmark Type Buttons -->
     <div>
         <div class="benchmark-toggle" style="margin-bottom: 0;">
-            <button id="btnTS" class="mode-btn active" onclick="setMode('TS')">Time Spy (Standard)</button>
-            <button id="btnTSX" class="mode-btn" onclick="setMode('TSX')">Time Spy Extreme (4K)</button>
+            <!-- Removed onclick="setMode('TS')" to prevent JS errors now that TSX button is gone -->
+            <button id="btnTS" class="mode-btn active" style="cursor: default;">Time Spy (Standard)</button>
         </div>
     </div>
 
