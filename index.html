@@ -3313,7 +3313,8 @@ function runScanChunk(cpuIndex, config, lists) {
                     if (gpuConf.count > 1 && m.pciSlots < 5) return false;
                     if (gpuConf.sliType === 'SLI' && !m.supportSLI) return false;
                     if (gpuConf.sliType === 'Crossfire' && !m.supportCF) return false;
-                    if (sticks === 4 && m.size === 'Mini-ITX') return false;
+                    // Check actual slot count (populated from MOBORAM.txt or default size logic)
+if (m.ramSlots < sticks) return false;
                     
                     // --- FIX 2: SPEED LIMIT RELAXATION ---
                     if (config.useXMP) { 
@@ -4168,7 +4169,8 @@ function revertPart(buildIdx, type, event) {
             const count = isCurrentModel ? build.ramSticks : 0;
             
             // Limit check (Mobo slots)
-            const maxSlots = (build.mobo && build.mobo.size === 'Mini-ITX') ? 2 : 4;
+            const maxSlots = build.mobo ? (build.mobo.ramSlots || 4) : 4;
+
             const isFull = (count >= maxSlots);
 
             if (isCurrentModel) {
@@ -4256,7 +4258,8 @@ window.toggleRam = function(partName, delta, isNewSelection = false) {
     }
 
     // Bounds Check
-    const maxSlots = (build.mobo && build.mobo.size === 'Mini-ITX') ? 2 : 4;
+    const maxSlots = build.mobo ? (build.mobo.ramSlots || 4) : 4;
+
     if (newCount > maxSlots) newCount = maxSlots;
     if (newCount < 1) newCount = 1; // Minimum 1 stick
 
@@ -4416,7 +4419,8 @@ if (type === 'fan') {
                 if (sliType === 'Crossfire' && !part.supportCF) return false;
             }
             if (build.case && !build.case.moboSizes.includes(part.size)) return false;
-            if (build.ramSticks === 4 && part.size === 'Mini-ITX') return false;
+            if (part.ramSlots < build.ramSticks) return false;
+
             return true;
         }
 
