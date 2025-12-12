@@ -3260,16 +3260,12 @@ function runScanChunk(cpuIndex, config, lists) {
 
         for (const sticks of possibleSticks) {
             
-            // DEDUPLICATION SETS
-            // uniqueBuilds: Tracks "Parts + Score" to stop exact duplicates.
-            // uniqueHardware: Tracks "Parts Only" (Used for PerfMode optimization).
             const uniqueBuilds = new Set();
             const uniqueHardware = new Set();
 
             let freqsToTest = config.useXMP ? uniqueXmpFreqs : uniqueDefaultSpeeds;
             
             for (const freq of freqsToTest) {
-                // If PerfMode is ON, and we already found a valid build for this hardware config, stop checking lower freqs.
                 if (globalPerfMode && uniqueHardware.size > 0) break;
 
                 const liveCpuScore = calculateCpuScore(cpu, freq, sticks, config.currentMode, config.useOC, config.useXMP, 0);
@@ -3294,12 +3290,23 @@ function runScanChunk(cpuIndex, config, lists) {
                     if (gpuConf.sliType === 'SLI' && !m.supportSLI) return false;
                     if (gpuConf.sliType === 'Crossfire' && !m.supportCF) return false;
                     if (sticks === 4 && m.size === 'Mini-ITX') return false;
-                    if (config.useXMP) { if (m.maxMemSpeed < freq) return false; } 
-                    else { if (m.defaultMem !== freq) return false; }
+                    
+                    // --- BUG FIX START ---
+                    if (config.useXMP) { 
+                        // Only strictly filter by speed if the user HAS NOT manually selected a motherboard.
+                        // If they picked a specific board, allow it even if it throttles the RAM.
+                        if (selectedOptions.moboNames.size === 0) {
+                            if (m.maxMemSpeed < freq) return false; 
+                        }
+                    } 
+                    else { 
+                        if (m.defaultMem !== freq) return false; 
+                    }
+                    // --- BUG FIX END ---
+
                     return true;
                 });
 
-                // Pass the deduplication sets to the assembler
                 assembleBuilds(validRams, validMobos, cpu, gpuConf, sticks, totalScore, liveCpuScore, config, lists, stmt, uniqueBuilds, uniqueHardware);
             }
         }
