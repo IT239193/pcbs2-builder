@@ -89,6 +89,111 @@
             letter-spacing: 1px;
         }
 
+/* --- ADD TO CSS --- */
+
+/* Upgrader Specific Styles */
+.upgrade-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.upgrade-card {
+    background: var(--bg-panel);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid var(--success);
+}
+
+.upgrade-card:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.upgrade-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.upgrade-name {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: var(--text-main);
+}
+
+.upgrade-stats {
+    color: var(--text-muted);
+    font-size: 0.9em;
+    margin-top: 4px;
+}
+
+.upgrade-meta {
+    text-align: right;
+}
+
+.upgrade-price {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--price-red);
+}
+
+.upgrade-diff {
+    color: var(--success);
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+.search-dropdown-single {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: #151525;
+    border: 1px solid var(--border);
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+}
+.search-dropdown-single.show { display: block; }
+.search-item {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.search-item:hover { background: var(--accent); color: white; }
+
+/* Navigation Bar Update */
+.nav-bar {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    justify-content: center;
+}
+.nav-btn {
+    padding: 15px 30px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 1.2em;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 8px;
+    flex: 1;
+    max-width: 300px;
+    text-align: center;
+}
+.nav-btn.active {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 0 15px rgba(52, 152, 219, 0.3);
+}
+
         /* Header */
         header {
             text-align: center;
@@ -1223,14 +1328,10 @@
     </div>
 </div>
 
-<div class="container">
-    <header>
+<header>
         <h1>PCBS2 Ultimate Builder</h1>
         <div class="header-subtitle">contact timmy2131_ on discord for bug reports</div>
-        <button class="view-toggle-btn" onclick="toggleView()" id="mainViewToggle">
-            <span style="font-size:1.4em; display:block; margin-bottom:5px;">Data Viewer</span>
-            <span style="font-size:1.1em; font-weight:normal; color:#ccc;">click this box to swap to the data info page where u can know right OC values, more info about parts, and countless more stuff</span>
-        </button>        
+       
         <!-- Performance Tip -->
         <div id="perfWarning" class="hidden">
             <span>💡 PRO TIP:</span> 
@@ -1238,6 +1339,13 @@
             <div class="close-warning" onclick="dismissWarning()">&times;</div>
         </div>
     </header>
+
+    <!-- Navigation Bar -->
+    <div class="nav-bar">
+        <div class="nav-btn active" onclick="switchMainView('calculator')" id="navCalc">Build Calculator</div>
+        <div class="nav-btn" onclick="switchMainView('data')" id="navData">Data Viewer</div>
+        <div class="nav-btn" onclick="switchMainView('upgrader')" id="navUpgrade">Part Upgrader</div>
+    </div>
 
     <!-- CALCULATOR VIEW -->
     <div id="calculatorView" style="display: block;">
@@ -1678,7 +1786,473 @@
     <div id="dataViewListContainer"></div>
 </div>
 
+
+
+<!-- UPGRADER VIEW -->
+<div id="upgraderView" style="display: none;">
+    <div class="controls-wrapper active">
+        <div class="section-header">1. Requirements & Goals</div>
+        <div class="input-grid">
+            <div class="input-group">
+                <label>Total Budget ($)</label>
+                <input type="number" id="upgBudget" value="5000">
+            </div>
+            <div class="input-group">
+                <label>Career Level</label>
+                <input type="number" id="upgLevel" value="30" min="1" max="30">
+            </div>
+            <div class="input-group">
+                <label>Part to Upgrade</label>
+                <select id="upgTargetType" onchange="toggleUpgInputs()">
+                    <option value="cpu">Processor (CPU)</option>
+                    <option value="gpu">Graphics Card (GPU)</option>
+                </select>
+            </div>
+            
+            <!-- Multi-GPU Selector -->
+            <div class="input-group" id="upgGpuConfigBox">
+                <label>Allowed Target Configs</label>
+                <div class="multi-select-container">
+                    <div class="multi-select-display" id="upgGpuDisplay" onclick="document.getElementById('upgGpuOptions').classList.toggle('show')">
+                        Single GPU
+                    </div>
+                    <div id="upgGpuOptions" class="multi-dropdown" style="padding: 10px; display: none; flex-direction: column; gap: 5px;">
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="chkGpu1" checked onchange="updateUpgDisplay()">
+                            <label for="chkGpu1">Single (1x)</label>
+                        </div>
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="chkGpu2" onchange="updateUpgDisplay()">
+                            <label for="chkGpu2">Dual (2x)</label>
+                        </div>
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="chkGpu3" onchange="updateUpgDisplay()">
+                            <label for="chkGpu3">Triple (3x)</label>
+                        </div>
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="chkGpu4" onchange="updateUpgDisplay()">
+                            <label for="chkGpu4">Quad (4x)</label>
+                        </div>
+                    </div>
+                </div>
+                <div style="color: #ff9f43; font-size: 0.85em; margin-top: 8px; line-height: 1.3; font-weight: bold; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 4px; border: 1px solid #e67e22;">
+                    ⚠ Before allowing multi gpu suggestions make sure that your motherboard and case is suitable. The tool DOESNT VERIFY if the suggested multi gpu is compatible !!!
+                </div>
+            </div>
+        </div>
+
+        <div class="section-header">2. Original System Details</div>
+        <p style="color:#aaa; margin-bottom:15px; font-size:0.9em;">
+            *Required to ensure compatibility for Single Part swaps.
+        </p>
+
+        <div class="upgrade-grid">
+            <!-- Motherboard -->
+            <div class="input-group" style="position:relative;">
+                <label>Current Motherboard</label>
+                <input type="text" id="upgMoboSearch" placeholder="Search Motherboard..." oninput="filterSingleSearch('mobo', this)" onfocus="filterSingleSearch('mobo', this)">
+                <div class="search-dropdown-single" id="upgMoboList"></div>
+                <input type="hidden" id="upgMoboVal">
+            </div>
+
+            <!-- Case -->
+            <div class="input-group" style="position:relative;">
+                <label>Current Case</label>
+                <input type="text" id="upgCaseSearch" placeholder="Search Case..." oninput="filterSingleSearch('case', this)" onfocus="filterSingleSearch('case', this)">
+                <div class="search-dropdown-single" id="upgCaseList"></div>
+                <input type="hidden" id="upgCaseVal">
+            </div>
+
+            <!-- PSU -->
+            <div class="input-group" style="position:relative;">
+                <label>Current Power Supply (PSU) *</label>
+                <input type="text" id="upgPsuSearch" placeholder="Search PSU..." oninput="filterSingleSearch('psu', this)" onfocus="filterSingleSearch('psu', this)">
+                <div class="search-dropdown-single" id="upgPsuList"></div>
+                <input type="hidden" id="upgPsuVal">
+            </div>
+        </div>
+
+        <div class="upgrade-grid">
+            <!-- Current CPU -->
+            <div class="input-group" style="position:relative;">
+                <label>Current CPU</label>
+                <input type="text" id="upgCpuSearch" placeholder="Search CPU..." oninput="filterSingleSearch('cpu', this)" onfocus="filterSingleSearch('cpu', this)">
+                <div class="search-dropdown-single" id="upgCpuList"></div>
+                <input type="hidden" id="upgCpuVal">
+            </div>
+
+            <!-- Current GPU with Count Selector -->
+            <div class="input-group" style="position:relative;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <label style="margin:0;">Current GPU</label>
+                    <select id="upgCurrentGpuCount" style="width:60px; height:24px; padding:0 5px; font-size:0.9em; background:#222; color:#fff; border:1px solid #555;">
+                        <option value="1">1x</option>
+                        <option value="2">2x</option>
+                        <option value="3">3x</option>
+                        <option value="4">4x</option>
+                    </select>
+                </div>
+                <input type="text" id="upgGpuSearch" placeholder="Search GPU..." oninput="filterSingleSearch('gpu', this)" onfocus="filterSingleSearch('gpu', this)">
+                <div class="search-dropdown-single" id="upgGpuList"></div>
+                <input type="hidden" id="upgGpuVal">
+            </div>
+        </div>
+
+        <button class="btn-generate" onclick="findUpgrades()">GET BETTER PARTS</button>
+    </div>
+
+    <!-- Results -->
+    <div class="results-meta">
+        <div class="result-count" id="upgResultCount">Results will appear here</div>
+    </div>
+    <div id="upgradeResultsList"></div>
+</div>
+
+
+    
 <script>
+// Update Display Text for Checkboxes
+function updateUpgDisplay() {
+    const c1 = document.getElementById('chkGpu1').checked;
+    const c2 = document.getElementById('chkGpu2').checked;
+    const c3 = document.getElementById('chkGpu3').checked;
+    const c4 = document.getElementById('chkGpu4').checked;
+    
+    let parts = [];
+    if (c1) parts.push("Single");
+    if (c2) parts.push("Dual");
+    if (c3) parts.push("Triple");
+    if (c4) parts.push("Quad");
+    
+    const display = document.getElementById('upgGpuDisplay');
+    if (parts.length === 0) display.innerText = "Select Configs...";
+    else display.innerText = parts.join(" / ");
+}
+
+// Close the custom dropdown if clicked outside
+window.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('upgGpuOptions');
+    const display = document.getElementById('upgGpuDisplay');
+    if (dropdown && display && !dropdown.contains(e.target) && !display.contains(e.target)) {
+        dropdown.classList.remove('show');
+        dropdown.style.display = 'none'; // Ensure it hides using style
+    }
+});
+
+// Fix toggle for the custom dropdown class
+document.getElementById('upgGpuDisplay')?.addEventListener('click', function(e) {
+    e.stopPropagation(); // Stop global listener from immediately closing it
+    const dd = document.getElementById('upgGpuOptions');
+    if (dd.style.display === 'flex') {
+        dd.style.display = 'none';
+        dd.classList.remove('show');
+    } else {
+        dd.style.display = 'flex';
+        dd.classList.add('show');
+    }
+});
+
+function toggleUpgInputs() {
+    const type = document.getElementById('upgTargetType').value;
+    const gpuBox = document.getElementById('upgGpuConfigBox');
+
+    if (type === 'gpu') {
+        gpuBox.style.opacity = '1';
+        gpuBox.style.pointerEvents = 'all';
+    } else {
+        gpuBox.style.opacity = '0.3';
+        gpuBox.style.pointerEvents = 'none';
+    }
+}
+
+
+
+    
+// Updated View Switcher to trigger toggle
+function switchMainView(viewName) {
+    document.getElementById('calculatorView').style.display = 'none';
+    document.getElementById('dataView').style.display = 'none';
+    document.getElementById('upgraderView').style.display = 'none';
+    
+    document.getElementById('navCalc').classList.remove('active');
+    document.getElementById('navData').classList.remove('active');
+    document.getElementById('navUpgrade').classList.remove('active');
+
+    if (viewName === 'calculator') {
+        document.getElementById('calculatorView').style.display = 'block';
+        document.getElementById('navCalc').classList.add('active');
+    } else if (viewName === 'data') {
+        document.getElementById('dataView').style.display = 'block';
+        document.getElementById('navData').classList.add('active');
+        renderDataList();
+    } else if (viewName === 'upgrader') {
+        document.getElementById('upgraderView').style.display = 'block';
+        document.getElementById('navUpgrade').classList.add('active');
+        // Trigger logic to ensure correct initial state
+        toggleUpgInputs();
+    }
+}
+
+function switchMainView(viewName) {
+    // Hide all
+    document.getElementById('calculatorView').style.display = 'none';
+    document.getElementById('dataView').style.display = 'none';
+    document.getElementById('upgraderView').style.display = 'none';
+    
+    // Deactivate Nav Buttons
+    document.getElementById('navCalc').classList.remove('active');
+    document.getElementById('navData').classList.remove('active');
+    document.getElementById('navUpgrade').classList.remove('active');
+
+    // Show Selected
+    if (viewName === 'calculator') {
+        document.getElementById('calculatorView').style.display = 'block';
+        document.getElementById('navCalc').classList.add('active');
+    } else if (viewName === 'data') {
+        document.getElementById('dataView').style.display = 'block';
+        document.getElementById('navData').classList.add('active');
+        renderDataList();
+    } else if (viewName === 'upgrader') {
+        document.getElementById('upgraderView').style.display = 'block';
+        document.getElementById('navUpgrade').classList.add('active');
+    }
+}
+
+
+// --- UPGRADER LOGIC ---
+
+// 1. Single Select Search (for setting up current PC)
+function filterSingleSearch(type, input) {
+    const listId = `upg${type.charAt(0).toUpperCase() + type.slice(1)}List`;
+    const container = document.getElementById(listId);
+    const val = input.value.toLowerCase();
+    
+    let source = [];
+    if (type === 'mobo') source = Array.from(DB.mobo.values());
+    else if (type === 'case') source = Array.from(DB.cases.values());
+    else if (type === 'psu') source = Array.from(DB.psu.values());
+    else if (type === 'cpu') source = Array.from(DB.cpu.values());
+    else if (type === 'gpu') source = Array.from(DB.gpu.values());
+
+    container.innerHTML = '';
+    const filtered = source.filter(item => item.name.toLowerCase().includes(val)).slice(0, 50);
+
+    if (filtered.length > 0) {
+        container.classList.add('show');
+        filtered.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'search-item';
+            div.innerText = item.name;
+            div.onclick = () => {
+                input.value = item.name;
+                document.getElementById(`upg${type.charAt(0).toUpperCase() + type.slice(1)}Val`).value = item.name;
+                container.classList.remove('show');
+            };
+            container.appendChild(div);
+        });
+    } else {
+        container.classList.remove('show');
+    }
+}
+
+// Hide dropdowns when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.search-dropdown-single') && !e.target.closest('.input-group')) {
+        document.querySelectorAll('.search-dropdown-single').forEach(d => d.classList.remove('show'));
+    }
+});
+
+// Toggle GPU Count visibility
+function toggleUpgInputs() {
+    const type = document.getElementById('upgTargetType').value;
+    const gpuGroup = document.getElementById('upgGpuCountGroup');
+    if (type === 'gpu') gpuGroup.style.opacity = '1';
+    else gpuGroup.style.opacity = '0.3';
+}
+
+
+// 2. Main Upgrade Function (Updated Score Position)
+function findUpgrades() {
+    const budget = parseFloat(document.getElementById('upgBudget').value) || 0;
+    const userLevel = parseInt(document.getElementById('upgLevel').value) || 30;
+    const targetType = document.getElementById('upgTargetType').value; 
+    
+    // Get Current Setup details
+    const currGpuCount = parseInt(document.getElementById('upgCurrentGpuCount').value) || 1;
+
+    // Determine allowed TARGET counts based on checkboxes
+    let allowedCounts = []; 
+    if (targetType === 'gpu') {
+        if (document.getElementById('chkGpu1').checked) allowedCounts.push(1);
+        if (document.getElementById('chkGpu2').checked) allowedCounts.push(2);
+        if (document.getElementById('chkGpu3').checked) allowedCounts.push(3);
+        if (document.getElementById('chkGpu4').checked) allowedCounts.push(4);
+        
+        if (allowedCounts.length === 0) {
+            alert("Please select at least one Target GPU Configuration (Single, Dual, etc).");
+            return;
+        }
+    } else {
+        allowedCounts = [1]; 
+    }
+
+    // Get Current System Parts
+    const moboName = document.getElementById('upgMoboVal').value;
+    const caseName = document.getElementById('upgCaseVal').value;
+    const psuName = document.getElementById('upgPsuVal').value;
+    const cpuName = document.getElementById('upgCpuVal').value;
+    const gpuName = document.getElementById('upgGpuVal').value;
+
+    const mobo = DB.mobo.get(moboName);
+    const box = DB.cases.get(caseName);
+    const psu = DB.psu.get(psuName);
+    const currCpu = DB.cpu.get(cpuName);
+    const currGpu = DB.gpu.get(gpuName);
+
+    // --- VALIDATION ---
+    if (!psu) {
+        alert("Please select a Power Supply (PSU) to calculate power limits.");
+        return;
+    }
+
+    if (targetType === 'cpu') {
+        if (!mobo) { alert("Motherboard required for CPU upgrade compatibility."); return; }
+        if (!currGpu) { alert("Current GPU required for power calculation."); return; }
+    }
+    
+    if (targetType === 'gpu' && !currCpu) {
+        alert("Current CPU required for power calculation.");
+        return;
+    }
+
+    // --- CALCULATE BASELINE (CURRENT SYSTEM) ---
+    const maxWatts = psu.watts;
+    let baseWatts = 50; 
+    let currentScore = 0;
+
+    if (targetType === 'cpu') {
+        baseWatts += (currGpu.watts * currGpuCount);
+        currentScore = currCpu ? currCpu.scoreTS : 0;
+    } else {
+        baseWatts += currCpu.watts;
+        if (currGpu) {
+            if (currGpuCount === 1) currentScore = currGpu.score;
+            else if (currGpuCount === 2) currentScore = currGpu.score2 || 0;
+            else if (currGpuCount === 3) currentScore = currGpu.score3 || 0;
+            else if (currGpuCount === 4) currentScore = currGpu.score4 || 0;
+        }
+    }
+
+    let upgrades = [];
+    
+    // --- CPU UPGRADE LOGIC ---
+    if (targetType === 'cpu') {
+        const candidates = Array.from(DB.cpu.values());
+        candidates.forEach(c => {
+            if (c.level > userLevel) return;
+            if (c.socket !== mobo.socket) return; 
+            
+            if ((baseWatts + c.watts) > maxWatts) return;
+            if (c.scoreTS <= currentScore) return;
+            if (c.price > budget) return;
+
+            upgrades.push({ 
+                name: c.name, 
+                part: c, 
+                score: c.scoreTS, 
+                price: c.price, 
+                watts: c.watts, 
+                count: 1, 
+                diff: c.scoreTS - currentScore 
+            });
+        });
+    } 
+    // --- GPU UPGRADE LOGIC ---
+    else {
+        const candidates = Array.from(DB.gpu.values());
+        
+        candidates.forEach(g => {
+            if (g.level > userLevel) return;
+            
+            for (let count of allowedCounts) {
+                if (count > 1) {
+                    if (!g.multi) continue; 
+                    const maxCap = getMultiGPUCap(g.name, g.length);
+                    if (maxCap < count) continue; 
+                } else {
+                    if (box && g.length > box.maxGpuLen) continue;
+                }
+
+                const totalGpuWatts = g.watts * count;
+                if ((baseWatts + totalGpuWatts) > maxWatts) continue;
+
+                let totalScore = 0;
+                if (count === 1) totalScore = g.score;
+                else if (count === 2) totalScore = g.score2;
+                else if (count === 3) totalScore = g.score3;
+                else if (count === 4) totalScore = g.score4;
+
+                if (!totalScore || totalScore <= currentScore) continue;
+
+                const totalPrice = g.price * count;
+                if (totalPrice > budget) continue;
+
+                upgrades.push({ 
+                    name: g.name, 
+                    part: g, 
+                    score: totalScore, 
+                    price: totalPrice, 
+                    watts: totalGpuWatts, 
+                    count: count, 
+                    diff: totalScore - currentScore 
+                });
+            }
+        });
+    }
+
+    upgrades.sort((a, b) => a.price - b.price);
+
+    const list = document.getElementById('upgradeResultsList');
+    list.innerHTML = '';
+    const countDiv = document.getElementById('upgResultCount');
+
+    if (upgrades.length === 0) {
+        countDiv.innerText = "No upgrades found within budget or constraints.";
+        return;
+    }
+
+    countDiv.innerText = `Found ${upgrades.length} upgrades (Sorted by Price)`;
+
+    upgrades.forEach(u => {
+        const p = u.part;
+        const brandClass = getBrandClass(p);
+        const nameDisplay = u.count > 1 ? `${u.count}x ${u.name}` : u.name;
+        
+        const html = `
+        <div class="upgrade-card" style="border-left-color: ${u.price <= budget ? '#2ecc71' : '#e74c3c'}">
+            <div class="upgrade-info">
+                <div class="upgrade-name ${brandClass}" style="color:white;">${nameDisplay}</div>
+                <div class="upgrade-stats">
+                    Total Watts: ${u.watts}W | Lvl: ${p.level}
+                </div>
+            </div>
+            <div class="upgrade-meta">
+                <div class="upgrade-price">
+                    ${formatCurrency(u.price)} 
+                    <span style="color: #666; margin: 0 8px; font-weight:normal;">|</span> 
+                    <span style="color: #fff;">${formatNumber(u.score)}</span>
+                    <span class="upgrade-diff" style="font-size:0.65em; vertical-align: middle;">(+${formatNumber(u.diff)})</span>
+                </div>
+            </div>
+        </div>
+        `;
+        list.innerHTML += html;
+    });
+}
+
+
+    
+
     const DB = { 
         cpu: new Map(), 
         gpu: new Map(), 
