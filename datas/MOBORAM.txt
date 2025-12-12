@@ -3,9 +3,7 @@
 * H170 4TUNE X | 4
 * H170 Mtech | 4
 * H170 Mtech plus | 4
-* Motherboard_HTBAPC | 4
-* Motherboard_AM4 | 4
-* Motherboard_LGA1151 | 4
+
 
 **ASRock**
 * B550 Extreme4 | 4
@@ -205,4 +203,5 @@
 * MB_NZXT_N7_B550 | 4
 * MB_NZXT_N7_B550_White_MS | 4
 * MB_NZXT_N7_Z590 | 4
+
 * MB_NZXT_N7_Z590_White_MS | 4
