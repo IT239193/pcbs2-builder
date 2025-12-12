@@ -2040,6 +2040,8 @@ if (selectedOptions.ramNames.size > 0) {
             { id: 'water_gpu', file: 'Water Cooled GPU.txt', label: 'Water GPU' },
             { id: 'ram',       file: 'RAM.txt',              label: 'RAM' },
             { id: 'mobo',      file: 'Motherboard.txt',      label: 'Motherboard' },
+            // MOBORAM must be loaded AFTER Motherboard.txt so we can match names to existing objects
+            { id: 'moboram',   file: 'MOBORAM.txt',          label: 'Mobo Slots' }, 
             { id: 'cases',     file: 'Cases.txt',            label: 'Cases' },
             { id: 'cooler',    file: 'Coolers.txt',          label: 'Cooler' },
             { id: 'psu',       file: 'PSU.txt',              label: 'PSU' },
@@ -2077,6 +2079,46 @@ if (selectedOptions.ramNames.size > 0) {
     }
 
     function parseHTML(fname, html) {
+        const n = fname.toLowerCase();
+
+        // --- SPECIAL HANDLING FOR MOBORAM.TXT (Text File, not HTML Table) ---
+        if (n.includes('moboram.txt')) {
+            const lines = html.split(/\r?\n/);
+            let matchCount = 0;
+
+            lines.forEach(line => {
+                line = line.trim();
+                if (!line || !line.includes('|')) return;
+
+                // Parse: * Name | 4
+                const parts = line.split('|');
+                // Remove the star (*) and whitespace from the start
+                const searchKey = parts[0].replace(/^\*\s*/, '').trim(); 
+                const slots = parseInt(parts[1].trim()) || 4; // Default to 4 if parsing fails
+
+                if (!searchKey) return;
+
+                // Search strictly in DB.mobo values
+                for (const mobo of DB.mobo.values()) {
+                    // Match against Concat name OR Asset path OR Name
+                    // We use includes() because the file might have partial names or full paths
+                    const asset = (mobo.assetPath || "").toLowerCase();
+                    const concat = (mobo.concatName || "").toLowerCase();
+                    const key = searchKey.toLowerCase();
+
+                    if (asset.includes(key) || concat.includes(key) || mobo.name.toLowerCase().includes(key)) {
+                        mobo.ramSlots = slots;
+                        matchCount++;
+                        // We don't break here in case the key matches multiple variants 
+                        // (though ideally it's 1:1, duplicate matches are usually harmless here)
+                    }
+                }
+            });
+            console.log(`MOBORAM.txt: Updated RAM slots for ${matchCount} motherboards.`);
+            return matchCount;
+        }
+
+        // --- STANDARD HTML TABLE PARSING ---
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
         const rows = Array.from(doc.querySelectorAll('tr'));
@@ -2094,7 +2136,6 @@ if (selectedOptions.ramNames.size > 0) {
         };
 
         let type = '';
-        const n = fname.toLowerCase();
         
         if (n.includes('cpu.txt')) type = 'cpu';
         else if (n.includes('gpu')) type = 'gpu';
@@ -2141,10 +2182,8 @@ if (selectedOptions.ramNames.size > 0) {
                 base.finalAdjTSX = getNum(cells, 'Final Adjustment (TSX)');
                 base.defaultMem = getNum(cells, 'Default Memory Speed') || 2133;
 
-
                 base.maxMemChannels = getNum(cells, 'Max Memory Channels') || 2;
                 base.maxMemChannelsRaw = get(cells, 'Max Memory Channels');
-                base.defaultMem = getNum(cells, 'Default Memory Speed') || 2133;
                 base.memTypes = get(cells, 'Supported Memory Types');
                 base.cores = get(cells, 'Cores');
                 
@@ -2202,7 +2241,14 @@ if (selectedOptions.ramNames.size > 0) {
                 base.supportSLI = get(cells, 'Support SLI') === 'Yes';
                 base.supportCF = get(cells, 'Support Crossfire') === 'Yes';
                 base.maxMemSpeed = getNum(cells, 'Max Memory Speed'); 
-base.defaultMem = getNum(cells, 'Default Memory Speed') || 2133;
+                base.defaultMem = getNum(cells, 'Default Memory Speed') || 2133;
+                
+                // NEW: Capture Asset Path and Concat Name for MOBORAM matching
+                base.assetPath = get(cells, 'Asset Path');
+                base.concatName = get(cells, 'Concat name');
+                // Default RAM slots (will be updated by MOBORAM parsing later)
+                // Default to 2 for ITX, 4 for others as a fallback
+                base.ramSlots = (base.size === 'Mini-ITX') ? 2 : 4; 
 
             } else if (type === 'cases') {
                 base.size = get(cells, 'Case Size');
@@ -2243,6 +2289,8 @@ base.defaultMem = getNum(cells, 'Default Memory Speed') || 2133;
         updateStatus();
         return addedCount; 
     }
+
+
 
     function updateStatus() {
         if (Loaded.cpu && Loaded.gpu && Loaded.mobo && Loaded.ram && Loaded.cases && Loaded.storage) {
@@ -2848,53 +2896,55 @@ if (category === 'ssdNames' || category === 'hddNames') {
         return '';
     }
     
-    // UPDATED: Can accept a RAM object OR raw numbers
-function calculateCpuScore(cpu, ramOrFreq, stickCount, mode, useOC, useXMP, moboLimit = 0) {
-    let freq = useOC ? cpu.maxFreq : cpu.stdFreq;
-    if (!freq) freq = cpu.baseFreq;
-    if (!freq) return 0;
+    function calculateCpuScore(cpu, ramOrFreq, stickCount, mode, useOC, useXMP, moboLimit = 0) {
+        let freq = useOC ? cpu.maxFreq : cpu.stdFreq;
+        if (!freq) freq = cpu.baseFreq;
+        if (!freq) return 0;
 
-    const isTS = (mode === 'TS');
-    // Get Multipliers
-    const coreMult = isTS ? cpu.coreClockMultTS : cpu.coreClockMultTSX;
-    const memChanMult = isTS ? cpu.memChannelMultTS : cpu.memChannelMultTSX;
-    const memClockMult = isTS ? cpu.multTS : cpu.multTSX;
-    const adjustment = isTS ? cpu.finalAdjTS : cpu.finalAdjTSX;
+        const isTS = (mode === 'TS');
+        // Get Multipliers
+        const coreMult = isTS ? cpu.coreClockMultTS : cpu.coreClockMultTSX;
+        const memChanMult = isTS ? cpu.memChannelMultTS : cpu.memChannelMultTSX;
+        const memClockMult = isTS ? cpu.multTS : cpu.multTSX;
+        const adjustment = isTS ? cpu.finalAdjTS : cpu.finalAdjTSX;
 
-    let activeChannels, actualMemSpeed;
+        let activeChannels, actualMemSpeed;
 
-    // Determine Memory Speed
-    let targetRamFreq = 0;
-    
-    // Check if input is a RAM Object or just a number (Frequency)
-    if (typeof ramOrFreq === 'object' && ramOrFreq !== null) {
-        targetRamFreq = ramOrFreq.freq;
-    } else {
-        targetRamFreq = parseInt(ramOrFreq) || cpu.defaultMem || 2133;
-    }
-
-    // Determine Channels
-    activeChannels = Math.min(stickCount, cpu.maxMemChannels);
-
-    // Determine Actual Operating Speed (XMP vs JEDEC vs Mobo Limit)
-    if (useXMP) {
-        actualMemSpeed = targetRamFreq;
-        if (moboLimit > 0 && actualMemSpeed > moboLimit) {
-            actualMemSpeed = moboLimit;
+        // Determine Memory Speed
+        let targetRamFreq = 0;
+        
+        // Check if input is a RAM Object or just a number (Frequency)
+        if (typeof ramOrFreq === 'object' && ramOrFreq !== null) {
+            targetRamFreq = ramOrFreq.freq;
+        } else {
+            targetRamFreq = parseInt(ramOrFreq) || cpu.defaultMem || 2133;
         }
-    } else {
-        // Without XMP, it usually defaults to CPU default (e.g. 2133/2400) or the stick speed, whichever is lower
-        actualMemSpeed = Math.min(targetRamFreq, (cpu.defaultMem || 2133));
+
+        // --- UPDATED CHANNEL LOGIC ---
+        // If sticks < cpu.max -> use sticks
+        // If sticks > cpu.max -> use cpu.max (cap at max capability)
+        // This handles both the 3 sticks on 4-channel (result 3) AND 3 sticks on 2-channel (result 2) cases.
+        activeChannels = Math.min(stickCount, cpu.maxMemChannels);
+
+        // Determine Actual Operating Speed (XMP vs JEDEC vs Mobo Limit)
+        if (useXMP) {
+            actualMemSpeed = targetRamFreq;
+            if (moboLimit > 0 && actualMemSpeed > moboLimit) {
+                actualMemSpeed = moboLimit;
+            }
+        } else {
+            // Without XMP, it usually defaults to CPU default (e.g. 2133/2400) or the stick speed, whichever is lower
+            actualMemSpeed = Math.min(targetRamFreq, (cpu.defaultMem || 2133));
+        }
+
+        const coreScore = coreMult * freq;
+        const chanScore = memChanMult * activeChannels;
+        const speedScore = memClockMult * actualMemSpeed;
+        const sum = coreScore + chanScore + speedScore + adjustment;
+
+        const final = Math.floor(sum * 298);
+        return final > 0 ? final : 0;
     }
-
-    const coreScore = coreMult * freq;
-    const chanScore = memChanMult * activeChannels;
-    const speedScore = memClockMult * actualMemSpeed;
-    const sum = coreScore + chanScore + speedScore + adjustment;
-
-    const final = Math.floor(sum * 298);
-    return final > 0 ? final : 0;
-}
 
     function calculate3DMark(cpuScore, gpuScore) {
         if (!cpuScore || !gpuScore) return 0;
