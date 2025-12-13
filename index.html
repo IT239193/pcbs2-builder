@@ -2071,7 +2071,7 @@ function toggleUpgInputs() {
 }
 
 
-// 2. Main Upgrade Function (Updated Score Position)
+// 2. Main Upgrade Function (Updated Score Position & Air/Water Info)
 function findUpgrades() {
     const budget = parseFloat(document.getElementById('upgBudget').value) || 0;
     const userLevel = parseInt(document.getElementById('upgLevel').value) || 30;
@@ -2228,12 +2228,18 @@ function findUpgrades() {
         const brandClass = getBrandClass(p);
         const nameDisplay = u.count > 1 ? `${u.count}x ${u.name}` : u.name;
         
+        // --- NEW: Determine Cooling Info String ---
+        let coolingInfo = "";
+        if (targetType === 'gpu') {
+            coolingInfo = ` | ${p.isWater ? "Water" : "Air"}`;
+        }
+
         const html = `
         <div class="upgrade-card" style="border-left-color: ${u.price <= budget ? '#2ecc71' : '#e74c3c'}">
             <div class="upgrade-info">
                 <div class="upgrade-name ${brandClass}" style="color:white;">${nameDisplay}</div>
                 <div class="upgrade-stats">
-                    Total Watts: ${u.watts}W | Lvl: ${p.level}
+                    Total Watts: ${u.watts}W | Lvl: ${p.level}${coolingInfo}
                 </div>
             </div>
             <div class="upgrade-meta">
