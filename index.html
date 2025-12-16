@@ -9,19 +9,21 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.min.js"></script>
     <style>
 
-/* --- ADD TO CSS --- */
+/* --- DATA VIEWER COLORS --- */
+/* Text colors for Part Names based on brand */
+.text-amd { color: #d35400 !important; }      /* Orange */
+.text-nvidia { color: #76b900 !important; }   /* Green */
+.text-intel { color: #00d2ff !important; }    /* Cyan/Blue (CPU) */
+.text-intel-gpu { color: #0047AB !important; }/* Darker Blue (GPU) */
 
-/* Specific colors for Data Viewer GPU names */
-.name-air {
-    color: #95a5a6 !important; /* Grey */
-}
-.name-water {
-    color: #29b6f6 !important; /* Soft Cyan/Blue */
-}
+/* Text colors for the cooling suffix */
+.text-water { color: #000080 !important; font-weight: bold; } /* Navy Blue */
+.text-air { color: #95a5a6 !important; font-weight: bold; }   /* Grey */
 
-/* Ensure the filter hides smoothly when not on GPU tab */
-#dataGpuFilter {
-    transition: 0.2s;
+/* Update item-name-list to allow suffix to sit next to it */
+.item-name-list {
+    display: inline !important; /* Changed from block to inline */
+    margin-right: 5px;
 }
 
 
@@ -3053,19 +3055,17 @@ function switchDataTab(tab) {
 
 
 
-    
-/* REPLACE EXISTING renderDataList FUNCTION */
-function renderDataList() {
+    function renderDataList() {
     const container = document.getElementById('dataViewListContainer');
     container.innerHTML = '';
     const sortMode = document.getElementById('dataViewSort').value;
-    const gpuFilterMode = document.getElementById('dataGpuFilter').value; // Get the cooling filter
+    const gpuFilterMode = document.getElementById('dataGpuFilter').value; 
     
     let items = [];
     if (currentDataTab === 'gpu') {
         items = Array.from(DB.gpu.values());
         
-        // Apply Cooling Filter (Only for GPUs)
+        // Apply Cooling Filter
         if (gpuFilterMode === 'air') {
             items = items.filter(g => !g.isWater);
         } else if (gpuFilterMode === 'water') {
@@ -3085,40 +3085,51 @@ function renderDataList() {
         let priceB = b.price || 999999;
 
         if (currentDataTab === 'gpu') {
-            scoreA = a.score || 0; // Single GPU score
+            scoreA = a.score || 0;
             scoreB = b.score || 0;
         } else if (currentDataTab === 'cpu') {
-            scoreA = a.scoreTS || 0; // Base CPU Score
+            scoreA = a.scoreTS || 0;
             scoreB = b.scoreTS || 0;
         }
-        // Cases do not have a score, so scoreA/B remain 0
 
         if (sortMode === 'score_desc') return scoreB - scoreA;
         if (sortMode === 'score_asc') return scoreA - scoreB;
         if (sortMode === 'price_desc') return priceB - priceA;
         if (sortMode === 'price_asc') return priceA - priceB;
         
-        // Value = Score / Price
         let valA = (priceA > 0) ? scoreA / priceA : 0;
         let valB = (priceB > 0) ? scoreB / priceB : 0;
         
-        if (sortMode === 'val_desc') return valB - valA; // Most Overperforming (Best Value)
-        if (sortMode === 'val_asc') return valA - valB; // Most Underperforming (Worst Value)
+        if (sortMode === 'val_desc') return valB - valA;
+        if (sortMode === 'val_asc') return valA - valB;
         
         return 0;
     });
 
     items.forEach(item => {
         const div = document.createElement('div');
-        div.className = `data-list-row ${getBrandClass(item)}`;
-        let str = "";
+        const brandClass = getBrandClass(item); // e.g. 'brand-amd'
         
-        // Determine Color Class for Name
-        let nameColorClass = "";
+        // Keep the left border color logic
+        div.className = `data-list-row ${brandClass}`;
+
+        // 1. Determine Name Color based on Brand
+        let nameTextClass = "";
+        if (brandClass === 'brand-amd') nameTextClass = 'text-amd';
+        else if (brandClass === 'brand-nvidia') nameTextClass = 'text-nvidia';
+        else if (brandClass === 'brand-intel') nameTextClass = 'text-intel';
+        else if (brandClass === 'brand-intel-gpu') nameTextClass = 'text-intel-gpu';
+
+        // 2. Build the Cooling Suffix (Only for GPUs)
+        let suffixHtml = "";
         if (currentDataTab === 'gpu') {
-            nameColorClass = item.isWater ? "name-water" : "name-air";
+            const suffixText = item.isWater ? "| Water" : "| Air";
+            const suffixClass = item.isWater ? "text-water" : "text-air";
+            suffixHtml = `<span class="${suffixClass}">${suffixText}</span>`;
         }
 
+        // 3. Build the Stats String (str)
+        let str = "";
         if (currentDataTab === 'gpu') {
             const cooling = item.isWater ? "Water" : "Air";
             str = `Single GPU Score: ${item.rawScore || ""} | Double GPU Score ${item.rawScore2 || ""} | Triple GPU Score ${item.rawScore3 || ""} | Quad GPU Score ${item.rawScore4 || ""} | VRAM ${item.vram} | Length ${item.length} | Watt ${item.watts} | ${cooling} | Base Core/Max Core: ${item.baseCore || "?"}/${item.maxCore || "?"} MHz | Base Mem/Max Mem: ${item.baseMem || "?"}/${item.maxMem || "?"} MHz | Level ${item.level} | Price ${item.price} | Sell Price ${item.sellPrice} | Slot size: ${item.slotSize} |`;
@@ -3126,12 +3137,17 @@ function renderDataList() {
             const freqStr = `${item.baseFreq || "?"} / ${item.stdFreq || "?"} / ${item.maxFreq || "?"}`;
             str = `Basic Cpu Score: ${item.scoreTS} | Basic CPU Score (TSX): ${item.scoreTSX} | OC Score: ${item.ocScore} | Socket ${item.socket} | ${item.cores}C | BaseMidMaxFreq: ${freqStr} MHz | VoltageMinMax: ${item.voltage || "?"}/${item.maxVoltage || "?"} V | Can Delid ${item.canDelid} | Sell Price : ${item.sellPrice} | Price ${item.price} | Level ${item.level} | Max Memory Channels: ${item.maxMemChannelsRaw || "?"} | Supported Memory Types ${item.memTypes}`;
         } else if (currentDataTab === 'cases') {
-            // Case Info Display
             str = `Size: ${item.size} | Mobo Support: ${item.moboSizes} | Max GPU Len: ${item.maxGpuLen}mm | Max CPU Height: ${item.maxCpuHeight}mm | Max PSU Len: ${item.maxPsuLen}mm | Radiator Sizes: ${item.radSizes} | GPU Slots: ${item.gpuSlots} | SSD Slots: ${item.ssdSlots} | HDD Slots: ${item.hddSlots} | Level: ${item.level} | Price: ${formatCurrency(item.price)}`;
         }
 
-        // Applied the color class here
-        div.innerHTML = `<span class="item-name-list ${nameColorClass}">${item.name}</span><span class="raw-string">${str}</span>`;
+        // 4. Construct HTML: Title container + Stats
+        div.innerHTML = `
+            <div style="margin-bottom:4px;">
+                <span class="item-name-list ${nameTextClass}">${item.name}</span>
+                ${suffixHtml}
+            </div>
+            <span class="raw-string">${str}</span>`;
+        
         container.appendChild(div);
     });
     filterDataList();
