@@ -8,6 +8,24 @@
     <!-- SQLite WASM -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.min.js"></script>
     <style>
+
+/* --- ADD TO CSS --- */
+
+/* Specific colors for Data Viewer GPU names */
+.name-air {
+    color: #95a5a6 !important; /* Grey */
+}
+.name-water {
+    color: #29b6f6 !important; /* Soft Cyan/Blue */
+}
+
+/* Ensure the filter hides smoothly when not on GPU tab */
+#dataGpuFilter {
+    transition: 0.2s;
+}
+
+
+        
         :root {
             --bg-dark: #0f0f1e;
             --bg-panel: #1a1a2e;
@@ -1781,7 +1799,8 @@
     <!-- END OF CALCULATOR VIEW -->
     </div>
 
-    <!-- DATA VIEWER SECTION (This was missing/broken) -->
+<!-- FIND <div id="dataView" ...> AND REPLACE THE CONTROLS CONTAINER INSIDE IT -->
+
     <div id="dataView" style="display: none;">
         <div class="viewer-tabs">
             <button class="v-tab-btn active" onclick="switchDataTab('gpu')">GPUs</button>
@@ -1789,10 +1808,19 @@
             <button class="v-tab-btn" onclick="switchDataTab('cases')">Cases</button>
         </div>
         
-        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+        <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+            <!-- Search Box -->
             <input type="text" id="dataSearchBox" class="dropdown-search" style="flex: 2; padding:15px; font-size:1.1em;" placeholder="Type to filter components list..." oninput="filterDataList()">
             
-            <select id="dataViewSort" class="dropdown-search" style="flex: 1; padding: 15px; font-size: 1.1em; cursor: pointer;" onchange="renderDataList()">
+            <!-- NEW: GPU Cooling Filter (Default Visible because GPU is default tab) -->
+            <select id="dataGpuFilter" class="dropdown-search" style="flex: 1; padding: 15px; font-size: 1.1em; cursor: pointer; min-width: 150px;" onchange="renderDataList()">
+                <option value="both">All Types</option>
+                <option value="air">Air Cooled</option>
+                <option value="water">Water Cooled</option>
+            </select>
+
+            <!-- Sort Box -->
+            <select id="dataViewSort" class="dropdown-search" style="flex: 1; padding: 15px; font-size: 1.1em; cursor: pointer; min-width: 150px;" onchange="renderDataList()">
                 <option value="score_desc">Highest Score</option>
                 <option value="score_asc">Lowest Score</option>
                 <option value="price_desc">Highest Price</option>
@@ -1804,7 +1832,6 @@
 
         <div id="dataViewListContainer"></div>
     </div>
-    <!-- END DATA VIEWER SECTION -->
 
 <!-- UPGRADER VIEW -->
 <div id="upgraderView" style="display: none;">
@@ -2989,6 +3016,8 @@ if (selectedOptions.ramNames.size > 0) {
         }
     }
 
+
+/* REPLACE EXISTING switchDataTab FUNCTION */
 function switchDataTab(tab) {
     currentDataTab = tab;
     const btns = document.querySelectorAll('.v-tab-btn');
@@ -2999,8 +3028,18 @@ function switchDataTab(tab) {
     else if(tab === 'cpu') btns[1].classList.add('active');
     else if(tab === 'cases') btns[2].classList.add('active');
     
+    // Show/Hide the GPU Cooling Filter Dropdown
+    const gpuFilter = document.getElementById('dataGpuFilter');
+    if (tab === 'gpu') {
+        gpuFilter.style.display = 'block';
+    } else {
+        gpuFilter.style.display = 'none';
+        gpuFilter.value = 'both'; // Reset filter when switching away
+    }
+
     renderDataList();
 }
+    
 
     function filterDataList() {
         const q = document.getElementById('dataSearchBox').value.toLowerCase();
@@ -3013,15 +3052,31 @@ function switchDataTab(tab) {
 
 
 
+
+    
+/* REPLACE EXISTING renderDataList FUNCTION */
 function renderDataList() {
     const container = document.getElementById('dataViewListContainer');
     container.innerHTML = '';
     const sortMode = document.getElementById('dataViewSort').value;
+    const gpuFilterMode = document.getElementById('dataGpuFilter').value; // Get the cooling filter
     
     let items = [];
-    if (currentDataTab === 'gpu') items = Array.from(DB.gpu.values());
-    else if (currentDataTab === 'cpu') items = Array.from(DB.cpu.values());
-    else if (currentDataTab === 'cases') items = Array.from(DB.cases.values());
+    if (currentDataTab === 'gpu') {
+        items = Array.from(DB.gpu.values());
+        
+        // Apply Cooling Filter (Only for GPUs)
+        if (gpuFilterMode === 'air') {
+            items = items.filter(g => !g.isWater);
+        } else if (gpuFilterMode === 'water') {
+            items = items.filter(g => g.isWater);
+        }
+
+    } else if (currentDataTab === 'cpu') {
+        items = Array.from(DB.cpu.values());
+    } else if (currentDataTab === 'cases') {
+        items = Array.from(DB.cases.values());
+    }
 
     // SORTING LOGIC
     items.sort((a,b) => {
@@ -3058,6 +3113,12 @@ function renderDataList() {
         div.className = `data-list-row ${getBrandClass(item)}`;
         let str = "";
         
+        // Determine Color Class for Name
+        let nameColorClass = "";
+        if (currentDataTab === 'gpu') {
+            nameColorClass = item.isWater ? "name-water" : "name-air";
+        }
+
         if (currentDataTab === 'gpu') {
             const cooling = item.isWater ? "Water" : "Air";
             str = `Single GPU Score: ${item.rawScore || ""} | Double GPU Score ${item.rawScore2 || ""} | Triple GPU Score ${item.rawScore3 || ""} | Quad GPU Score ${item.rawScore4 || ""} | VRAM ${item.vram} | Length ${item.length} | Watt ${item.watts} | ${cooling} | Base Core/Max Core: ${item.baseCore || "?"}/${item.maxCore || "?"} MHz | Base Mem/Max Mem: ${item.baseMem || "?"}/${item.maxMem || "?"} MHz | Level ${item.level} | Price ${item.price} | Sell Price ${item.sellPrice} | Slot size: ${item.slotSize} |`;
@@ -3069,7 +3130,8 @@ function renderDataList() {
             str = `Size: ${item.size} | Mobo Support: ${item.moboSizes} | Max GPU Len: ${item.maxGpuLen}mm | Max CPU Height: ${item.maxCpuHeight}mm | Max PSU Len: ${item.maxPsuLen}mm | Radiator Sizes: ${item.radSizes} | GPU Slots: ${item.gpuSlots} | SSD Slots: ${item.ssdSlots} | HDD Slots: ${item.hddSlots} | Level: ${item.level} | Price: ${formatCurrency(item.price)}`;
         }
 
-        div.innerHTML = `<span class="item-name-list">${item.name}</span><span class="raw-string">${str}</span>`;
+        // Applied the color class here
+        div.innerHTML = `<span class="item-name-list ${nameColorClass}">${item.name}</span><span class="raw-string">${str}</span>`;
         container.appendChild(div);
     });
     filterDataList();
