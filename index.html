@@ -2676,232 +2676,287 @@ if (selectedOptions.ramNames.size > 0) {
     }
 
     function parseHTML(fname, html) {
-        const n = fname.toLowerCase();
+  const n = (fname || "").toLowerCase();
 
-        // --- NEW: HANDLING FOR MOBORAM.TXT ---
-        if (n.includes('moboram.txt')) {
-            const lines = html.split(/\r?\n/);
-            let matchCount = 0;
-            let missingCount = 0;
+  // --- HANDLING FOR MOBORAM.TXT (same logic) ---
+  if (n.includes('moboram.txt')) {
+    const lines = html.split(/\r?\n/);
+    let matchCount = 0;
+    let missingCount = 0;
 
-            // Group the warnings so they don't clutter the console unless you open them
-            console.groupCollapsed("MOBORAM.txt - Missing Matches");
+    console.groupCollapsed("MOBORAM.txt - Missing Matches");
 
-            lines.forEach(line => {
-                line = line.trim();
-                // Skip empty lines or headers not starting with *
-                if (!line || !line.startsWith('*')) return;
+    lines.forEach(line => {
+      line = line.trim();
+      if (!line || !line.startsWith('*')) return;
 
-                // Format: * Name | 4
-                // Step 1: Remove the leading '*'
-                let content = line.substring(1).trim(); 
-                
-                // Step 2: Split by '|' to separate Name and Count
-                if (!content.includes('|')) return;
-                
-                const parts = content.split('|');
-                const rawName = parts[0].trim();
-                const nameKey = rawName.toLowerCase(); // The name to search for
-                const slotCount = parseInt(parts[1].trim()) || 4; // The slot limit
+      let content = line.substring(1).trim();
+      if (!content.includes('|')) return;
 
-                let foundForThisEntry = false;
+      const parts = content.split('|');
+      const rawName = parts[0].trim();
+      const nameKey = rawName.toLowerCase();
+      const slotCount = parseInt(parts[1].trim()) || 4;
 
-                // Step 3: Find matching Motherboard in DB
-                // We check if the nameKey exists inside the Asset Path OR Concat Name
-                for (const mobo of DB.mobo.values()) {
-                    const asset = (mobo.assetPath || "").toLowerCase();
-                    const concat = (mobo.concatName || "").toLowerCase();
-                    
-                    // Match logic: strict inclusion
-                    if (asset.includes(nameKey) || concat.includes(nameKey)) {
-                        mobo.ramSlots = slotCount;
-                        matchCount++;
-                        foundForThisEntry = true;
-                    }
-                }
+      let foundForThisEntry = false;
 
-                if (!foundForThisEntry) {
-                    console.warn(`Not Found: "${rawName}"`);
-                    missingCount++;
-                }
-            });
+      for (const mobo of DB.mobo.values()) {
+        const asset = (mobo.assetPath || "").toLowerCase();
+        const concat = (mobo.concatName || "").toLowerCase();
 
-            console.groupEnd(); // Close the log group
-            console.log(`MOBORAM.txt: Updated slots for ${matchCount} boards. Missing/Unmatched entries: ${missingCount}`);
-            return matchCount;
+        if (asset.includes(nameKey) || concat.includes(nameKey)) {
+          mobo.ramSlots = slotCount;
+          matchCount++;
+          foundForThisEntry = true;
         }
+      }
 
-        // --- STANDARD HTML TABLE PARSING ---
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const rows = Array.from(doc.querySelectorAll('tr'));
-        if (rows.length < 2) return 0;
+      if (!foundForThisEntry) {
+        console.warn(`Not Found: "${rawName}"`);
+        missingCount++;
+      }
+    });
 
-        const headers = Array.from(rows[0].querySelectorAll('td')).map(td => td.getAttribute('div') || td.textContent.trim());
-        const idx = {};
-        headers.forEach((h, i) => idx[h] = i);
-        
-        const get = (cells, key) => (idx[key] !== undefined && cells[idx[key]]) ? cells[idx[key]].textContent.trim() : '';
-        const getNum = (cells, key) => {
-            const val = get(cells, key);
-            if (!val) return 0;
-            return parseFloat(val.replace(/[^\d.-]/g, '')) || 0;
-        };
+    console.groupEnd();
+    console.log(`MOBORAM.txt: Updated slots for ${matchCount} boards. Missing/Unmatched entries: ${missingCount}`);
+    return matchCount;
+  }
 
-        let type = '';
-        
-        if (n.includes('cpu.txt')) type = 'cpu';
-        else if (n.includes('gpu')) type = 'gpu';
-        else if (n.includes('ram')) type = 'ram';
-        else if (n.includes('motherboard')) type = 'mobo';
-        else if (n.includes('cases')) type = 'cases';
-        else if (n.includes('cooler')) type = 'cooler';
-        else if (n.includes('psu') || n.includes('power supplies')) type = 'psu';
-        else if (n.includes('case fans') || n.includes('fans')) type = 'fan';
-        else if (n.includes('storage')) type = 'storage';
+  // --- STANDARD HTML PARSING (supports both header-tables and td div="Key" tables) ---
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+  const rows = Array.from(doc.querySelectorAll('tr'));
+  if (rows.length < 1) return 0;
 
-        if (!type) return 0;
-        let addedCount = 0; 
+  // Determine type from filename
+  let type = '';
+  if (n.includes('cpu.txt')) type = 'cpu';
+  else if (n.includes('gpu')) type = 'gpu';
+  else if (n.includes('ram')) type = 'ram';
+  else if (n.includes('motherboard')) type = 'mobo';
+  else if (n.includes('cases')) type = 'cases';
+  else if (n.includes('cooler')) type = 'cooler';
+  else if (n.includes('psu') || n.includes('power supplies')) type = 'psu';
+  else if (n.includes('case fans') || n.includes('fans')) type = 'fan';
+  else if (n.includes('storage')) type = 'storage';
+  if (!type) return 0;
 
-        for (let i = 1; i < rows.length; i++) {
-            const cells = rows[i].querySelectorAll('td');
-            if (!cells.length) continue;
-            
-            const price = getNum(cells, 'Price');
-            if (price <= 0) continue;
-
-            const base = {
-                name: get(cells, 'Part Name'),
-                price: price,
-                sellPrice: get(cells, 'Sell Price') || "0",
-                level: parseInt(get(cells, 'Level')) || 0,
-                mfgr: get(cells, 'Manufacturer')
-            };
-
-            if (type === 'cpu') {
-                base.scoreTS = getNum(cells, 'Basic CPU Score (TS)');
-                base.scoreTSX = getNum(cells, 'Basic CPU Score (TSX)');
-                if (!base.scoreTS) base.scoreTS = base.scoreTSX;
-                base.socket = get(cells, 'CPU Socket');
-                base.watts = getNum(cells, 'Wattage');
-                
-                base.coreClockMultTS = getNum(cells, 'Core Clock Multiplier (TS)');
-                base.multTS = getNum(cells, 'Mem Clock Multiplier (TS)');
-                base.memChannelMultTS = getNum(cells, 'Mem Channels Multiplier (TS)');
-                base.finalAdjTS = getNum(cells, 'Final Adjustment (TS)');
-                base.coreClockMultTSX = getNum(cells, 'Core Clock Multiplier (TSX)');
-                base.multTSX = getNum(cells, 'Mem Clock Multiplier (TSX)');   
-                base.memChannelMultTSX = getNum(cells, 'Mem Channels Multiplier (TSX)');
-                base.finalAdjTSX = getNum(cells, 'Final Adjustment (TSX)');
-                base.defaultMem = getNum(cells, 'Default Memory Speed') || 2133;
-
-                base.maxMemChannels = getNum(cells, 'Max Memory Channels') || 2;
-                base.maxMemChannelsRaw = get(cells, 'Max Memory Channels');
-                base.memTypes = get(cells, 'Supported Memory Types');
-                base.cores = get(cells, 'Cores');
-                
-                base.stdFreq = getNum(cells, 'Frequency');       
-                base.baseFreq = getNum(cells, 'Base Frequency'); 
-                base.maxFreq = getNum(cells, 'Max Freq');        
-
-                if (!base.stdFreq) base.stdFreq = base.baseFreq;
-                if (!base.maxFreq) base.maxFreq = base.stdFreq;
-
-                base.voltage = get(cells, 'Voltage');
-                base.maxVoltage = get(cells, 'Max Voltage');
-                base.canOC = get(cells, 'Can Overclock');
-                base.ocScore = get(cells, 'Overclock Basic CPU Score') || "-";
-                base.canDelid = get(cells, 'Can Delid');
-
-            } else if (type === 'gpu') {
-                    const partType = get(cells, 'Part Type'); // "Part Type" kolonunu oku
-                base.score = getNum(cells, 'Single GPU Graphics Score');
-                base.score2 = getNum(cells, 'Double GPU Graphics Score');
-                base.score3 = getNum(cells, 'Triple GPU Graphics Score');
-                base.score4 = getNum(cells, 'Quad GPU Graphics Score');
-                base.rawScore = get(cells, 'Single GPU Graphics Score');
-                base.rawScore2 = get(cells, 'Double GPU Graphics Score');
-                base.rawScore3 = get(cells, 'Triple GPU Graphics Score');
-                base.rawScore4 = get(cells, 'Quad GPU Graphics Score');
-                base.watts = getNum(cells, 'Wattage');
-                base.vram = getNum(cells, 'VRAM (GB)');
-                base.length = getNum(cells, 'Length');
-                base.multi = get(cells, 'Double GPU supported') === 'Yes';
-                base.sliType = get(cells, 'Double GPU SLI') === 'Yes' ? 'SLI' : 'Crossfire';
-                base.isWater = (partType === 'WaterCooledGPU');
-                base.baseCore = get(cells, 'Base Core Clock Freq');
-                base.baseMem = get(cells, 'Base Mem Clock Freq');
-                base.maxCore = get(cells, 'GPU max clock');
-                base.maxMem = get(cells, 'GPU max mem clock');
-                base.chipset = get(cells, 'Chipset');
-                base.slotSize = get(cells, 'Slot Size') || get(cells, 'Size') || "N/A";
-
-            } else if (type === 'ram') {
-                base.freq = getNum(cells, 'Frequency');
-                base.type = get(cells, 'Ram Type');
-                base.size = getNum(cells, 'Size each (GB)');
-                base.totalSize = getNum(cells, 'Total Size (GB)');
-                base.voltage = get(cells, 'Voltage');
-                base.maxVoltage = get(cells, 'Max Voltage');
-                base.maxSpeed = getNum(cells, 'Max Speed');
-                base.mfgr = get(cells, 'Manufacturer') || get(cells, 'Brand');
-                base.name = `${base.name} ${base.freq}MHz ${base.size}GB`;
-
-            } else if (type === 'mobo') {
-                base.socket = get(cells, 'CPU Socket');
-                base.ramType = get(cells, 'Ram Type');
-                base.size = get(cells, 'Motherboard Size');
-                base.pciSlots = getNum(cells, 'PCI Slots');
-                base.supportSLI = get(cells, 'Support SLI') === 'Yes';
-                base.supportCF = get(cells, 'Support Crossfire') === 'Yes';
-                base.maxMemSpeed = getNum(cells, 'Max Memory Speed'); 
-                base.defaultMem = getNum(cells, 'Default Memory Speed') || 2133;
-                
-                // Capture Asset Path and Concat Name for MOBORAM matching
-                base.assetPath = get(cells, 'Asset Path');
-                base.concatName = get(cells, 'Concat name');
-                // Default RAM slots based on Size
-                base.ramSlots = (base.size === 'Mini-ITX') ? 2 : 4; 
-
-            } else if (type === 'cases') {
-                base.size = get(cells, 'Case Size');
-                base.moboSizes = get(cells, 'Motherboard Size');
-                base.maxGpuLen = getNum(cells, 'Max GPU length');
-                base.maxCpuHeight = getNum(cells, 'Max CPU Fan Height');
-                base.maxPsuLen = getNum(cells, 'Max PSU length');
-                base.radSizes = get(cells, 'Max Radiator Sizes') || "";
-                base.gpuSlots = getNum(cells, 'GPU Slots');
-                base.ssdSlots = getNum(cells, 'SSD Slots');
-                base.hddSlots = getNum(cells, 'HDD Slots');
-            } else if (type === 'cooler') {
-                base.type = get(cells, 'Type');
-                base.height = getNum(cells, 'Height');
-                base.size = getNum(cells, 'Size');
-                base.sockets = get(cells, 'CPU Socket List');
-                base.flow = getNum(cells, 'Air Flow');
-            } else if (type === 'psu') {
-                base.watts = getNum(cells, 'Wattage');
-                base.length = getNum(cells, 'Length');
-            } else if (type === 'fan') {
-                base.size = getNum(cells, 'Size');
-                base.flow = getNum(cells, 'Air Flow');
-            } else if (type === 'storage') {
-                base.sizeGB = getNum(cells, 'Size (GB)');
-                base.sizeStr = base.sizeGB >= 1000 ? (base.sizeGB/1000)+'TB' : base.sizeGB+'GB';
-                base.speed = getNum(cells, 'Transfer Speed') || getNum(cells, 'Speed');
-                base.type = get(cells, 'Type');
-                base.mfgr = get(cells, 'Manufacturer');
-                base.name = `${base.name} (${base.sizeStr})`;
-            }
-
-            DB[type].set(base.name, base);
-            addedCount++; 
-        }
-
-        Loaded[type] = true;
-        updateStatus();
-        return addedCount; 
+  // Helper: detect format (td has attribute div="Price"/"Part Name" etc.)
+  const hasDivKeyFormat = (() => {
+    const firstRowCells = rows[0].querySelectorAll('td,th');
+    for (const c of firstRowCells) {
+      const k = (c.getAttribute('div') || '').trim();
+      if (k) return true;
     }
+    return false;
+  })();
+
+  // Helper: row -> key/value map (div="Key")
+  const cellsToMapDivAttr = (row) => {
+    const map = {};
+    row.querySelectorAll('td,th').forEach(cell => {
+      const key = (cell.getAttribute('div') || '').trim();
+      if (!key) return;
+      map[key] = (cell.textContent || '').trim();
+    });
+    return map;
+  };
+
+  // Helper: header-indexed format (first row is header)
+  const buildHeaderIndex = (headerRow) => {
+    const headers = Array.from(headerRow.querySelectorAll('td,th'))
+      .map(cell => (cell.getAttribute('data-label') || cell.textContent || '').trim());
+    const idx = {};
+    headers.forEach((h, i) => { if (h) idx[h] = i; });
+    return idx;
+  };
+  const cellsToMapByHeaderIndex = (row, idx) => {
+    const cells = Array.from(row.querySelectorAll('td,th'));
+    const map = {};
+    Object.keys(idx).forEach(k => {
+      const i = idx[k];
+      map[k] = (cells[i]?.textContent || '').trim();
+    });
+    return map;
+  };
+
+  const get = (m, key) => (m && m[key] != null) ? String(m[key]).trim() : '';
+  const getNum = (m, key) => {
+    const val = get(m, key);
+    if (!val) return 0;
+    return parseFloat(val.replace(/[^\d.-]/g, '')) || 0;
+  };
+
+  let addedCount = 0;
+
+  // Decide how to read rows
+  let startIndex = 0;
+  let headerIdx = null;
+
+  // If not div-attr format, assume first row is header and start from row 1
+  if (!hasDivKeyFormat) {
+    if (rows.length < 2) return 0;
+    headerIdx = buildHeaderIndex(rows[0]);
+    startIndex = 1;
+  }
+
+  for (let i = startIndex; i < rows.length; i++) {
+    const map = hasDivKeyFormat
+      ? cellsToMapDivAttr(rows[i])
+      : cellsToMapByHeaderIndex(rows[i], headerIdx);
+
+    // Must have a valid price to include
+    const price = getNum(map, 'Price');
+    if (price <= 0) continue;
+
+    const base = {
+      name: get(map, 'Part Name'),
+      price: price,
+      // Your files sometimes use SellPrice (no space)
+      sellPrice: get(map, 'SellPrice') || get(map, 'Sell Price') || "0",
+      level: parseInt(get(map, 'Level')) || 0,
+      mfgr: get(map, 'Manufacturer')
+    };
+
+    if (!base.name) continue;
+
+    if (type === 'cpu') {
+      base.scoreTS = getNum(map, 'Basic CPU Score (TS)');
+      base.scoreTSX = getNum(map, 'Basic CPU Score (TSX)');
+      if (!base.scoreTS) base.scoreTS = base.scoreTSX;
+
+      base.socket = get(map, 'CPU Socket');
+      base.watts = getNum(map, 'Wattage');
+
+      base.coreClockMultTS = getNum(map, 'Core Clock Multiplier (TS)');
+      base.multTS = getNum(map, 'Mem Clock Multiplier (TS)');
+      base.memChannelMultTS = getNum(map, 'Mem Channels Multiplier (TS)');
+      base.finalAdjTS = getNum(map, 'Final Adjustment (TS)');
+
+      base.coreClockMultTSX = getNum(map, 'Core Clock Multiplier (TSX)');
+      base.multTSX = getNum(map, 'Mem Clock Multiplier (TSX)');
+      base.memChannelMultTSX = getNum(map, 'Mem Channels Multiplier (TSX)');
+      base.finalAdjTSX = getNum(map, 'Final Adjustment (TSX)');
+
+      base.defaultMem = getNum(map, 'Default Memory Speed') || 2133;
+
+      base.maxMemChannels = getNum(map, 'Max Memory Channels') || 2;
+      base.maxMemChannelsRaw = get(map, 'Max Memory Channels');
+      base.memTypes = get(map, 'Supported Memory Types');
+      base.cores = get(map, 'Cores');
+
+      base.stdFreq = getNum(map, 'Frequency');
+      base.baseFreq = getNum(map, 'Base Frequency');
+      base.maxFreq = getNum(map, 'Max Freq');
+      if (!base.stdFreq) base.stdFreq = base.baseFreq;
+      if (!base.maxFreq) base.maxFreq = base.stdFreq;
+
+      base.voltage = get(map, 'Voltage');
+      base.maxVoltage = get(map, 'Max Voltage');
+      base.canOC = get(map, 'Can Overclock');
+      base.ocScore = get(map, 'Overclock Basic CPU Score') || "-";
+      base.canDelid = get(map, 'Can Delid');
+
+    } else if (type === 'gpu') {
+      const partType = get(map, 'Part Type'); // in your example: WaterCooledGPU
+
+      base.score  = getNum(map, 'Single GPU Graphics Score');
+      base.score2 = getNum(map, 'Double GPU Graphics Score');
+      base.score3 = getNum(map, 'Triple GPU Graphics Score');
+      base.score4 = getNum(map, 'Quad GPU Graphics Score');
+
+      base.rawScore  = get(map, 'Single GPU Graphics Score');
+      base.rawScore2 = get(map, 'Double GPU Graphics Score');
+      base.rawScore3 = get(map, 'Triple GPU Graphics Score');
+      base.rawScore4 = get(map, 'Quad GPU Graphics Score');
+
+      base.watts = getNum(map, 'Wattage');
+      base.vram = getNum(map, 'VRAM (GB)');
+      base.length = getNum(map, 'Length');
+
+      base.multi = get(map, 'Double GPU supported') === 'Yes';
+      base.sliType = get(map, 'Double GPU SLI') === 'Yes' ? 'SLI' : 'Crossfire';
+
+      // Main fix: use Part Type, with filename fallback
+      base.isWater = (partType === 'WaterCooledGPU') || n.includes('water');
+
+      base.baseCore = get(map, 'Base Core Clock Freq');
+      base.baseMem = get(map, 'Base Mem Clock Freq');
+      base.maxCore = get(map, 'GPU max clock');
+      base.maxMem = get(map, 'GPU max mem clock');
+
+      base.chipset = get(map, 'Chipset');
+      base.slotSize = get(map, 'Slot Size') || get(map, 'Size') || "N/A";
+
+    } else if (type === 'ram') {
+      base.freq = getNum(map, 'Frequency');
+      base.type = get(map, 'Ram Type');
+      base.size = getNum(map, 'Size each (GB)');
+      base.totalSize = getNum(map, 'Total Size (GB)');
+      base.voltage = get(map, 'Voltage');
+      base.maxVoltage = get(map, 'Max Voltage');
+      base.maxSpeed = getNum(map, 'Max Speed');
+      base.mfgr = get(map, 'Manufacturer') || get(map, 'Brand');
+      base.name = `${base.name} ${base.freq}MHz ${base.size}GB`;
+
+    } else if (type === 'mobo') {
+      base.socket = get(map, 'CPU Socket');
+      base.ramType = get(map, 'Ram Type');
+      base.size = get(map, 'Motherboard Size');
+      base.pciSlots = getNum(map, 'PCI Slots');
+      base.supportSLI = get(map, 'Support SLI') === 'Yes';
+      base.supportCF = get(map, 'Support Crossfire') === 'Yes';
+      base.maxMemSpeed = getNum(map, 'Max Memory Speed');
+      base.defaultMem = getNum(map, 'Default Memory Speed') || 2133;
+
+      base.assetPath = get(map, 'Asset Path');
+      base.concatName = get(map, 'Concat name');
+
+      base.ramSlots = (base.size === 'Mini-ITX') ? 2 : 4;
+
+    } else if (type === 'cases') {
+      base.size = get(map, 'Case Size');
+      base.moboSizes = get(map, 'Motherboard Size');
+      base.maxGpuLen = getNum(map, 'Max GPU length');
+      base.maxCpuHeight = getNum(map, 'Max CPU Fan Height');
+      base.maxPsuLen = getNum(map, 'Max PSU length');
+      base.radSizes = get(map, 'Max Radiator Sizes') || "";
+      base.gpuSlots = getNum(map, 'GPU Slots');
+      base.ssdSlots = getNum(map, 'SSD Slots');
+      base.hddSlots = getNum(map, 'HDD Slots');
+
+    } else if (type === 'cooler') {
+      base.type = get(map, 'Type');
+      base.height = getNum(map, 'Height');
+      base.size = getNum(map, 'Size');
+      base.sockets = get(map, 'CPU Socket List');
+      base.flow = getNum(map, 'Air Flow');
+
+    } else if (type === 'psu') {
+      base.watts = getNum(map, 'Wattage');
+      base.length = getNum(map, 'Length');
+
+    } else if (type === 'fan') {
+      base.size = getNum(map, 'Size');
+      base.flow = getNum(map, 'Air Flow');
+
+    } else if (type === 'storage') {
+      base.sizeGB = getNum(map, 'Size (GB)');
+      base.sizeStr = base.sizeGB >= 1000 ? (base.sizeGB / 1000) + 'TB' : base.sizeGB + 'GB';
+      base.speed = getNum(map, 'Transfer Speed') || getNum(map, 'Speed');
+      base.type = get(map, 'Type');
+      base.mfgr = get(map, 'Manufacturer');
+      base.name = `${base.name} (${base.sizeStr})`;
+    }
+
+    DB[type].set(base.name, base);
+    addedCount++;
+  }
+
+  Loaded[type] = true;
+  updateStatus();
+  return addedCount;
+}
 
 
 
@@ -4877,4 +4932,4 @@ if (type === 'fan') {
 
 </script>
 </body>
-    </html>
+      </html>
