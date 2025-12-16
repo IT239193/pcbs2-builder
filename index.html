@@ -2814,6 +2814,7 @@ if (selectedOptions.ramNames.size > 0) {
                 base.canDelid = get(cells, 'Can Delid');
 
             } else if (type === 'gpu') {
+                    const partType = get(cells, 'Part Type'); // "Part Type" kolonunu oku
                 base.score = getNum(cells, 'Single GPU Graphics Score');
                 base.score2 = getNum(cells, 'Double GPU Graphics Score');
                 base.score3 = getNum(cells, 'Triple GPU Graphics Score');
