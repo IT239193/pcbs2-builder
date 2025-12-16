@@ -1763,27 +1763,6 @@
         </div>
     </div>
 
-<div class="viewer-tabs">
-    <button class="v-tab-btn active" onclick="switchDataTab('gpu')">GPUs</button>
-    <button class="v-tab-btn" onclick="switchDataTab('cpu')">CPUs</button>
-    <button class="v-tab-btn" onclick="switchDataTab('cases')">Cases</button>
-</div>
-    
-    <div style="display: flex; gap: 15px; margin-bottom: 20px;">
-        <input type="text" id="dataSearchBox" class="dropdown-search" style="flex: 2; padding:15px; font-size:1.1em;" placeholder="Type to filter components list..." oninput="filterDataList()">
-        
-        <select id="dataViewSort" class="dropdown-search" style="flex: 1; padding: 15px; font-size: 1.1em; cursor: pointer;" onchange="renderDataList()">
-            <option value="score_desc">Highest Score</option>
-            <option value="score_asc">Lowest Score</option>
-            <option value="price_desc">Highest Price</option>
-            <option value="price_asc">Lowest Price</option>
-            <option value="val_desc">Most Overperforming</option>
-            <option value="val_asc">Most Underperforming</option>
-        </select>
-    </div>
-
-    <div id="dataViewListContainer"></div>
-</div>
 
 
 
