@@ -2827,7 +2827,7 @@ if (selectedOptions.ramNames.size > 0) {
                 base.length = getNum(cells, 'Length');
                 base.multi = get(cells, 'Double GPU supported') === 'Yes';
                 base.sliType = get(cells, 'Double GPU SLI') === 'Yes' ? 'SLI' : 'Crossfire';
-                base.isWater = n.includes('water');
+                base.isWater = n.includes('Water Cooled GPU');
                 base.baseCore = get(cells, 'Base Core Clock Freq');
                 base.baseMem = get(cells, 'Base Mem Clock Freq');
                 base.maxCore = get(cells, 'GPU max clock');
