@@ -1764,11 +1764,11 @@
     </div>
 
     <!-- REPLACE THE ENTIRE <div id="dataView"> SECTION WITH THIS -->
-<div id="dataView" style="display: none;">
-    <div class="viewer-tabs">
-        <button class="v-tab-btn active" onclick="switchDataTab('gpu')">GPUs</button>
-        <button class="v-tab-btn" onclick="switchDataTab('cpu')">CPUs</button>
-    </div>
+<div class="viewer-tabs">
+    <button class="v-tab-btn active" onclick="switchDataTab('gpu')">GPUs</button>
+    <button class="v-tab-btn" onclick="switchDataTab('cpu')">CPUs</button>
+    <button class="v-tab-btn" onclick="switchDataTab('cases')">Cases</button>
+</div>
     
     <div style="display: flex; gap: 15px; margin-bottom: 20px;">
         <input type="text" id="dataSearchBox" class="dropdown-search" style="flex: 2; padding:15px; font-size:1.1em;" placeholder="Type to filter components list..." oninput="filterDataList()">
@@ -2915,14 +2915,18 @@ if (selectedOptions.ramNames.size > 0) {
         }
     }
 
-    function switchDataTab(tab) {
-        currentDataTab = tab;
-        const btns = document.querySelectorAll('.v-tab-btn');
-        btns.forEach(b => b.classList.remove('active'));
-        if(tab === 'gpu') btns[0].classList.add('active');
-        else btns[1].classList.add('active');
-        renderDataList();
-    }
+function switchDataTab(tab) {
+    currentDataTab = tab;
+    const btns = document.querySelectorAll('.v-tab-btn');
+    btns.forEach(b => b.classList.remove('active'));
+    
+    // Update active state based on selection
+    if(tab === 'gpu') btns[0].classList.add('active');
+    else if(tab === 'cpu') btns[1].classList.add('active');
+    else if(tab === 'cases') btns[2].classList.add('active');
+    
+    renderDataList();
+}
 
     function filterDataList() {
         const q = document.getElementById('dataSearchBox').value.toLowerCase();
@@ -2934,58 +2938,66 @@ if (selectedOptions.ramNames.size > 0) {
     }
 
     function renderDataList() {
-        const container = document.getElementById('dataViewListContainer');
-        container.innerHTML = '';
-        const sortMode = document.getElementById('dataViewSort').value;
+    const container = document.getElementById('dataViewListContainer');
+    container.innerHTML = '';
+    const sortMode = document.getElementById('dataViewSort').value;
+    
+    let items = [];
+    if (currentDataTab === 'gpu') items = Array.from(DB.gpu.values());
+    else if (currentDataTab === 'cpu') items = Array.from(DB.cpu.values());
+    else if (currentDataTab === 'cases') items = Array.from(DB.cases.values());
+
+    // SORTING LOGIC
+    items.sort((a,b) => {
+        let scoreA = 0, scoreB = 0;
+        let priceA = a.price || 999999;
+        let priceB = b.price || 999999;
+
+        if (currentDataTab === 'gpu') {
+            scoreA = a.score || 0; // Single GPU score
+            scoreB = b.score || 0;
+        } else if (currentDataTab === 'cpu') {
+            scoreA = a.scoreTS || 0; // Base CPU Score
+            scoreB = b.scoreTS || 0;
+        }
+        // Cases do not have a score, so scoreA/B remain 0
+
+        if (sortMode === 'score_desc') return scoreB - scoreA;
+        if (sortMode === 'score_asc') return scoreA - scoreB;
+        if (sortMode === 'price_desc') return priceB - priceA;
+        if (sortMode === 'price_asc') return priceA - priceB;
         
-        let items = [];
-        if (currentDataTab === 'gpu') items = Array.from(DB.gpu.values());
-        else items = Array.from(DB.cpu.values());
+        // Value = Score / Price
+        let valA = (priceA > 0) ? scoreA / priceA : 0;
+        let valB = (priceB > 0) ? scoreB / priceB : 0;
+        
+        if (sortMode === 'val_desc') return valB - valA; // Most Overperforming (Best Value)
+        if (sortMode === 'val_asc') return valA - valB; // Most Underperforming (Worst Value)
+        
+        return 0;
+    });
 
-        // SORTING LOGIC
-        items.sort((a,b) => {
-            let scoreA = 0, scoreB = 0;
-            let priceA = a.price || 999999;
-            let priceB = b.price || 999999;
+    items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = `data-list-row ${getBrandClass(item)}`;
+        let str = "";
+        
+        if (currentDataTab === 'gpu') {
+            const cooling = item.isWater ? "Water" : "Air";
+            str = `Single GPU Score: ${item.rawScore || ""} | Double GPU Score ${item.rawScore2 || ""} | Triple GPU Score ${item.rawScore3 || ""} | Quad GPU Score ${item.rawScore4 || ""} | VRAM ${item.vram} | Length ${item.length} | Watt ${item.watts} | ${cooling} | Base Core/Max Core: ${item.baseCore || "?"}/${item.maxCore || "?"} MHz | Base Mem/Max Mem: ${item.baseMem || "?"}/${item.maxMem || "?"} MHz | Level ${item.level} | Price ${item.price} | Sell Price ${item.sellPrice} | Slot size: ${item.slotSize} |`;
+        } else if (currentDataTab === 'cpu') {
+            const freqStr = `${item.baseFreq || "?"} / ${item.stdFreq || "?"} / ${item.maxFreq || "?"}`;
+            str = `Basic Cpu Score: ${item.scoreTS} | Basic CPU Score (TSX): ${item.scoreTSX} | OC Score: ${item.ocScore} | Socket ${item.socket} | ${item.cores}C | BaseMidMaxFreq: ${freqStr} MHz | VoltageMinMax: ${item.voltage || "?"}/${item.maxVoltage || "?"} V | Can Delid ${item.canDelid} | Sell Price : ${item.sellPrice} | Price ${item.price} | Level ${item.level} | Max Memory Channels: ${item.maxMemChannelsRaw || "?"} | Supported Memory Types ${item.memTypes}`;
+        } else if (currentDataTab === 'cases') {
+            // Case Info Display
+            str = `Size: ${item.size} | Mobo Support: ${item.moboSizes} | Max GPU Len: ${item.maxGpuLen}mm | Max CPU Height: ${item.maxCpuHeight}mm | Max PSU Len: ${item.maxPsuLen}mm | Radiator Sizes: ${item.radSizes} | GPU Slots: ${item.gpuSlots} | SSD Slots: ${item.ssdSlots} | HDD Slots: ${item.hddSlots} | Level: ${item.level} | Price: ${formatCurrency(item.price)}`;
+        }
 
-            if (currentDataTab === 'gpu') {
-                scoreA = a.score || 0; // Single GPU score
-                scoreB = b.score || 0;
-            } else {
-                scoreA = a.scoreTS || 0; // Base CPU Score
-                scoreB = b.scoreTS || 0;
-            }
-
-            if (sortMode === 'score_desc') return scoreB - scoreA;
-            if (sortMode === 'score_asc') return scoreA - scoreB;
-            if (sortMode === 'price_desc') return priceB - priceA;
-            if (sortMode === 'price_asc') return priceA - priceB;
-            
-            // Value = Score / Price
-            let valA = (priceA > 0) ? scoreA / priceA : 0;
-            let valB = (priceB > 0) ? scoreB / priceB : 0;
-            
-            if (sortMode === 'val_desc') return valB - valA; // Most Overperforming (High value)
-            if (sortMode === 'val_asc') return valA - valB; // Most Underperforming (Low value)
-            
-            return 0;
-        });
-
-        items.forEach(item => {
-            const div = document.createElement('div');
-            div.className = `data-list-row ${getBrandClass(item)}`;
-            let str = "";
-            if (currentDataTab === 'gpu') {
-                const cooling = item.isWater ? "Water" : "Air";
-                str = `Single GPU Score: ${item.rawScore || ""} | Double GPU Score ${item.rawScore2 || ""} | Triple GPU Score ${item.rawScore3 || ""} | Quad GPU Score ${item.rawScore4 || ""} | VRAM ${item.vram} | Length ${item.length} | Watt ${item.watts} | ${cooling} | Base Core/Max Core: ${item.baseCore || "?"}/${item.maxCore || "?"} MHz | Base Mem/Max Mem: ${item.baseMem || "?"}/${item.maxMem || "?"} MHz | Level ${item.level} | Price ${item.price} | Sell Price ${item.sellPrice} | Slot size: ${item.slotSize} |`;
-            } else {
-const freqStr = `${item.baseFreq || "?"} / ${item.stdFreq || "?"} / ${item.maxFreq || "?"}`;                str = `Basic Cpu Score: ${item.scoreTS} | Basic CPU Score (TSX): ${item.scoreTSX} | OC Score: ${item.ocScore} | Socket ${item.socket} | ${item.cores}C | BaseMidMaxFreq: ${freqStr} MHz | VoltageMinMax: ${item.voltage || "?"}/${item.maxVoltage || "?"} V | Can Delid ${item.canDelid} | Sell Price : ${item.sellPrice} | Price ${item.price} | Level ${item.level} | Max Memory Channels: ${item.maxMemChannelsRaw || "?"} | Supported Memory Types ${item.memTypes}`;
-            }
-            div.innerHTML = `<span class="item-name-list">${item.name}</span><span class="raw-string">${str}</span>`;
-            container.appendChild(div);
-        });
-        filterDataList();
-    }
+        div.innerHTML = `<span class="item-name-list">${item.name}</span><span class="raw-string">${str}</span>`;
+        container.appendChild(div);
+    });
+    filterDataList();
+}
 
     function getMultiGPUCap(name, length) {
         const n = name.toLowerCase();
@@ -5024,4 +5036,4 @@ if (type === 'fan') {
 
 </script>
 </body>
-</html>
+    </html>
