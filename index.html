@@ -1552,6 +1552,17 @@
                     </div>
                 </div>
 
+
+                <!-- ADD THIS INSIDE THE "4. Component Filters" .input-grid SECTION -->
+<div class="input-group">
+    <label>GPU Cooling Type</label>
+    <select id="gpuCoolingType">
+        <option value="any" selected>Any (Air & Water)</option>
+        <option value="air">Air Cooled Only</option>
+        <option value="water">Water Cooled Only</option>
+    </select>
+</div>
+
                 <div class="input-group">
                     <label>Specific CPU Model(s)</label>
                     <div id="multiCpu" class="multi-select-container">
@@ -3632,8 +3643,7 @@ if (category === 'ssdNames' || category === 'hddNames') {
     let precalcGpuConfigs = []; // Stores flattened valid GPU configs
 
 
-
-    async function generateBuilds() {
+async function generateBuilds() {
         // Safety Checks
         if (!Loaded.cpu || !Loaded.gpu) return alert("Wait for Data Load!");
         
@@ -3680,11 +3690,11 @@ if (category === 'ssdNames' || category === 'hddNames') {
             useStorage: document.getElementById('incStorage').checked && Loaded.storage,
             reqSticks: parseInt(document.getElementById('ramSticks').value),
             targetRamVal: parseIntVal('targetTotalRam'),
-            currentMode: currentMode
+            currentMode: currentMode,
+            gpuCooling: document.getElementById('gpuCoolingType').value // <--- NEW INPUT CAPTURE
         };
 
         // --- 2. PREPARE AUX LISTS (STRICT PRICE SORTING) ---
-        // We explicitly sort these by Price Ascending so the assembler always picks the cheapest fit.
         
         let rawCases = Array.from(DB.cases.values()).filter(c => {
             if (c.level > config.lvl) return false;
@@ -3701,7 +3711,7 @@ if (category === 'ssdNames' || category === 'hddNames') {
                 
             allPsu: config.usePsu ? Array.from(DB.psu.values())
                 .filter(p => p.level <= config.lvl)
-                .sort((a,b) => a.price - b.price) : [], // Ensure Cheapest PSU is first
+                .sort((a,b) => a.price - b.price) : [],
                 
             allFans: config.useFan ? Array.from(DB.fan.values())
                 .filter(f => f.level <= config.lvl)
@@ -3726,7 +3736,6 @@ if (category === 'ssdNames' || category === 'hddNames') {
             }
         });
 
-        // Fallback storage if none selected but required
         if (config.useStorage && finalStorageList.length === 0) {
             const fallback = Array.from(DB.storage.values())
                 .filter(s => s.type !== 'HDD' && s.level <= config.lvl)
@@ -3738,7 +3747,6 @@ if (category === 'ssdNames' || category === 'hddNames') {
         }
         minAuxCost += totalStorageCost;
 
-        // Add minimum costs of required parts to fail fast
         if (config.useCase && lists.allCases.length > 0) minAuxCost += lists.allCases[0].price;
         if (config.usePsu && lists.allPsu.length > 0) minAuxCost += lists.allPsu[0].price;
         if (config.useCooler && lists.allCoolers.length > 0) minAuxCost += lists.allCoolers[0].price;
@@ -3757,11 +3765,19 @@ if (category === 'ssdNames' || category === 'hddNames') {
         }).sort((a,b) => (currentMode === 'TS' ? b.scoreTS - a.scoreTS : b.scoreTSX - a.scoreTSX));
 
         // --- 5. GPU LIST (RAW VS OPTIMIZED) ---
+        
+        // NEW: Filter raw source by Cooling Type before doing anything else
+        let rawGpuSource = Array.from(DB.gpu.values()).filter(g => {
+            if (config.gpuCooling === 'air' && g.isWater) return false;
+            if (config.gpuCooling === 'water' && !g.isWater) return false;
+            return true;
+        });
+
         let allGpus = [];
         if (OPTIMIZE_LISTS) {
-            allGpus = getOptimizedGpuList(Array.from(DB.gpu.values()), config.lvl);
+            allGpus = getOptimizedGpuList(rawGpuSource, config.lvl);
         } else {
-            allGpus = Array.from(DB.gpu.values()).filter(g => {
+            allGpus = rawGpuSource.filter(g => {
                 if (g.level > config.lvl) return false;
                 if (selectedOptions.gpuNames.size > 0 && !selectedOptions.gpuNames.has(g.name)) return false;
                 if (selectedOptions.vram.size > 0 && !selectedOptions.vram.has(g.vram)) return false;
@@ -3817,7 +3833,7 @@ if (category === 'ssdNames' || category === 'hddNames') {
         
         // Start Async Processing
         runScanChunk(0, config, lists);
-    }
+}
 
 function runScanChunk(cpuIndex, config, lists) {
     if (cpuIndex >= lists.validCpu.length) {
