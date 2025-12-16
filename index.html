@@ -1763,7 +1763,6 @@
         </div>
     </div>
 
-    <!-- REPLACE THE ENTIRE <div id="dataView"> SECTION WITH THIS -->
 <div class="viewer-tabs">
     <button class="v-tab-btn active" onclick="switchDataTab('gpu')">GPUs</button>
     <button class="v-tab-btn" onclick="switchDataTab('cpu')">CPUs</button>
@@ -2937,7 +2936,9 @@ function switchDataTab(tab) {
         });
     }
 
-    function renderDataList() {
+
+
+function renderDataList() {
     const container = document.getElementById('dataViewListContainer');
     container.innerHTML = '';
     const sortMode = document.getElementById('dataViewSort').value;
@@ -2998,6 +2999,7 @@ function switchDataTab(tab) {
     });
     filterDataList();
 }
+    
 
     function getMultiGPUCap(name, length) {
         const n = name.toLowerCase();
